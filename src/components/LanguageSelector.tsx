@@ -17,9 +17,9 @@ const LanguageSelector: React.FC = () => {
     { code: 'ar', name: t('ar') },
   ];
 
-  const handleLanguageChange = async (newLocale: string) => {
+  const handleLanguageChange = (newLocale: string) => {
     // Set the user's locale preference in cookie
-    await setUserLocale(newLocale as any);
+    setUserLocale(newLocale as any);
     
     // Navigate to the same page with the new locale
     const currentPath = pathname.replace(`/${locale}`, '');
