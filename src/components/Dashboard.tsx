@@ -246,77 +246,81 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-nav fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl"
+        className="glass-nav fixed top-3 md:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl mx-3 md:mx-0"
       >
-        <div className="flex items-center justify-between px-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between px-3 md:px-4">
+          <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
+            <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
+              <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                <Wallet className="w-3 h-3 md:w-5 md:h-5 text-white" />
               </div>
-              <span className="font-semibold text-gray-800">PairBudget</span>
+              <span className="font-semibold text-gray-800 text-sm md:text-base hidden sm:block">PairBudget</span>
             </div>
             
             {/* Pocket Selector */}
-            <PocketSelector onCreateNew={onCreateNewPocket || (() => {
-              // Fallback behavior
-              window.location.reload();
-            })} />
+            <div className="flex-1 min-w-0">
+              <PocketSelector onCreateNew={onCreateNewPocket || (() => {
+                // Fallback behavior
+                window.location.reload();
+              })} />
+            </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
-              <span>Welcome, {userProfile?.name || user?.email?.split('@')[0]}</span>
+          <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+            <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600">
+              <span className="truncate max-w-32">Welcome, {userProfile?.name || user?.email?.split('@')[0]}</span>
               <span className="text-gray-400">•</span>
               <span className="capitalize text-blue-600 font-medium">{userRole}</span>
-        </div>
+            </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 md:space-x-2">
               {showRecoveryButton && (
                 <button
                   onClick={handleFirebaseRecovery}
                   disabled={isRecovering}
-                  className="p-2 text-blue-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+                  className="p-1.5 md:p-2 text-blue-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
                   title="Manual Firebase Recovery"
                 >
-                  <RefreshCw className={`w-5 h-5 ${isRecovering ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isRecovering ? 'animate-spin' : ''}`} />
                 </button>
               )}
               
               <button
                 onClick={() => setShowInviteCode(true)}
-                className="p-2 text-gray-500 hover:text-blue-500 transition-colors rounded-lg hover:bg-blue-50"
+                className="p-1.5 md:p-2 text-gray-500 hover:text-blue-500 transition-colors rounded-lg hover:bg-blue-50"
                 title="Share Invite Code"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-4 h-4 md:w-5 md:h-5" />
               </button>
               
               <button
                 onClick={signOut}
-                className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                className="p-1.5 md:p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                 title="Sign Out"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4 md:w-5 md:h-5" />
               </button>
             </div>
           </div>
         </div>
       </motion.header>
 
-      <div className="max-w-6xl mx-auto pt-24 space-y-8">
+      <div className="max-w-6xl mx-auto pt-20 md:pt-24 space-y-6 md:space-y-8">
         {/* Pocket Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-6 md:mb-8 px-4"
         >
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">{currentPocket.name}</h1>
-          <div className="flex items-center justify-center space-x-3 text-gray-600">
-            <Users className="w-5 h-5" />
-            <span>{currentPocket.participants.length} members</span>
-            <span className="text-gray-400">•</span>
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 truncate">{currentPocket.name}</h1>
+          <div className="flex items-center justify-center space-x-2 md:space-x-3 text-sm md:text-base text-gray-600 flex-wrap">
+            <div className="flex items-center space-x-1">
+              <Users className="w-4 h-4 md:w-5 md:h-5" />
+              <span>{currentPocket.participants.length} members</span>
+            </div>
+            <span className="text-gray-400 hidden sm:inline">•</span>
             <span className="capitalize">You are the {userRole}</span>
-      </div>
+          </div>
         </motion.div>
 
         {/* Stats Cards */}
@@ -324,54 +328,54 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8 px-4"
         >
           {/* Current Balance */}
-          <div className="stat-card-balance card-floating">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-                <BalanceIcon className="w-6 h-6 text-white" />
+          <div className="stat-card-balance card-floating col-span-1 sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
+                <BalanceIcon className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Current Balance</span>
+              <span className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide text-right">Current Balance</span>
             </div>
-            <div className={`text-3xl font-bold ${balanceColor} mb-2`}>
+            <div className={`text-2xl md:text-3xl font-bold ${balanceColor} mb-1 md:mb-2`}>
               {formatCurrency(currentPocket.balance)}
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs md:text-sm text-gray-600">
               {currentPocket.balance >= 0 ? 'Available to spend' : 'Over budget'}
             </p>
           </div>
 
           {/* Total Funded */}
           <div className="stat-card-funded card-floating">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <ArrowUpRight className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Funded</span>
+              <span className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide text-right">Total Funded</span>
             </div>
-            <div className="text-3xl font-bold text-blue-600 mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-blue-600 mb-1 md:mb-2">
               {formatCurrency(currentPocket.totalFunded)}
             </div>
-            <p className="text-sm text-gray-600">Money added to pocket</p>
+            <p className="text-xs md:text-sm text-gray-600">Money added to pocket</p>
           </div>
 
           {/* Total Spent */}
           <div className="stat-card-spent card-floating">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                <ArrowDownRight className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Spent</span>
+              <span className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide text-right">Total Spent</span>
             </div>
-            <div className="text-3xl font-bold text-orange-600 mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-orange-600 mb-1 md:mb-2">
               {formatCurrency(currentPocket.totalSpent)}
             </div>
-            <p className="text-sm text-gray-600">Money spent from pocket</p>
+            <p className="text-xs md:text-sm text-gray-600">Money spent from pocket</p>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 px-4">
           {/* Actions */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -380,23 +384,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
             className="lg:col-span-1"
           >
             <div className="card-floating">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">Quick Actions</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6">Quick Actions</h2>
               
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {canAddFunds && (
                   <button
                     onClick={() => {
                       setFormData({ ...formData, type: 'fund' });
                       setShowTransactionForm(true);
                     }}
-                    className="w-full p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 flex items-center space-x-3 group"
+                    className="w-full p-3 md:p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 flex items-center space-x-3 group"
                   >
                     <div className="quick-action-icon group-hover:scale-110">
                       <i className="fas fa-money-bill-wave"></i>
                     </div>
                     <div className="text-left">
-                      <div className="font-medium">Add Funds</div>
-                      <div className="text-sm opacity-90">Add money to pocket</div>
+                      <div className="font-medium text-sm md:text-base">Add Funds</div>
+                      <div className="text-xs md:text-sm opacity-90">Add money to pocket</div>
                     </div>
                   </button>
                 )}
@@ -407,28 +411,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                       setFormData({ ...formData, type: 'expense' });
                       setShowTransactionForm(true);
                     }}
-                    className="w-full p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 flex items-center space-x-3 group"
+                    className="w-full p-3 md:p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 flex items-center space-x-3 group"
                   >
                     <div className="quick-action-icon group-hover:scale-110">
                       <i className="fas fa-shopping-cart"></i>
                     </div>
                     <div className="text-left">
-                      <div className="font-medium">Add Expense</div>
-                      <div className="text-sm opacity-90">Record a purchase</div>
+                      <div className="font-medium text-sm md:text-base">Add Expense</div>
+                      <div className="text-xs md:text-sm opacity-90">Record a purchase</div>
                     </div>
                   </button>
                 )}
 
                 <button
                   onClick={() => setShowInviteCode(true)}
-                  className="w-full p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center space-x-3 group"
+                  className="w-full p-3 md:p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center space-x-3 group"
                 >
                   <div className="quick-action-icon group-hover:scale-110">
                     <i className="fas fa-user-plus"></i>
                   </div>
                   <div className="text-left">
-                    <div className="font-medium">Invite Partner</div>
-                    <div className="text-sm opacity-90">Share invite code</div>
+                    <div className="font-medium text-sm md:text-base">Invite Partner</div>
+                    <div className="text-xs md:text-sm opacity-90">Share invite code</div>
                   </div>
                 </button>
               </div>
@@ -443,53 +447,53 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
             className="lg:col-span-2"
           >
             <div className="card-floating">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">Recent Transactions</h2>
-                <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800">Recent Transactions</h2>
+                <div className="flex items-center space-x-2 md:space-x-3">
                   <button
                     onClick={() => router.push('/all-transactions')}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    className="text-xs md:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   >
                     View All
                   </button>
-                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <Calendar className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                 </div>
               </div>
 
               {recentTransactions.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {recentTransactions.map((transaction) => (
                     <motion.div
                       key={transaction.id}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                     >
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
+                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                           transaction.type === 'fund' 
                             ? 'bg-blue-100 text-blue-600' 
                             : 'bg-orange-100 text-orange-600'
                         }`}>
                           {transaction.type === 'fund' ? (
-                            <ArrowUpRight className="w-5 h-5" />
+                            <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5" />
                           ) : (
-                            <ArrowDownRight className="w-5 h-5" />
+                            <ArrowDownRight className="w-4 h-4 md:w-5 md:h-5" />
                           )}
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900">{transaction.description}</div>
-                          <div className="flex items-center space-x-3 text-sm text-gray-500">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-900 text-sm md:text-base truncate">{transaction.description}</div>
+                          <div className="flex items-center space-x-2 md:space-x-3 text-xs md:text-sm text-gray-500 flex-wrap">
                             <span className="flex items-center space-x-1">
                               <User className="w-3 h-3" />
-                              <span>{userNames[transaction.userId] || 'Loading...'}</span>
+                              <span className="truncate max-w-20 md:max-w-none">{userNames[transaction.userId] || 'Loading...'}</span>
                             </span>
-                            <span>{transaction.category}</span>
-                            <span>{formatDate(transaction.date)}</span>
+                            <span className="hidden sm:inline">{transaction.category}</span>
+                            <span className="hidden md:inline">{formatDate(transaction.date)}</span>
                           </div>
                         </div>
                       </div>
-                      <div className={`text-lg font-semibold ${
+                      <div className={`text-sm md:text-lg font-semibold flex-shrink-0 ${
                         transaction.type === 'fund' ? 'text-blue-600' : 'text-orange-600'
                       }`}>
                         {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
@@ -532,21 +536,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-12 pt-8 border-t border-gray-200"
+          className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-gray-200 px-4"
         >
           <div className="card-floating">
             <div className="text-center">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <UserMinus className="w-6 h-6 text-orange-600" />
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <UserMinus className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Pocket Management</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-2">Pocket Management</h3>
+              <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
                 Need to leave this pocket? You can always create a new one or join another.
               </p>
               
               <button
                 onClick={() => setShowLeavePocketModal(true)}
-                className="px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors flex items-center space-x-2 mx-auto"
+                className="px-4 md:px-6 py-2 md:py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors flex items-center space-x-2 mx-auto text-sm md:text-base"
               >
                 <UserMinus className="w-4 h-4" />
                 <span>Leave Pocket</span>
