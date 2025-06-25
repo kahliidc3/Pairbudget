@@ -696,3 +696,8 @@ body::before {
   color: white;
 }
 
+/* Custom gradient utilities for auth forms */
+.bg-gradient-radial {
+  background: radial-gradient(circle at center, var(--tw-gradient-stops));
+}
+
