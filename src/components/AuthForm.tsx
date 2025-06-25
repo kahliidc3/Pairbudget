@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiHeart } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiHeart, FiGlobe } from 'react-icons/fi';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { signIn, signUp } from '@/services/authService';
 import LoadingSpinner from './LoadingSpinner';
@@ -17,7 +18,8 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
     email: '',
     password: '',
     confirmPassword: '',
-    name: ''
+    name: '',
+    preferredLanguage: 'en'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -25,6 +27,11 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const { setUser, setUserProfile } = useAuthStore();
+  
+  // Translation hooks
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
+  const tLanguages = useTranslations('languages');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +47,12 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
     setIsLoading(true);
     try {
       if (mode === 'signup') {
-        const { user, userProfile } = await signUp(formData.email, formData.password, formData.name);
+        const { user, userProfile } = await signUp(
+          formData.email, 
+          formData.password, 
+          formData.name, 
+          formData.preferredLanguage
+        );
         setUser(user);
         setUserProfile(userProfile);
       } else {
@@ -54,7 +66,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -96,7 +108,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="text-hero mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
             >
-              {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+              {mode === 'login' ? 'Welcome Back' : t('createAccount')}
             </motion.h1>
             
             <motion.p
@@ -122,17 +134,33 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="relative">
-                    <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="Full Name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="input-glass w-full pl-12 pr-4"
-                    />
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder={t('name')}
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="input-glass w-full pl-12 pr-4"
+                      />
+                    </div>
+                    
+                    <div className="relative">
+                      <FiGlobe className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                      <select
+                        name="preferredLanguage"
+                        value={formData.preferredLanguage}
+                        onChange={handleInputChange}
+                        className="input-glass w-full pl-12 pr-4 appearance-none bg-white"
+                      >
+                        <option value="en">{tLanguages('en')}</option>
+                        <option value="fr">{tLanguages('fr')}</option>
+                        <option value="ar">{tLanguages('ar')}</option>
+                      </select>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -148,7 +176,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                 <input
                   type="email"
                   name="email"
-                  placeholder="Email Address"
+                  placeholder={t('email')}
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -167,7 +195,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
-                  placeholder="Password"
+                  placeholder={t('password')}
                   value={formData.password}
                   onChange={handleInputChange}
                   required

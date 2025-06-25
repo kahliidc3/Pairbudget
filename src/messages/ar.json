@@ -1,0 +1,141 @@
+{
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "language": "اللغة"
+  },
+  "navigation": {
+    "pairbudget": "بير بدجت",
+    "dashboard": "لوحة التحكم",
+    "allTransactions": "جميع المعاملات",
+    "signIn": "تسجيل الدخول",
+    "signOut": "تسجيل الخروج",
+    "getStarted": "ابدأ الآن"
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "name": "الاسم الكامل",
+    "preferredLanguage": "اللغة المفضلة",
+    "createAccount": "إنشاء حساب",
+    "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "rememberMe": "تذكرني"
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "landing": {
+    "heroTitle": "تتبع المصروفات",
+    "heroSubtitle": "مصمم لشخصين",
+    "heroDescription": "مثالي للأزواج والعائلات والشركاء. تتبع المصروفات المشتركة، وإدارة الميزانيات معاً، والحفاظ على أهدافكم المالية متزامنة.",
+    "startJourney": "ابدأ رحلتك",
+    "quickStats": {
+      "peoplePerPocket": "أشخاص لكل جيب",
+      "transactions": "المعاملات",
+      "realTimeSync": "المزامنة الفورية"
+    },
+    "features": {
+      "title": "مبني للشراكة",
+      "description": "كل ميزة مصممة لجعل إدارة الأموال المشتركة سهلة وشفافة.",
+      "twoPersonFocus": {
+        "title": "التركيز على شخصين",
+        "description": "مصمم خصيصاً للأزواج والشركاء والمتعاونين المقربين. لا توجد إدارة معقدة للمجموعات، فقط تتبع بسيط للمصروفات بين شخصين."
+      },
+      "realTimeSync": {
+        "title": "المزامنة الفورية",
+        "description": "كل معاملة تتزامن فوراً. كلا الشريكين يرى دائماً أحدث رصيد ومصروفات بدون تأخير أو تضارب."
+      },
+      "securePrivate": {
+        "title": "آمن وخاص",
+        "description": "بياناتك المالية مشفرة وآمنة. فقط أنت وشريكك لديكما الوصول إلى معلومات ميزانيتكما المشتركة."
+      }
+    },
+    "cta": {
+      "title": "مستعد لوضع الميزانية معاً؟",
+      "description": "انضم إلى آلاف الأزواج الذين بسطوا مصروفاتهم المشتركة مع بير بدجت.",
+      "createPocket": "أنشئ جيبك الأول"
+    }
+  },
+  "dashboard": {
+    "welcome": "مرحباً",
+    "role": {
+      "provider": "مزود",
+      "spender": "منفق"
+    },
+    "stats": {
+      "currentBalance": "الرصيد الحالي",
+      "totalFunded": "إجمالي التمويل",
+      "totalSpent": "إجمالي المصروف",
+      "availableToSpend": "متاح للإنفاق",
+      "overBudget": "تجاوز الميزانية",
+      "moneyAdded": "المال المضاف للجيب",
+      "moneySpent": "المال المنفق من الجيب"
+    },
+    "quickActions": {
+      "title": "الإجراءات السريعة",
+      "addFunds": "إضافة أموال",
+      "addFundsDesc": "إضافة مال للجيب",
+      "addExpense": "إضافة مصروف",
+      "addExpenseDesc": "تسجيل عملية شراء",
+      "invitePartner": "دعوة شريك",
+      "invitePartnerDesc": "مشاركة رمز الدعوة"
+    },
+    "recentTransactions": {
+      "title": "المعاملات الأخيرة",
+      "viewAll": "عرض الكل",
+      "noTransactions": "لا توجد معاملات بعد",
+      "noTransactionsDesc": "ابدأ بإضافة أموال أو تسجيل مصروف",
+      "addTransaction": "إضافة معاملة"
+    },
+    "pocketManagement": {
+      "title": "إدارة الجيب",
+      "description": "تحتاج لمغادرة هذا الجيب؟ يمكنك دائماً إنشاء واحد جديد أو الانضمام لآخر.",
+      "leavePocket": "مغادرة الجيب"
+    },
+    "members": "أعضاء",
+    "youAreThe": "أنت"
+  },
+  "transactions": {
+    "title": "تاريخ المعاملات",
+    "description": "التاريخ الكامل لجميع المعاملات في",
+    "searchPlaceholder": "البحث في المعاملات...",
+    "allTypes": "جميع الأنواع",
+    "allCategories": "جميع الفئات",
+    "fundsOnly": "الأموال فقط",
+    "expensesOnly": "المصروفات فقط",
+    "transaction": "معاملة",
+    "transactions": "معاملات",
+    "noTransactionsFound": "لم يتم العثور على معاملات",
+    "adjustFilters": "جرب تعديل المرشحات لرؤية المزيد من النتائج.",
+    "noTransactionsRecorded": "لم يتم تسجيل أي معاملات بعد.",
+    "clearFilters": "مسح المرشحات",
+    "addFunds": "إضافة أموال",
+    "addExpense": "إضافة مصروف",
+    "fund": "تمويل",
+    "expense": "مصروف"
+  },
+  "pocket": {
+    "createNew": "إنشاء جيب جديد",
+    "selectPocket": "اختيار جيب",
+    "familyBudget": "ميزانية العائلة",
+    "sharedPocket": "جيب مشترك",
+    "balance": "الرصيد",
+    "thisMonth": "هذا الشهر",
+    "expenses": "المصروفات"
+  }
+} 

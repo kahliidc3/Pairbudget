@@ -1,0 +1,141 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "language": "Language"
+  },
+  "navigation": {
+    "pairbudget": "PairBudget",
+    "dashboard": "Dashboard",
+    "allTransactions": "All Transactions",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "getStarted": "Get Started"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "preferredLanguage": "Preferred Language",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me"
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "landing": {
+    "heroTitle": "Expense Tracking",
+    "heroSubtitle": "Made for Two",
+    "heroDescription": "Perfect for couples, families, and partners. Track shared expenses, manage budgets together, and keep your financial goals in sync.",
+    "startJourney": "Start Your Journey",
+    "quickStats": {
+      "peoplePerPocket": "People per Pocket",
+      "transactions": "Transactions",
+      "realTimeSync": "Real-time Sync"
+    },
+    "features": {
+      "title": "Built for Partnership",
+      "description": "Every feature designed to make shared financial management effortless and transparent.",
+      "twoPersonFocus": {
+        "title": "Two-Person Focus",
+        "description": "Designed specifically for couples, partners, and close collaborators. No complex group management, just simple two-person expense tracking."
+      },
+      "realTimeSync": {
+        "title": "Real-time Sync",
+        "description": "Every transaction syncs instantly. Both partners always see the latest balance and expenses without any delays or conflicts."
+      },
+      "securePrivate": {
+        "title": "Secure & Private",
+        "description": "Your financial data is encrypted and secure. Only you and your partner have access to your shared budget information."
+      }
+    },
+    "cta": {
+      "title": "Ready to Budget Together?",
+      "description": "Join thousands of couples who've simplified their shared expenses with PairBudget.",
+      "createPocket": "Create Your First Pocket"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "role": {
+      "provider": "Provider",
+      "spender": "Spender"
+    },
+    "stats": {
+      "currentBalance": "Current Balance",
+      "totalFunded": "Total Funded",
+      "totalSpent": "Total Spent",
+      "availableToSpend": "Available to spend",
+      "overBudget": "Over budget",
+      "moneyAdded": "Money added to pocket",
+      "moneySpent": "Money spent from pocket"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "addFunds": "Add Funds",
+      "addFundsDesc": "Add money to pocket",
+      "addExpense": "Add Expense",
+      "addExpenseDesc": "Record a purchase",
+      "invitePartner": "Invite Partner",
+      "invitePartnerDesc": "Share invite code"
+    },
+    "recentTransactions": {
+      "title": "Recent Transactions",
+      "viewAll": "View All",
+      "noTransactions": "No transactions yet",
+      "noTransactionsDesc": "Start by adding funds or recording an expense",
+      "addTransaction": "Add Transaction"
+    },
+    "pocketManagement": {
+      "title": "Pocket Management",
+      "description": "Need to leave this pocket? You can always create a new one or join another.",
+      "leavePocket": "Leave Pocket"
+    },
+    "members": "members",
+    "youAreThe": "You are the"
+  },
+  "transactions": {
+    "title": "Transaction History",
+    "description": "Complete history of all transactions in",
+    "searchPlaceholder": "Search transactions...",
+    "allTypes": "All Types",
+    "allCategories": "All Categories",
+    "fundsOnly": "Funds Only",
+    "expensesOnly": "Expenses Only",
+    "transaction": "transaction",
+    "transactions": "transactions",
+    "noTransactionsFound": "No transactions found",
+    "adjustFilters": "Try adjusting your filters to see more results.",
+    "noTransactionsRecorded": "No transactions have been recorded yet.",
+    "clearFilters": "Clear Filters",
+    "addFunds": "Add Funds",
+    "addExpense": "Add Expense",
+    "fund": "fund",
+    "expense": "expense"
+  },
+  "pocket": {
+    "createNew": "Create New Pocket",
+    "selectPocket": "Select Pocket",
+    "familyBudget": "Family Budget",
+    "sharedPocket": "Shared Pocket",
+    "balance": "Balance",
+    "thisMonth": "This Month",
+    "expenses": "Expenses"
+  }
+} 

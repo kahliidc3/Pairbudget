@@ -255,7 +255,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                 <Wallet className="w-3 h-3 md:w-5 md:h-5 text-white" />
               </div>
               <span className="font-semibold text-gray-800 text-sm md:text-base hidden sm:block">PairBudget</span>
-            </div>
+        </div>
             
             {/* Pocket Selector */}
             <div className="flex-1 min-w-0">
@@ -263,9 +263,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                 // Fallback behavior
                 window.location.reload();
               })} />
-            </div>
-          </div>
-          
+        </div>
+      </div>
+
           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
             <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600">
               <span className="truncate max-w-32">Welcome, {userProfile?.name || user?.email?.split('@')[0]}</span>

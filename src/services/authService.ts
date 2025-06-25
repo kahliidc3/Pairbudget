@@ -8,7 +8,7 @@ import { doc, setDoc, getDoc, deleteField } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User } from '@/types';
 
-export const signUp = async (email: string, password: string, name: string) => {
+export const signUp = async (email: string, password: string, name: string, preferredLanguage?: string) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -22,6 +22,7 @@ export const signUp = async (email: string, password: string, name: string) => {
       name,
       email,
       pocketIds: [], // Initialize empty array for multiple pockets
+      preferredLanguage: preferredLanguage || 'en',
       createdAt: new Date(),
     };
     

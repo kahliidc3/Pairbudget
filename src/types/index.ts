@@ -4,6 +4,7 @@ export interface User {
   email: string;
   currentPocketId?: string;
   pocketIds: string[]; // Array of pocket IDs the user belongs to
+  preferredLanguage?: string;
   createdAt: Date;
 }
 

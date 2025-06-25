@@ -1,0 +1,141 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "language": "Langue"
+  },
+  "navigation": {
+    "pairbudget": "PairBudget",
+    "dashboard": "Tableau de bord",
+    "allTransactions": "Toutes les transactions",
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "getStarted": "Commencer"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "name": "Nom complet",
+    "preferredLanguage": "Langue préférée",
+    "createAccount": "Créer un compte",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "forgotPassword": "Mot de passe oublié ?",
+    "rememberMe": "Se souvenir de moi"
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "landing": {
+    "heroTitle": "Suivi des dépenses",
+    "heroSubtitle": "Conçu pour deux",
+    "heroDescription": "Parfait pour les couples, les familles et les partenaires. Suivez les dépenses partagées, gérez les budgets ensemble et gardez vos objectifs financiers synchronisés.",
+    "startJourney": "Commencer votre parcours",
+    "quickStats": {
+      "peoplePerPocket": "Personnes par poche",
+      "transactions": "Transactions",
+      "realTimeSync": "Synchronisation temps réel"
+    },
+    "features": {
+      "title": "Conçu pour le partenariat",
+      "description": "Chaque fonctionnalité conçue pour rendre la gestion financière partagée sans effort et transparente.",
+      "twoPersonFocus": {
+        "title": "Focus sur deux personnes",
+        "description": "Conçu spécifiquement pour les couples, partenaires et collaborateurs proches. Pas de gestion de groupe complexe, juste un suivi simple des dépenses à deux."
+      },
+      "realTimeSync": {
+        "title": "Synchronisation temps réel",
+        "description": "Chaque transaction se synchronise instantanément. Les deux partenaires voient toujours le solde et les dépenses les plus récents sans délais ni conflits."
+      },
+      "securePrivate": {
+        "title": "Sécurisé et privé",
+        "description": "Vos données financières sont cryptées et sécurisées. Seuls vous et votre partenaire avez accès aux informations de votre budget partagé."
+      }
+    },
+    "cta": {
+      "title": "Prêt à budgétiser ensemble ?",
+      "description": "Rejoignez des milliers de couples qui ont simplifié leurs dépenses partagées avec PairBudget.",
+      "createPocket": "Créer votre première poche"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "role": {
+      "provider": "Fournisseur",
+      "spender": "Dépensier"
+    },
+    "stats": {
+      "currentBalance": "Solde actuel",
+      "totalFunded": "Total financé",
+      "totalSpent": "Total dépensé",
+      "availableToSpend": "Disponible à dépenser",
+      "overBudget": "Dépassement de budget",
+      "moneyAdded": "Argent ajouté à la poche",
+      "moneySpent": "Argent dépensé de la poche"
+    },
+    "quickActions": {
+      "title": "Actions rapides",
+      "addFunds": "Ajouter des fonds",
+      "addFundsDesc": "Ajouter de l'argent à la poche",
+      "addExpense": "Ajouter une dépense",
+      "addExpenseDesc": "Enregistrer un achat",
+      "invitePartner": "Inviter un partenaire",
+      "invitePartnerDesc": "Partager le code d'invitation"
+    },
+    "recentTransactions": {
+      "title": "Transactions récentes",
+      "viewAll": "Voir tout",
+      "noTransactions": "Aucune transaction encore",
+      "noTransactionsDesc": "Commencez par ajouter des fonds ou enregistrer une dépense",
+      "addTransaction": "Ajouter une transaction"
+    },
+    "pocketManagement": {
+      "title": "Gestion de la poche",
+      "description": "Besoin de quitter cette poche ? Vous pouvez toujours en créer une nouvelle ou rejoindre une autre.",
+      "leavePocket": "Quitter la poche"
+    },
+    "members": "membres",
+    "youAreThe": "Vous êtes le"
+  },
+  "transactions": {
+    "title": "Historique des transactions",
+    "description": "Historique complet de toutes les transactions dans",
+    "searchPlaceholder": "Rechercher des transactions...",
+    "allTypes": "Tous les types",
+    "allCategories": "Toutes les catégories",
+    "fundsOnly": "Fonds seulement",
+    "expensesOnly": "Dépenses seulement",
+    "transaction": "transaction",
+    "transactions": "transactions",
+    "noTransactionsFound": "Aucune transaction trouvée",
+    "adjustFilters": "Essayez d'ajuster vos filtres pour voir plus de résultats.",
+    "noTransactionsRecorded": "Aucune transaction n'a encore été enregistrée.",
+    "clearFilters": "Effacer les filtres",
+    "addFunds": "Ajouter des fonds",
+    "addExpense": "Ajouter une dépense",
+    "fund": "fonds",
+    "expense": "dépense"
+  },
+  "pocket": {
+    "createNew": "Créer une nouvelle poche",
+    "selectPocket": "Sélectionner une poche",
+    "familyBudget": "Budget familial",
+    "sharedPocket": "Poche partagée",
+    "balance": "Solde",
+    "thisMonth": "Ce mois",
+    "expenses": "Dépenses"
+  }
+} 
