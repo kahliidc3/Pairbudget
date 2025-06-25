@@ -1,0 +1,518 @@
+{
+    "designSystem": {
+      "name": "Futuristic Neon Design System",
+      "version": "3.0.0",
+      "description": "A vibrant, colorful futuristic design system featuring neon gradients, holographic effects, cyber aesthetics, and dynamic animated icons with sci-fi inspired UI elements"
+    },
+    "colorPalette": {
+      "neonPrimary": {
+        "electric": "#00FFFF",
+        "neonPink": "#FF0080",
+        "neonGreen": "#39FF14",
+        "neonBlue": "#0080FF",
+        "neonPurple": "#8000FF",
+        "neonOrange": "#FF4000",
+        "neonYellow": "#FFFF00"
+      },
+      "holographic": {
+        "chrome": "linear-gradient(45deg, #FF0080, #00FFFF, #39FF14, #FF4000)",
+        "rainbow": "linear-gradient(90deg, #FF0080 0%, #8000FF 20%, #0080FF 40%, #00FFFF 60%, #39FF14 80%, #FFFF00 100%)",
+        "prism": "conic-gradient(from 0deg, #FF0080, #8000FF, #0080FF, #00FFFF, #39FF14, #FFFF00, #FF4000, #FF0080)"
+      },
+      "cyberpunk": {
+        "darkBase": "#0A0A0F",
+        "deepPurple": "#1A0B2E",
+        "darkCyan": "#16213E",
+        "neonAccent": "#E94560",
+        "cyberBlue": "#0F3460",
+        "matrixGreen": "#00FF41"
+      },
+      "futuristicNeutral": {
+        "techWhite": "#F0F8FF",
+        "hologramSilver": "#C0C0C0",
+        "spaceDark": "#0D1117",
+        "voidBlack": "#000000",
+        "neonglow": "rgba(0, 255, 255, 0.3)"
+      },
+      "gradients": {
+        "cyberspace": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        "neonNight": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+        "electricDream": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+        "synthwave": "linear-gradient(135deg, #ff0080 0%, #8000ff 50%, #00ffff 100%)",
+        "matrix": "linear-gradient(135deg, #0f0f23 0%, #39ff14 50%, #0f0f23 100%)",
+        "holodeck": "linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%)"
+      }
+    },
+    "typography": {
+      "fontFamily": "Inter, system-ui, -apple-system, sans-serif",
+      "weights": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700
+      },
+      "scale": {
+        "hero": {
+          "fontSize": "2.5rem",
+          "lineHeight": "1.2",
+          "fontWeight": 700,
+          "letterSpacing": "-0.02em"
+        },
+        "title": {
+          "fontSize": "1.5rem",
+          "lineHeight": "1.3",
+          "fontWeight": 600
+  
+        },
+        "body": {
+          "fontSize": "0.875rem",
+          "lineHeight": "1.5",
+          "fontWeight": 400
+        },
+        "caption": {
+          "fontSize": "0.75rem",
+          "lineHeight": "1.4",
+          "fontWeight": 500
+        }
+      }
+    },
+    "spacing": {
+      "scale": [4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96],
+      "component": {
+        "cardPadding": "32px",
+        "inputPadding": "16px",
+        "buttonPadding": "12px 24px",
+        "elementGap": "20px"
+      }
+    },
+    "borderRadius": {
+      "small": "8px",
+      "medium": "12px",
+      "large": "16px",
+      "xlarge": "20px"
+    },
+    "iconography": {
+      "style": "futuristic-neon-outline",
+      "categories": {
+        "interface": {
+          "style": "geometric-minimal-with-neon-glow",
+          "examples": ["hexagonal-home", "circuit-menu", "hologram-search", "quantum-settings"],
+          "effects": "stroke-animation and glow-on-hover"
+        },
+        "technology": {
+          "style": "cyber-circuit-inspired",
+          "examples": ["ai-brain-nodes", "blockchain-cubes", "data-flow-arrows", "quantum-computing"],
+          "animation": "pulsing-connections and data-flow"
+        },
+        "social": {
+          "style": "digital-glitch-variants",
+          "examples": ["pixel-heart", "share-network-nodes", "comment-speech-bubble", "profile-hexagon"],
+          "effects": "glitch-on-hover and color-shift"
+        },
+        "business": {
+          "style": "holographic-3d-elements",
+          "examples": ["chart-hologram", "coin-spinner", "briefcase-neon", "handshake-circuit"],
+          "animation": "3d-rotation and holographic-shimmer"
+        }
+      },
+      "iconEffects": {
+        "neonGlow": {
+          "filter": "drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor)",
+          "transition": "all 0.3s ease"
+        },
+        "holographicShimmer": {
+          "background": "linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.8) 50%, transparent 70%)",
+          "animation": "shimmer 2s linear infinite"
+        },
+        "dataFlow": {
+          "strokeDasharray": "10 5",
+          "animation": "dash-flow 1s linear infinite"
+        },
+        "quantumFlicker": {
+          "animation": "quantum-flicker 0.1s infinite alternate",
+          "opacity": "0.8 to 1.0"
+        }
+      },
+      "sizingScale": {
+        "nano": "12px",
+        "micro": "16px", 
+        "small": "20px",
+        "medium": "24px",
+        "large": "32px",
+        "xl": "48px",
+        "hero": "64px"
+      }
+    },
+    "effects": {
+      "holographic": {
+        "base": {
+          "background": "linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%)",
+          "backgroundSize": "200% 200%",
+          "animation": "hologram-sweep 3s linear infinite"
+        },
+        "neonGlow": {
+          "boxShadow": "0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor",
+          "filter": "drop-shadow(0 0 10px currentColor)"
+        },
+        "chromatic": {
+          "background": "conic-gradient(from 0deg, #ff0080, #8000ff, #0080ff, #00ffff, #39ff14, #ffff00, #ff4000, #ff0080)",
+          "backgroundClip": "text",
+          "webkitBackgroundClip": "text",
+          "color": "transparent"
+        }
+      },
+      "cyberpunk": {
+        "glitch": {
+          "animation": "glitch 2s infinite",
+          "position": "relative",
+          "pseudoElements": "::before, ::after with offset colors"
+        },
+        "dataStream": {
+          "background": "repeating-linear-gradient(90deg, transparent, transparent 2px, #00ff41 2px, #00ff41 4px)",
+          "animation": "data-flow 1s linear infinite"
+        },
+        "scanlines": {
+          "background": "linear-gradient(transparent 50%, rgba(0,255,65,0.1) 50%)",
+          "backgroundSize": "100% 4px"
+        }
+      },
+      "futuristicGlass": {
+        "neonGlass": {
+          "background": "rgba(0, 255, 255, 0.1)",
+          "backdropFilter": "blur(20px)",
+          "border": "1px solid rgba(0, 255, 255, 0.3)",
+          "boxShadow": "0 8px 32px rgba(0, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+        },
+        "energyField": {
+          "background": "radial-gradient(circle at center, rgba(255, 0, 128, 0.3) 0%, transparent 70%)",
+          "animation": "energy-pulse 2s ease-in-out infinite alternate"
+        }
+      },
+      "particleEffects": {
+        "digitalRain": {
+          "particles": "animated matrix-style falling characters",
+          "colors": ["#00ff41", "#008f11", "#004400"],
+          "speed": "variable falling animation"
+        },
+        "lightTrails": {
+          "paths": "curved svg paths with animated stroke-dasharray",
+          "colors": "neon gradient colors",
+          "duration": "3-6s continuous loop"
+        }
+      }
+    },
+    "layout": {
+      "structures": {
+        "heroSection": "split-content-with-visual",
+        "cardGrid": "asymmetric-floating-cards", 
+        "serviceSection": "illustration-with-content",
+        "statsDisplay": "horizontal-metric-cards"
+      },
+      "composition": {
+        "background": "full-viewport-with-floating-elements",
+        "cardArrangement": "multi-layer-stacking",
+        "visualHierarchy": "large-hero-medium-content-small-details"
+      },
+      "positioning": {
+        "floatingCards": {
+          "transform": "translate3d(x, y, z) with rotation",
+          "zIndex": "layered-depth-system"
+        },
+        "backgroundElements": {
+          "transform": "absolute positioning with parallax",
+          "zIndex": "behind-content"
+        }
+      }
+    },
+    "components": {
+      "navigation": {
+        "style": "cyber-floating-nav",
+        "background": "neon-glass-morphism",
+        "borderRadius": "0 0 20px 20px",
+        "border": "1px solid rgba(0, 255, 255, 0.3)",
+        "boxShadow": "0 0 30px rgba(0, 255, 255, 0.2)",
+        "backdropFilter": "blur(20px)",
+        "position": "fixed-top-full-width"
+      },
+      "buttons": {
+        "neonPrimary": {
+          "background": "linear-gradient(45deg, #ff0080, #8000ff)",
+          "border": "1px solid rgba(255, 255, 255, 0.3)",
+          "color": "white",
+          "borderRadius": "12px",
+          "padding": "12px 24px",
+          "boxShadow": "0 0 20px rgba(255, 0, 128, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+          "textShadow": "0 0 10px rgba(255, 255, 255, 0.8)"
+        },
+        "hologramButton": {
+          "background": "transparent",
+          "border": "2px solid transparent",
+          "borderImage": "linear-gradient(45deg, #00ffff, #ff0080) 1",
+          "color": "#00ffff",
+          "position": "relative",
+          "overflow": "hidden",
+          "pseudoElement": "::before with animated gradient overlay"
+        },
+        "glitchButton": {
+          "background": "#0a0a0f",
+          "border": "1px solid #00ff41",
+          "color": "#00ff41",
+          "fontFamily": "monospace",
+          "animation": "glitch-border 0.3s infinite",
+          "textShadow": "0 0 5px currentColor"
+        }
+      },
+      "cards": {
+        "cyberCard": {
+          "background": "rgba(10, 10, 15, 0.8)",
+          "backdropFilter": "blur(20px)",
+          "border": "1px solid rgba(0, 255, 255, 0.3)",
+          "borderRadius": "16px",
+          "boxShadow": "0 0 30px rgba(0, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+          "position": "relative",
+          "overflow": "hidden"
+        },
+        "hologramCard": {
+          "background": "linear-gradient(135deg, rgba(255, 0, 128, 0.1), rgba(0, 255, 255, 0.1))",
+          "backdropFilter": "blur(15px)",
+          "border": "1px solid transparent",
+          "borderImage": "linear-gradient(45deg, #ff0080, #00ffff) 1",
+          "animation": "hologram-flicker 3s ease-in-out infinite"
+        },
+        "dataCard": {
+          "background": "rgba(0, 0, 0, 0.9)",
+          "border": "1px solid #00ff41",
+          "fontFamily": "monospace",
+          "color": "#00ff41",
+          "boxShadow": "0 0 20px rgba(0, 255, 65, 0.3)",
+          "pseudoElement": "::before with scrolling data animation"
+        }
+      },
+      "inputs": {
+        "neonInput": {
+          "background": "rgba(0, 0, 0, 0.7)",
+          "border": "2px solid rgba(0, 255, 255, 0.3)",
+          "borderRadius": "8px",
+          "color": "#00ffff",
+          "padding": "12px 16px",
+          "fontSize": "14px",
+          "fontFamily": "monospace",
+          "boxShadow": "0 0 15px rgba(0, 255, 255, 0.2)",
+          "focus": {
+            "borderColor": "#00ffff",
+            "boxShadow": "0 0 25px rgba(0, 255, 255, 0.5)",
+            "outline": "none"
+          }
+        },
+        "hologramInput": {
+          "background": "transparent",
+          "border": "none",
+          "borderBottom": "2px solid transparent",
+          "borderImage": "linear-gradient(90deg, #ff0080, #00ffff) 1",
+          "color": "white",
+          "fontSize": "16px",
+          "animation": "hologram-underline 2s ease-in-out infinite"
+        }
+      },
+      "backgroundElements": {
+        "particleField": {
+          "particles": "floating geometric shapes",
+          "colors": ["#00ffff", "#ff0080", "#39ff14", "#8000ff"],
+          "animation": "particle-drift 20s linear infinite",
+          "count": "15-25 particles"
+        },
+        "gridPattern": {
+          "background": "linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)",
+          "backgroundSize": "50px 50px",
+          "animation": "grid-pulse 4s ease-in-out infinite"
+        },
+        "circuitLines": {
+          "paths": "svg animated circuit paths",
+          "strokeColor": "#00ff41",
+          "strokeWidth": "2px",
+          "animation": "circuit-flow 3s linear infinite",
+          "opacity": "0.3"
+        }
+      }
+    },
+    "patterns": {
+      "visualDepth": {
+        "technique": "multi-layer-z-index",
+        "elements": ["background-blur", "floating-cards", "foreground-content"],
+        "spacing": "z-index: 1, 10, 100 hierarchy"
+      },
+      "contentLayout": {
+        "hero": "split-screen-with-visual",
+        "features": "card-grid-asymmetric",
+        "stats": "horizontal-metrics-row",
+        "services": "icon-content-illustration"
+      },
+      "interactionStates": {
+        "hover": "lift-and-glow-effect",
+        "focus": "border-highlight-with-shadow",
+        "active": "slight-scale-down"
+      },
+      "responsiveAdaptation": {
+        "desktop": "side-by-side-layouts",
+        "tablet": "stacked-with-reduced-spacing",
+        "mobile": "single-column-full-width"
+      },
+      "themeVariations": {
+        "light": {
+          "background": "light-gradients-white-cards",
+          "text": "dark-on-light",
+          "effects": "subtle-shadows"
+        },
+        "dark": {
+          "background": "dark-gradients-glass-cards", 
+          "text": "light-on-dark",
+          "effects": "pronounced-glows"
+        }
+      }
+    },
+    "animations": {
+      "cyberEffects": {
+        "glitch": {
+          "keyframes": "transform: translateX(-2px) skew(-1deg); opacity: 0.8 to 1",
+          "duration": "0.3s",
+          "timingFunction": "steps(10, end)",
+          "iterationCount": "infinite"
+        },
+        "hologramFlicker": {
+          "keyframes": "opacity: 0.7 to 1, filter: hue-rotate(0deg) to hue-rotate(360deg)",
+          "duration": "3s",
+          "timingFunction": "ease-in-out", 
+          "iterationCount": "infinite"
+        },
+        "dataFlow": {
+          "keyframes": "stroke-dashoffset: 0 to 100",
+          "duration": "2s",
+          "timingFunction": "linear",
+          "iterationCount": "infinite"
+        }
+      },
+      "neonGlow": {
+        "pulseGlow": {
+          "keyframes": "box-shadow: 0 0 10px currentColor to 0 0 30px currentColor, 0 0 50px currentColor",
+          "duration": "2s",
+          "timingFunction": "ease-in-out",
+          "iterationCount": "infinite",
+          "direction": "alternate"
+        },
+        "colorShift": {
+          "keyframes": "filter: hue-rotate(0deg) to hue-rotate(360deg)",
+          "duration": "5s",
+          "timingFunction": "linear",
+          "iterationCount": "infinite"
+        }
+      },
+      "holographic": {
+        "shimmer": {
+          "keyframes": "background-position: -200% 0 to 200% 0",
+          "duration": "2s",
+          "timingFunction": "linear",
+          "iterationCount": "infinite"
+        },
+        "prismRotate": {
+          "keyframes": "background: conic-gradient(from 0deg to 360deg, rainbow colors)",
+          "duration": "4s",
+          "timingFunction": "linear",
+          "iterationCount": "infinite"
+        }
+      },
+      "particleSystem": {
+        "float": {
+          "keyframes": "transform: translateY(0) rotate(0deg) to translateY(-20px) rotate(360deg)",
+          "duration": "6-12s random",
+          "timingFunction": "ease-in-out",
+          "iterationCount": "infinite"
+        },
+        "twinkle": {
+          "keyframes": "opacity: 0.3 to 1, transform: scale(0.8) to scale(1.2)",
+          "duration": "1.5s",
+          "timingFunction": "ease-in-out",
+          "iterationCount": "infinite",
+          "direction": "alternate"
+        }
+      },
+      "interactions": {
+        "buttonHover": {
+          "transform": "translateY(-3px) scale(1.05)",
+          "boxShadow": "0 0 40px currentColor",
+          "filter": "brightness(1.2)",
+          "transition": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+        },
+        "cardHover": {
+          "transform": "translateY(-10px) rotateX(5deg)",
+          "boxShadow": "0 20px 60px rgba(0, 255, 255, 0.4)",
+          "border": "1px solid rgba(0, 255, 255, 0.8)",
+          "transition": "all 0.4s ease-out"
+        },
+        "iconHover": {
+          "animation": "icon-pulse 0.6s ease-in-out",
+          "filter": "drop-shadow(0 0 15px currentColor)",
+          "transform": "scale(1.1) rotate(5deg)"
+        }
+      }
+    },
+    "responsiveBreakpoints": {
+      "mobile": "max-width: 768px",
+      "tablet": "max-width: 1024px",
+      "desktop": "min-width: 1025px"
+    },
+    "usageGuidelines": {
+      "whenToUse": [
+        "Gaming platforms and esports",
+        "Crypto/Web3 applications", 
+        "AI/Machine learning dashboards",
+        "Cybersecurity platforms",
+        "Virtual reality interfaces",
+        "Tech startup landing pages",
+        "Digital art galleries",
+        "Futuristic product showcases"
+      ],
+      "designPrinciples": [
+        "Embrace vibrant neon colors with purpose and hierarchy",
+        "Use holographic effects sparingly for premium moments",
+        "Maintain accessibility with sufficient contrast ratios",
+        "Implement dynamic animations that enhance user experience",
+        "Balance futuristic aesthetics with functional usability",
+        "Create depth through layered glowing effects",
+        "Use cyberpunk typography for tech-forward branding",
+        "Incorporate interactive particle systems for engagement",
+        "Apply glitch effects strategically for impact",
+        "Design icons with animated states and neon treatments"
+      ],
+      "implementation": {
+        "frameworks": "React/Vue/Angular/Svelte with animation libraries", 
+        "cssFramework": "Tailwind CSS with extensive custom utilities",
+        "animationLibraries": ["Framer Motion", "GSAP", "Lottie", "Three.js"],
+        "dependencies": [
+          "CSS custom properties for dynamic theming",
+          "backdrop-filter and filter effects support",
+          "SVG animation capabilities",
+          "Canvas/WebGL for particle systems",
+          "CSS @keyframes for complex animations"
+        ],
+        "performance": {
+          "optimize": "GPU-accelerated transforms and filters",
+          "fallbacks": "Reduced motion alternatives",
+          "loading": "Progressive enhancement with animation layers",
+          "monitoring": "Animation performance tracking"
+        }
+      },
+      "accessibilityConsiderations": {
+        "contrast": "Enhanced contrast for neon colors (7:1 ratio minimum)",
+        "motionSensitivity": "Comprehensive prefers-reduced-motion support",
+        "colorBlindness": "Multiple visual cues beyond color",
+        "focusManagement": "High-contrast focus indicators with neon treatment",
+        "semanticMarkup": "ARIA labels for animated and decorative elements",
+        "cognitiveLoad": "Balanced animation timing to avoid overwhelm"
+      },
+      "brandPersonality": {
+        "characteristics": ["Innovative", "Dynamic", "Cutting-edge", "Energetic", "Premium"],
+        "emotions": ["Excitement", "Wonder", "Empowerment", "Curiosity", "Confidence"],
+        "applications": "Perfect for brands wanting to convey technological advancement and future-forward thinking"
+      }
+    }
+  }
