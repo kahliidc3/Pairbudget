@@ -146,50 +146,50 @@ export default function AllTransactionsPage() {
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-nav fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl"
+        className="glass-nav fixed top-3 md:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl mx-3 md:mx-0"
       >
-        <div className="flex items-center justify-between px-4">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between px-3 md:px-4">
+          <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
             <button
               onClick={() => router.back()}
-              className="p-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+              className="p-1.5 md:p-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 flex-shrink-0"
               title="Go Back"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
             </button>
             
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+              <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                <Wallet className="w-3 h-3 md:w-5 md:h-5 text-white" />
               </div>
-              <span className="font-semibold text-gray-800">All Transactions</span>
+              <span className="font-semibold text-gray-800 text-sm md:text-base truncate">All Transactions</span>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600 hidden md:block">
+          <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
+            <span className="text-xs md:text-sm text-gray-600 hidden lg:block truncate max-w-32">
               {currentPocket.name}
             </span>
             <button
               onClick={handleExport}
-              className="p-2 text-gray-500 hover:text-green-500 transition-colors rounded-lg hover:bg-green-50"
+              className="p-1.5 md:p-2 text-gray-500 hover:text-green-500 transition-colors rounded-lg hover:bg-green-50"
               title="Export CSV"
             >
-              <Download className="w-5 h-5" />
+              <Download className="w-4 h-4 md:w-5 md:h-5" />
             </button>
           </div>
         </div>
       </motion.header>
 
-      <div className="max-w-6xl mx-auto pt-24 space-y-8">
+      <div className="max-w-6xl mx-auto pt-20 md:pt-24 space-y-6 md:space-y-8 px-4">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Transaction History</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">Transaction History</h1>
+          <p className="text-sm md:text-base text-gray-600">
             Complete history of all transactions in {currentPocket.name}
           </p>
         </motion.div>
@@ -201,16 +201,16 @@ export default function AllTransactionsPage() {
           transition={{ delay: 0.1 }}
           className="card-floating"
         >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {/* Search */}
-            <div className="relative">
+            <div className="relative sm:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search transactions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-glass w-full pl-10"
+                className="input-glass w-full pl-10 text-sm"
               />
             </div>
 
@@ -218,7 +218,7 @@ export default function AllTransactionsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as 'all' | 'fund' | 'expense')}
-              className="input-glass w-full"
+              className="input-glass w-full text-sm"
             >
               <option value="all">All Types</option>
               <option value="fund">Funds Only</option>
@@ -229,7 +229,7 @@ export default function AllTransactionsPage() {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="input-glass w-full"
+              className="input-glass w-full text-sm"
             >
               <option value="all">All Categories</option>
               {EXPENSE_CATEGORIES.map((category) => (
@@ -238,8 +238,8 @@ export default function AllTransactionsPage() {
             </select>
 
             {/* Results Count */}
-            <div className="flex items-center justify-center px-4 py-2 bg-gray-100 rounded-lg">
-              <span className="text-sm text-gray-600">
+            <div className="flex items-center justify-center px-3 md:px-4 py-2 bg-gray-100 rounded-lg">
+              <span className="text-xs md:text-sm text-gray-600 text-center">
                 {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -260,9 +260,9 @@ export default function AllTransactionsPage() {
             </div>
           ) : filteredTransactions.length > 0 ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">Transactions</h2>
-                <Calendar className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800">Transactions</h2>
+                <Calendar className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
               </div>
 
               <div className="space-y-3">
@@ -272,27 +272,27 @@ export default function AllTransactionsPage() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                   >
-                    <div className="flex items-center space-x-4 flex-1">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
+                      <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                         transaction.type === 'fund' 
                           ? 'bg-blue-100 text-blue-600' 
                           : 'bg-orange-100 text-orange-600'
                       }`}>
                         {transaction.type === 'fund' ? (
-                          <ArrowUpRight className="w-6 h-6" />
+                          <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6" />
                         ) : (
-                          <ArrowDownRight className="w-6 h-6" />
+                          <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6" />
                         )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="font-medium text-gray-900 truncate">
+                          <h3 className="font-medium text-gray-900 truncate text-sm md:text-base">
                             {transaction.description}
                           </h3>
-                          <span className={`px-2 py-1 text-xs rounded-full ${
+                          <span className={`px-2 py-1 text-xs rounded-full hidden sm:inline ${
                             transaction.type === 'fund'
                               ? 'bg-blue-100 text-blue-600'
                               : 'bg-orange-100 text-orange-600'
@@ -301,18 +301,18 @@ export default function AllTransactionsPage() {
                           </span>
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-2 md:space-x-4 text-xs md:text-sm text-gray-500 flex-wrap">
                           <span className="flex items-center space-x-1">
                             <User className="w-3 h-3" />
-                            <span>{transaction.userName}</span>
+                            <span className="truncate max-w-20 md:max-w-none">{transaction.userName}</span>
                           </span>
-                          <span>{transaction.category}</span>
-                          <span>{formatDate(transaction.date)}</span>
+                          <span className="hidden sm:inline">{transaction.category}</span>
+                          <span className="hidden md:inline">{formatDate(transaction.date)}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className={`text-xl font-bold ${
+                    <div className={`text-sm md:text-xl font-bold flex-shrink-0 ${
                       transaction.type === 'fund' ? 'text-blue-600' : 'text-orange-600'
                     }`}>
                       {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
