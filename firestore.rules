@@ -4,10 +4,13 @@ service cloud.firestore {
     // Users can read/write their own user document
     // Users can also read other users' documents (for transaction display)
     match /users/{userId} {
-      // Allow write only for own document
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Allow create for new user during signup (when document doesn't exist yet)
+      allow create: if request.auth != null && request.auth.uid == userId;
       
-      // Allow read for own document or any authenticated user (for transaction user names)
+      // Allow read/write for own document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow read for other users' documents (for transaction display - user names only)
       // This is safe because we only expose user names, not sensitive data
       allow read: if request.auth != null;
     }
