@@ -167,35 +167,8 @@ export default function DashboardPage() {
 
   if (shouldShowLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden">
-        {/* Grid Pattern Background */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '20px 20px'
-          }}></div>
-        </div>
-
-        {/* Animated Background Shapes */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 rounded-full" style={{
-            animation: 'float 20s ease-in-out infinite'
-          }}></div>
-          <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-600/20 rounded-full" style={{
-            animation: 'float 25s ease-in-out infinite reverse'
-          }}></div>
-          <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full" style={{
-            animation: 'float 15s ease-in-out infinite'
-          }}></div>
-          <div className="absolute bottom-20 right-1/3 w-28 h-28 bg-gradient-to-br from-blue-600/20 to-cyan-500/20 rounded-full" style={{
-            animation: 'float 18s ease-in-out infinite reverse'
-          }}></div>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl relative z-10">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center max-w-md w-full mx-4 shadow-sm">
           <LoadingSpinner 
             size="lg" 
             className="mb-6" 
@@ -204,21 +177,12 @@ export default function DashboardPage() {
                   !userStatus.isAuthenticated ? 'Redirecting to login...' : 
                   'Loading your budget...'}
           />
-          <div className="mt-4 text-sm text-gray-300">
+          <div className="mt-4 text-sm text-slate-600 font-medium">
             {authLoading ? 'Verifying your credentials...' :
              !userStatus.isAuthenticated ? 'Please wait while we redirect you...' :
              'Setting up your financial dashboard...'}
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            25% { transform: translateY(-20px) rotate(5deg); }
-            50% { transform: translateY(-10px) rotate(0deg); }
-            75% { transform: translateY(-30px) rotate(-5deg); }
-          }
-        `}</style>
       </div>
     );
   }
@@ -227,21 +191,15 @@ export default function DashboardPage() {
   const hasNoPockets = !userStatus.hasPockets;
   const hasNoCurrentPocket = !currentPocket && userStatus.hasPockets;
 
-
-
   return (
     <ErrorBoundary>
-      <div className="min-h-screen">
-        {hasNoPockets ? (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <PocketSetup />
-          </div>
-        ) : hasNoCurrentPocket ? (
-            <PocketSelection />
-        ) : (
-          <Dashboard />
-        )}
-      </div>
+      {hasNoPockets ? (
+        <PocketSetup isModal={false} />
+      ) : hasNoCurrentPocket ? (
+        <PocketSelection />
+      ) : (
+        <Dashboard />
+      )}
     </ErrorBoundary>
   );
 } 

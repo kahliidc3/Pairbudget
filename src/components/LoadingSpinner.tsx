@@ -26,26 +26,37 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     }
   };
 
+  const getBorderWidth = () => {
+    switch (size) {
+      case 'sm':
+        return 'border-2';
+      case 'lg':
+        return 'border-4';
+      default:
+        return 'border-2';
+    }
+  };
+
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <div className="relative">
         {/* Main spinner */}
         <div 
-          className={`${getSizeClasses()} border-2 border-gray-200 border-t-purple-500 rounded-full animate-spin`}
+          className={`${getSizeClasses()} ${getBorderWidth()} border-slate-200 border-t-blue-600 rounded-full animate-spin`}
           style={{ animationDuration: '0.8s' }}
         />
         
         {/* Optional progress ring */}
         {showProgress && (
           <div 
-            className={`${getSizeClasses()} absolute inset-0 border-2 border-transparent border-t-blue-400 rounded-full animate-spin opacity-50`}
+            className={`${getSizeClasses()} ${getBorderWidth()} absolute inset-0 border-transparent border-t-slate-400 rounded-full animate-spin opacity-50`}
             style={{ animationDuration: '1.2s', animationDirection: 'reverse' }}
           />
         )}
       </div>
       
       {text && (
-        <p className={`mt-3 text-gray-600 animate-pulse ${
+        <p className={`mt-3 text-slate-600 animate-pulse ${
           size === 'sm' ? 'text-sm' : 
           size === 'lg' ? 'text-lg' : 'text-base'
         }`}>

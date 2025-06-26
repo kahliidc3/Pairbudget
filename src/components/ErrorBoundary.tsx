@@ -39,36 +39,38 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
-          <div className="glass-card text-center max-w-md w-full mx-4 p-8">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm text-center max-w-md w-full mx-auto p-8">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
             
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            <h2 className="text-xl font-semibold text-slate-900 mb-3">
               Something went wrong
             </h2>
             
-            <p className="text-gray-600 mb-6">
-              We encountered an unexpected error. Please try refreshing the page.
+            <p className="text-slate-600 mb-8 leading-relaxed">
+              We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
             </p>
             
             <button
               onClick={this.resetError}
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Try Again</span>
             </button>
             
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-                  Error Details
+              <details className="mt-8 text-left">
+                <summary className="cursor-pointer text-sm text-slate-500 hover:text-slate-700 font-medium mb-3">
+                  Error Details (Development)
                 </summary>
-                <pre className="mt-2 p-4 bg-gray-100 rounded text-xs text-red-600 overflow-auto">
-                  {this.state.error.stack}
-                </pre>
+                <div className="mt-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <pre className="text-xs text-red-600 overflow-auto max-h-40 whitespace-pre-wrap">
+                    {this.state.error.stack}
+                  </pre>
+                </div>
               </details>
             )}
           </div>

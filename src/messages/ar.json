@@ -27,6 +27,7 @@
     "signUp": "إنشاء حساب",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
     "name": "الاسم الكامل",
     "preferredLanguage": "اللغة المفضلة",
     "createAccount": "إنشاء حساب",
@@ -145,5 +146,25 @@
     "balance": "الرصيد",
     "thisMonth": "هذا الشهر",
     "expenses": "المصروفات"
+  },
+  "pocketSetup": {
+    "title": "إعداد جيبك",
+    "subtitle": "أنشئ ميزانية جديدة أو انضم لميزانية موجودة",
+    "managePockets": "إدارة جيوبك",
+    "manageSubtitle": "اعرض وأدر جميع جيوب الميزانية الموجودة لديك",
+    "yourPockets": "جيوبك",
+    "noPocketsYet": "لا توجد جيوب بعد",
+    "noPocketsDesc": "أنشئ جيب الميزانية الأول أو انضم لجيب موجود للبدء.",
+    "deletePocket": "حذف الجيب",
+    "deletePocketConfirm": "هل أنت متأكد من أنك تريد حذف هذا الجيب؟",
+    "deletePocketWarning": "هذا الإجراء لا يمكن التراجع عنه. جميع المعاملات والبيانات في هذا الجيب ستحذف نهائياً.",
+    "deleteConfirmText": "اكتب 'DELETE' للتأكيد",
+    "deleteSuccess": "تم حذف الجيب بنجاح",
+    "deleteError": "فشل في حذف الجيب",
+    "unauthorized": "غير مخول لحذف هذا الجيب",
+    "backToDashboard": "العودة للوحة التحكم",
+    "joinExisting": "الانضمام لموجود",
+    "inviteCode": "رمز الدعوة",
+    "enterInviteCode": "أدخل رمز الدعوة الذي تم مشاركته معك"
   }
 } 

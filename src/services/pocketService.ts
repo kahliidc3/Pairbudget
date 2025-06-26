@@ -90,10 +90,18 @@ export const getPocket = async (pocketId: string): Promise<Pocket | null> => {
     const pocketDoc = await getDoc(doc(db, 'pockets', pocketId));
     if (pocketDoc.exists()) {
       const data = pocketDoc.data();
-      return {
+      const pocket = {
         ...data,
         createdAt: data.createdAt?.toDate() || new Date(),
+        deletedAt: data.deletedAt?.toDate(),
       } as Pocket;
+      
+      // Return null for deleted pockets
+      if (pocket.deleted) {
+        return null;
+      }
+      
+      return pocket;
     }
     return null;
   } catch (error) {
@@ -390,6 +398,53 @@ export const leavePocket = async (pocketId: string, userUid: string): Promise<vo
     console.log(`User ${userUid} successfully left pocket ${pocketId}`);
   } catch (error) {
     console.error('Error leaving pocket:', error);
+    throw error;
+  }
+};
+
+export const deletePocket = async (pocketId: string, userUid: string): Promise<void> => {
+  try {
+    const pocketRef = doc(db, 'pockets', pocketId);
+    const pocketDoc = await getDoc(pocketRef);
+    
+    if (!pocketDoc.exists()) {
+      throw new Error('Pocket not found');
+    }
+    
+    const pocketData = pocketDoc.data() as Pocket;
+    
+    // Check if user is a participant
+    const isParticipant = pocketData.participants && pocketData.participants.includes(userUid);
+    const hasRole = pocketData.roles && pocketData.roles[userUid];
+    
+    if (!isParticipant && !hasRole) {
+      throw new Error('You are not authorized to delete this pocket');
+    }
+    
+    // Delete all transactions associated with the pocket
+    const transactionsQuery = query(
+      collection(db, 'transactions'),
+      where('pocketId', '==', pocketId)
+    );
+    const transactionsSnapshot = await getDocs(transactionsQuery);
+    
+    // Delete transactions in batches (Firestore allows max 500 operations per batch)
+    const deletePromises = transactionsSnapshot.docs.map(transactionDoc => 
+      updateDoc(transactionDoc.ref, { deleted: true, deletedAt: new Date() })
+    );
+    
+    await Promise.all(deletePromises);
+    
+    // Mark the pocket as deleted (soft delete for safety)
+    await updateDoc(pocketRef, {
+      deleted: true,
+      deletedAt: new Date(),
+      deletedBy: userUid
+    });
+    
+    console.log(`Pocket ${pocketId} successfully deleted by user ${userUid}`);
+  } catch (error) {
+    console.error('Error deleting pocket:', error);
     throw error;
   }
 };

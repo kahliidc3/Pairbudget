@@ -27,6 +27,7 @@
     "signUp": "Sign Up",
     "email": "Email",
     "password": "Password",
+    "confirmPassword": "Confirm Password",
     "name": "Full Name",
     "preferredLanguage": "Preferred Language",
     "createAccount": "Create Account",
@@ -145,5 +146,25 @@
     "balance": "Balance",
     "thisMonth": "This Month",
     "expenses": "Expenses"
+  },
+  "pocketSetup": {
+    "title": "Setup Your Pocket",
+    "subtitle": "Create a new budget or join an existing one",
+    "managePockets": "Manage Your Pockets",
+    "manageSubtitle": "View and manage all your existing budget pockets",
+    "yourPockets": "Your Pockets",
+    "noPocketsYet": "No pockets yet",
+    "noPocketsDesc": "Create your first budget pocket or join an existing one to get started.",
+    "deletePocket": "Delete Pocket",
+    "deletePocketConfirm": "Are you sure you want to delete this pocket?",
+    "deletePocketWarning": "This action cannot be undone. All transactions and data in this pocket will be permanently deleted.",
+    "deleteConfirmText": "Type 'DELETE' to confirm",
+    "deleteSuccess": "Pocket deleted successfully",
+    "deleteError": "Failed to delete pocket",
+    "unauthorized": "You are not authorized to delete this pocket",
+    "backToDashboard": "Back to Dashboard",
+    "joinExisting": "Join Existing",
+    "inviteCode": "Invite Code",
+    "enterInviteCode": "Enter the invite code shared with you"
   }
 } 

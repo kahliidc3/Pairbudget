@@ -18,7 +18,10 @@ import {
   ArrowRight,
   Wallet,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  CheckCircle,
+  Activity,
+  Globe
 } from 'lucide-react';
 
 // Force dynamic rendering
@@ -69,10 +72,10 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="glass-card animate-scale-in text-center">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 text-center max-w-md w-full mx-4">
           <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-gray-600">{tCommon('loading')}</p>
+          <p className="text-slate-600 font-medium">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -89,94 +92,76 @@ export default function HomePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400">
-        {/* Grid Pattern Background */}
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+        {/* Modern Grid Pattern Background */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
             backgroundImage: `
               linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
               linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
             `,
-            backgroundSize: '20px 20px'
+            backgroundSize: '32px 32px'
           }}></div>
         </div>
 
-        {/* Animated Background Shapes */}
+        {/* Refined Animated Background Shapes */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Floating Circles */}
-          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 rounded-full animate-pulse" style={{
-            animation: 'float 20s ease-in-out infinite'
-          }}></div>
-          <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-600/20 rounded-full" style={{
-            animation: 'float 25s ease-in-out infinite reverse'
-          }}></div>
-          <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full" style={{
-            animation: 'float 15s ease-in-out infinite'
-          }}></div>
-          <div className="absolute bottom-20 right-1/3 w-28 h-28 bg-gradient-to-br from-blue-600/20 to-cyan-500/20 rounded-full" style={{
-            animation: 'float 18s ease-in-out infinite reverse'
-          }}></div>
-          <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-gradient-to-br from-purple-600/20 to-pink-500/20 rounded-full" style={{
-            animation: 'float 22s ease-in-out infinite'
-          }}></div>
-          <div className="absolute top-1/3 right-1/4 w-36 h-36 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-full" style={{
-            animation: 'float 30s ease-in-out infinite reverse'
-          }}></div>
-          <div className="absolute bottom-1/3 left-1/3 w-12 h-12 bg-gradient-to-br from-indigo-600/20 to-purple-500/20 rounded-full" style={{
-            animation: 'float 12s ease-in-out infinite'
-          }}></div>
-          <div className="absolute top-10 right-1/2 w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-full" style={{
-            animation: 'float 16s ease-in-out infinite reverse'
-          }}></div>
-
-          {/* Geometric Shapes */}
-          <div className="absolute top-1/4 left-20 w-16 h-16 bg-gradient-to-br from-blue-500/15 to-purple-600/15 transform rotate-45" style={{
-            animation: 'float 20s ease-in-out infinite, spin 40s linear infinite'
-          }}></div>
-          <div className="absolute bottom-1/4 right-16 w-12 h-12 bg-gradient-to-br from-purple-500/15 to-indigo-600/15 rounded-lg transform rotate-12" style={{
-            animation: 'float 25s ease-in-out infinite reverse, spin 35s linear infinite reverse'
-          }}></div>
-          <div className="absolute top-2/3 left-1/4 w-14 h-14 bg-gradient-to-br from-indigo-500/15 to-blue-600/15 rounded-full transform" style={{
-            animation: 'float 18s ease-in-out infinite'
-          }}></div>
-          <div className="absolute bottom-40 right-1/4 w-18 h-18 bg-gradient-to-br from-cyan-500/15 to-purple-600/15 rounded-xl transform rotate-45" style={{
-            animation: 'float 22s ease-in-out infinite reverse'
-          }}></div>
-          <div className="absolute top-1/2 right-20 w-10 h-10 bg-gradient-to-br from-purple-600/15 to-pink-500/15 rounded-lg transform rotate-12" style={{
-            animation: 'float 15s ease-in-out infinite'
-          }}></div>
-          <div className="absolute bottom-1/2 left-16 w-20 h-8 bg-gradient-to-br from-blue-600/15 to-indigo-500/15 rounded-full transform rotate-45" style={{
-            animation: 'float 28s ease-in-out infinite reverse'
-          }}></div>
-
+          {/* Primary Floating Elements */}
+          <motion.div 
+            className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"
+            animate={{ 
+              y: [0, -20, 0], 
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div 
+            className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-lg"
+            animate={{ 
+              y: [0, 15, 0], 
+              x: [0, 10, 0],
+              scale: [1, 0.9, 1]
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div 
+            className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-full blur-md"
+            animate={{ 
+              y: [0, -25, 0], 
+              rotate: [0, 180, 360]
+            }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          />
+          
           {/* Accent Glows */}
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-600/5 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-purple-600/5 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-600/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-600/10 to-transparent rounded-full blur-3xl" />
         </div>
 
-        {/* Navigation */}
+        {/* Professional Navigation */}
         <motion.nav
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed top-2 md:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl mx-2 md:mx-0"
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
         >
-          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-full px-4 md:px-4 py-3 md:py-3 shadow-lg shadow-black/10">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                <div className="w-8 h-8 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-white" />
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-white" />
                 </div>
-                <span className="font-semibold text-white text-base md:text-base">{tNav('pairbudget')}</span>
+                <span className="font-bold text-white text-lg">{tNav('pairbudget')}</span>
               </div>
               
-              <div className="flex items-center space-x-2 md:space-x-4 rtl:space-x-reverse">
+              <div className="flex items-center space-x-4">
                 <LanguageSelector />
                 <button
                   onClick={() => {
                     setAuthMode('login');
                     setShowAuth(true);
                   }}
-                  className="text-sm px-3 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                  className="px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
                 >
                   {tNav('signIn')}
                 </button>
@@ -185,7 +170,7 @@ export default function HomePage() {
                     setAuthMode('signup');
                     setShowAuth(true);
                   }}
-                  className="text-sm px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25"
+                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg font-medium"
                 >
                   {tNav('getStarted')}
                 </button>
@@ -194,24 +179,24 @@ export default function HomePage() {
           </div>
         </motion.nav>
 
-        {/* Hero Section - Centered Layout */}
-        <div className="min-h-screen flex items-center justify-center px-4 py-20 md:py-20 relative z-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-12 items-center">
+        {/* Hero Section */}
+        <div className="min-h-screen flex items-center justify-center px-4 py-24 relative z-10">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left Content */}
             <motion.div 
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-center lg:text-left rtl:lg:text-right space-y-8"
+              className="text-center lg:text-left space-y-8"
             >
               <div>
                 <motion.h1 
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.8 }}
-                  className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight"
+                  className="text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight"
                 >
-                  <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
                     {t('heroTitle')}
                   </span>
                   <br />
@@ -222,7 +207,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.8 }}
-                  className="text-lg md:text-xl lg:text-xl text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 rtl:lg:mr-0"
+                  className="text-xl text-slate-200 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0"
                 >
                   {t('heroDescription')}
                 </motion.p>
@@ -231,17 +216,17 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.8 }}
-                  className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start rtl:lg:justify-end"
+                  className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
                 >
                   <button
                     onClick={() => {
                       setAuthMode('signup');
                       setShowAuth(true);
                     }}
-                    className="text-lg px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 rtl:space-x-reverse group"
+                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-xl font-semibold text-lg flex items-center justify-center space-x-2 group"
                   >
                     <span>{t('startJourney')}</span>
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 rtl:group-hover:translate-x-0" />
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                   </button>
                   
                   <button
@@ -249,88 +234,88 @@ export default function HomePage() {
                       setAuthMode('login');
                       setShowAuth(true);
                     }}
-                    className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all border border-white/20"
+                    className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all border border-white/20 font-semibold text-lg"
                   >
                     {tNav('signIn')}
                   </button>
                 </motion.div>
               </div>
 
-              {/* Quick Stats */}
+              {/* Professional Stats */}
               <motion.div 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.8 }}
-                className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20 max-w-md mx-auto lg:mx-0 rtl:lg:mr-0"
+                className="grid grid-cols-3 gap-8 pt-8 border-t border-white/20 max-w-lg mx-auto lg:mx-0"
               >
-                <div className="text-center lg:text-left rtl:lg:text-right">
+                <div className="text-center lg:text-left">
                   <div className="text-3xl font-bold text-blue-400 mb-2">2</div>
-                  <div className="text-sm text-gray-300">{t('quickStats.peoplePerPocket')}</div>
+                  <div className="text-sm text-slate-300 font-medium">{t('quickStats.peoplePerPocket')}</div>
                 </div>
-                <div className="text-center lg:text-left rtl:lg:text-right">
-                  <div className="text-3xl font-bold text-purple-400 mb-2">∞</div>
-                  <div className="text-sm text-gray-300">{t('quickStats.transactions')}</div>
+                <div className="text-center lg:text-left">
+                  <div className="text-3xl font-bold text-cyan-400 mb-2">∞</div>
+                  <div className="text-sm text-slate-300 font-medium">{t('quickStats.transactions')}</div>
                 </div>
-                <div className="text-center lg:text-left rtl:lg:text-right">
-                  <div className="text-3xl font-bold text-cyan-400 mb-2">24/7</div>
-                  <div className="text-sm text-gray-300">{t('quickStats.realTimeSync')}</div>
+                <div className="text-center lg:text-left">
+                  <div className="text-3xl font-bold text-purple-400 mb-2">24/7</div>
+                  <div className="text-sm text-slate-300 font-medium">{t('quickStats.realTimeSync')}</div>
                 </div>
               </motion.div>
             </motion.div>
 
-            {/* Right Visual */}
+            {/* Right Visual - Modern Dashboard Preview */}
             <motion.div 
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-              className="flex justify-center items-center order-first lg:order-last"
+              className="flex justify-center items-center"
             >
               <div className="relative">
-                {/* Main Card */}
+                {/* Main Dashboard Card */}
                 <motion.div 
                   initial={{ scale: 0.9, rotateY: -15 }}
                   animate={{ scale: 1, rotateY: 0 }}
                   transition={{ delay: 0.5, duration: 0.8, type: "spring" }}
-                  className="max-w-sm md:max-w-sm w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl"
+                  className="max-w-sm w-full bg-white rounded-2xl p-6 shadow-2xl border border-slate-200"
                 >
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                       <Wallet className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-xl font-semibold mb-2 text-white">{t('pocket.familyBudget')}</h3>
-                    <p className="text-base text-gray-300">{t('pocket.sharedPocket')}</p>
+                    <h3 className="text-xl font-bold mb-2 text-slate-900">{t('pocket.familyBudget')}</h3>
+                    <p className="text-slate-600">{t('pocket.sharedPocket')}</p>
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                      <span className="text-sm text-gray-300">{t('pocket.balance')}</span>
-                      <span className="font-semibold text-green-400 text-base">$1,247.50</span>
+                    <div className="flex justify-between items-center p-4 bg-green-50 rounded-xl border border-green-100">
+                      <span className="text-sm font-medium text-slate-700">{t('pocket.balance')}</span>
+                      <span className="font-bold text-green-600 text-lg">$1,247.50</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                      <span className="text-sm text-gray-300">{t('pocket.thisMonth')}</span>
-                      <span className="font-semibold text-blue-400 text-base">$892.30</span>
+                    <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                      <span className="text-sm font-medium text-slate-700">{t('pocket.thisMonth')}</span>
+                      <span className="font-bold text-blue-600 text-lg">$892.30</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                      <span className="text-sm text-gray-300">{t('pocket.expenses')}</span>
-                      <span className="font-semibold text-orange-400 text-base">$654.80</span>
+                    <div className="flex justify-between items-center p-4 bg-orange-50 rounded-xl border border-orange-100">
+                      <span className="text-sm font-medium text-slate-700">{t('pocket.expenses')}</span>
+                      <span className="font-bold text-orange-600 text-lg">$654.80</span>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Floating Transaction Cards - Hidden on small screens */}
+                {/* Floating Transaction Cards */}
                 <motion.div 
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1, duration: 0.6 }}
-                  className="absolute -bottom-4 -left-8 rtl:-right-8 rtl:left-auto bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-3 md:p-4 max-w-xs hidden md:block shadow-lg"
+                  className="absolute -bottom-4 -left-8 bg-white rounded-xl p-4 shadow-xl border border-slate-200 max-w-xs hidden md:block"
                 >
-                  <div className="flex items-center space-x-2 md:space-x-3 rtl:space-x-reverse">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-green-400" />
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-xs md:text-sm text-white">+$500.00</p>
-                      <p className="text-xs text-gray-300">Monthly funding</p>
+                      <p className="font-semibold text-slate-900">+$500.00</p>
+                      <p className="text-xs text-slate-600">Monthly funding</p>
                     </div>
                   </div>
                 </motion.div>
@@ -339,15 +324,15 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: -50 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.2, duration: 0.6 }}
-                  className="absolute -top-4 -right-8 rtl:-left-8 rtl:right-auto bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-3 md:p-4 max-w-xs hidden md:block shadow-lg"
+                  className="absolute -top-4 -right-8 bg-white rounded-xl p-4 shadow-xl border border-slate-200 max-w-xs hidden md:block"
                 >
-                  <div className="flex items-center space-x-2 md:space-x-3 rtl:space-x-reverse">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                      <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-orange-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-xs md:text-sm text-white">-$89.50</p>
-                      <p className="text-xs text-gray-300">Groceries</p>
+                      <p className="font-semibold text-slate-900">-$89.50</p>
+                      <p className="text-xs text-slate-600">Groceries</p>
                     </div>
                   </div>
                 </motion.div>
@@ -356,48 +341,35 @@ export default function HomePage() {
           </div>
         </div>
 
-        <style jsx>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            25% { transform: translateY(-20px) rotate(5deg); }
-            50% { transform: translateY(-10px) rotate(0deg); }
-            75% { transform: translateY(-30px) rotate(-5deg); }
-          }
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-
-        {/* Features Section */}
+        {/* Modern Features Section */}
         <motion.section 
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.5, duration: 0.8 }}
-          className="py-16 md:py-20 px-4"
+          className="py-20 px-4 relative"
         >
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12 md:mb-16">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
                 {t('features.title')}
               </h2>
-              <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-xl text-slate-300 max-w-2xl mx-auto">
                 {t('features.description')}
               </p>
             </div>
 
-            <div className="card-grid-asymmetric">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <motion.div 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.7, duration: 0.6 }}
-                className="card-floating text-center"
+                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all duration-300"
               >
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
-                  <Users className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Users className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">{t('features.twoPersonFocus.title')}</h3>
-                <p className="text-sm md:text-base text-gray-600">
+                <h3 className="text-xl font-bold mb-4 text-white">{t('features.twoPersonFocus.title')}</h3>
+                <p className="text-slate-300 leading-relaxed">
                   {t('features.twoPersonFocus.description')}
                 </p>
               </motion.div>
@@ -406,13 +378,13 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.9, duration: 0.6 }}
-                className="card-floating text-center"
+                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all duration-300"
               >
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
-                  <Zap className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Zap className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">{t('features.realTimeSync.title')}</h3>
-                <p className="text-sm md:text-base text-gray-600">
+                <h3 className="text-xl font-bold mb-4 text-white">{t('features.realTimeSync.title')}</h3>
+                <p className="text-slate-300 leading-relaxed">
                   {t('features.realTimeSync.description')}
                 </p>
               </motion.div>
@@ -421,13 +393,13 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 2.1, duration: 0.6 }}
-                className="card-floating text-center"
+                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all duration-300"
               >
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
-                  <Shield className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Shield className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">{t('features.securePrivate.title')}</h3>
-                <p className="text-sm md:text-base text-gray-600">
+                <h3 className="text-xl font-bold mb-4 text-white">{t('features.securePrivate.title')}</h3>
+                <p className="text-slate-300 leading-relaxed">
                   {t('features.securePrivate.description')}
                 </p>
               </motion.div>
@@ -435,31 +407,31 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        {/* Call to Action */}
+        {/* Enhanced CTA Section */}
         <motion.section 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2.3, duration: 0.8 }}
-          className="py-16 md:py-20 px-4"
+          className="py-20 px-4 relative"
         >
           <div className="max-w-4xl mx-auto text-center">
-            <div className="card-floating">
-              <div className="flex items-center justify-center mb-4 md:mb-6">
-                <div className="flex -space-x-1 md:-space-x-2">
-                  <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <Wallet className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-12">
+              <div className="flex items-center justify-center mb-6">
+                <div className="flex -space-x-2">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center border-2 border-white">
+                    <Wallet className="w-6 h-6 text-white" />
                   </div>
-                  <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
-                    <Star className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center border-2 border-white">
+                    <Star className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </div>
               
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
                 {t('cta.title')}
               </h2>
               
-              <p className="text-base md:text-lg lg:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto">
+              <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
                 {t('cta.description')}
               </p>
               
@@ -468,10 +440,10 @@ export default function HomePage() {
                   setAuthMode('signup');
                   setShowAuth(true);
                 }}
-                className="btn-primary text-sm md:text-lg px-6 md:px-10 py-3 md:py-4 mx-auto flex items-center justify-center space-x-2 md:space-x-3 group"
+                className="px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-xl font-bold text-lg flex items-center justify-center space-x-3 mx-auto group"
               >
                 <span>{t('cta.createPocket')}</span>
-                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </button>
             </div>
           </div>

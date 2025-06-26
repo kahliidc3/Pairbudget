@@ -20,6 +20,9 @@ export interface Pocket {
   totalFunded: number;
   totalSpent: number;
   inviteCode?: string;
+  deleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }
 
 export interface Transaction {

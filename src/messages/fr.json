@@ -27,6 +27,7 @@
     "signUp": "S'inscrire",
     "email": "E-mail",
     "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
     "name": "Nom complet",
     "preferredLanguage": "Langue préférée",
     "createAccount": "Créer un compte",
@@ -145,5 +146,25 @@
     "balance": "Solde",
     "thisMonth": "Ce mois",
     "expenses": "Dépenses"
+  },
+  "pocketSetup": {
+    "title": "Configurez Votre Poche",
+    "subtitle": "Créez un nouveau budget ou rejoignez un existant",
+    "managePockets": "Gérer Vos Poches",
+    "manageSubtitle": "Visualisez et gérez toutes vos poches budgétaires existantes",
+    "yourPockets": "Vos Poches",
+    "noPocketsYet": "Aucune poche pour le moment",
+    "noPocketsDesc": "Créez votre première poche budgétaire ou rejoignez une existante pour commencer.",
+    "deletePocket": "Supprimer Poche",
+    "deletePocketConfirm": "Êtes-vous sûr de vouloir supprimer cette poche ?",
+    "deletePocketWarning": "Cette action ne peut pas être annulée. Toutes les transactions et données de cette poche seront définitivement supprimées.",
+    "deleteConfirmText": "Tapez 'DELETE' pour confirmer",
+    "deleteSuccess": "Poche supprimée avec succès",
+    "deleteError": "Échec de la suppression de la poche",
+    "unauthorized": "Vous n'êtes pas autorisé à supprimer cette poche",
+    "backToDashboard": "Retour au Tableau de Bord",
+    "joinExisting": "Rejoindre Existante",
+    "inviteCode": "Code d'Invitation",
+    "enterInviteCode": "Entrez le code d'invitation partagé avec vous"
   }
 } 

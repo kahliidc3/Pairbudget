@@ -103,65 +103,96 @@ const PocketSelection: React.FC = () => {
   }, [user, userProfile, setUserProfile, setCurrentPocket, loadingPocketId]);
 
   if (showCreateNew) {
-    return <PocketSetup />;
+    return <PocketSetup isModal={false} />;
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      {/* Animated Background Shapes */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div 
+          className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"
+          animate={{ 
+            y: [0, -20, 0], 
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-lg"
+          animate={{ 
+            y: [0, 15, 0], 
+            x: [0, 10, 0],
+            scale: [1, 0.9, 1]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+
       {/* Navigation Header */}
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-nav fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-between w-full max-w-4xl mx-auto px-4"
+        className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
       >
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-            <Wallet className="w-5 h-5 text-white" />
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-white" />
+              </div>
+              <span className="font-bold text-white text-lg">PairBudget</span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-white/70 hidden md:block">
+                Welcome, {userProfile?.name || user?.email?.split('@')[0]}
+              </span>
+              <button
+                onClick={signOut}
+                className="px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <span className="font-semibold text-gray-800">PairBudget</span>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600 hidden md:block">
-            Welcome, {userProfile?.name || user?.email?.split('@')[0]}
-          </span>
-          <button
-            onClick={signOut}
-            className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
-            title="Sign Out"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
         </div>
       </motion.header>
 
-      <div className="w-full max-w-4xl mx-auto pt-24 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10"
-        >
+      <div className="min-h-screen flex items-center justify-center px-4 py-24 relative z-10">
+        <div className="max-w-4xl mx-auto w-full">
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="text-center mb-12"
           >
-            <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-4xl lg:text-5xl font-bold text-white mb-4"
+            >
               Choose Your Pocket
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-xl text-white/70 max-w-2xl mx-auto"
+            >
               You have {userPockets.length} pocket{userPockets.length !== 1 ? 's' : ''} available. 
               Select one to continue managing your budget.
-            </p>
+            </motion.p>
           </motion.div>
 
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading your pockets...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/30 mx-auto mb-4"></div>
+              <p className="text-white/70">Loading your pockets...</p>
             </div>
           ) : (
             <>
@@ -180,41 +211,41 @@ const PocketSelection: React.FC = () => {
                     transition={{ delay: 0.1 * index }}
                     onClick={() => handlePocketSelect(pocket)}
                     disabled={loadingPocketId === pocket.id}
-                    className={`card-floating p-6 text-left hover:scale-105 transition-all duration-300 group relative ${
+                    className={`bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 text-left hover:bg-white/15 transition-all duration-300 group relative hover:-translate-y-1 shadow-xl ${
                       loadingPocketId === pocket.id ? 'opacity-50 pointer-events-none' : ''
                     }`}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
                         {loadingPocketId === pocket.id ? (
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
                         ) : (
                           <Wallet className="w-6 h-6 text-white" />
                         )}
                       </div>
-                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
                     </div>
                     
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{pocket.name}</h3>
+                    <h3 className="text-xl font-semibold text-white mb-2">{pocket.name}</h3>
                     
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Balance</span>
-                        <span className={`font-medium ${pocket.balance >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        <span className="text-white/70">Balance</span>
+                        <span className={`font-medium ${pocket.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {formatCurrency(pocket.balance)}
                         </span>
                       </div>
                       
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Members</span>
-                        <span className="flex items-center space-x-1">
+                        <span className="text-white/70">Members</span>
+                        <span className="flex items-center space-x-1 text-white">
                           <Users className="w-3 h-3" />
                           <span>{pocket.participants.length}</span>
                         </span>
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                    <div className="flex items-center space-x-4 text-xs text-white/60">
                       <span className="flex items-center space-x-1">
                         <TrendingUp className="w-3 h-3" />
                         <span>Funded: {formatCurrency(pocket.totalFunded)}</span>
@@ -234,18 +265,18 @@ const PocketSelection: React.FC = () => {
               >
                 <button
                   onClick={() => setShowCreateNew(true)}
-                  className="inline-flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1"
                 >
                   <Plus className="w-5 h-5" />
                   <span className="font-medium">Create New Pocket</span>
                 </button>
-                <p className="text-sm text-gray-500 mt-3">
+                <p className="text-sm text-white/60 mt-3">
                   Want to start fresh? Create a new pocket for different budgets.
                 </p>
               </motion.div>
             </>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

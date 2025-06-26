@@ -8,7 +8,6 @@ import { useAuthStore } from '@/store/authStore';
 import { signIn, signUp } from '@/services/authService';
 import LoadingSpinner from './LoadingSpinner';
 
-
 interface AuthFormProps {
   mode: 'login' | 'signup';
   onToggleMode: () => void;
@@ -154,122 +153,67 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400">
-              {/* Grey/Black Professional Background */}
+    <div className="min-h-screen relative overflow-hidden bg-slate-50">
+      {/* Subtle Background Pattern */}
+      <div className="absolute inset-0">
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }} />
+        </div>
+      
+        {/* Floating Accent Elements */}
         <div className="absolute inset-0">
-          {/* Subtle Grid Pattern */}
-          <div className="absolute inset-0 opacity-[0.2]">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `
-                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: '50px 50px'
-            }} />
-          </div>
-        
-        {/* Animated Floating Shapes */}
-        <div className="absolute inset-0">
-          {[...Array(8)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute rounded-full"
+              className="absolute rounded-full opacity-5"
               style={{
-                width: `${Math.random() * 60 + 40}px`,
-                height: `${Math.random() * 60 + 40}px`,
-                background: i % 3 === 0 
-                  ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)'
-                  : i % 3 === 1 
-                  ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)'
-                  : 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)',
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                filter: 'blur(1px)',
-              }}
-              animate={{
-                x: [0, Math.random() * 100, 0],
-                y: [0, Math.random() * 100, 0],
-                scale: [1, 1.3, 1],
-                rotate: [0, 180, 360],
-              }}
-              transition={{
-                duration: Math.random() * 15 + 10,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          ))}
-        </div>
-        
-        {/* Geometric Shapes */}
-        <div className="absolute inset-0">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={`geo-${i}`}
-              className="absolute opacity-5"
-              style={{
-                width: `${Math.random() * 40 + 20}px`,
-                height: `${Math.random() * 40 + 20}px`,
+                width: `${80 + i * 30}px`,
+                height: `${80 + i * 30}px`,
                 background: i % 2 === 0 
-                  ? 'linear-gradient(45deg, rgba(59, 130, 246, 0.2) 0%, transparent 50%)'
-                  : 'linear-gradient(45deg, rgba(99, 102, 241, 0.2) 0%, transparent 50%)',
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                borderRadius: i % 3 === 0 ? '50%' : i % 3 === 1 ? '0%' : '25%',
-                transform: `rotate(${Math.random() * 360}deg)`,
+                  ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)'
+                  : 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                left: `${10 + i * 25}%`,
+                top: `${20 + i * 20}%`,
               }}
               animate={{
-                x: [0, Math.random() * 80, 0],
-                y: [0, Math.random() * 80, 0],
-                rotate: [0, 360],
-                scale: [1, 1.2, 1],
+                x: [0, 30, 0],
+                y: [0, 20, 0],
+                scale: [1, 1.1, 1],
               }}
               transition={{
-                duration: Math.random() * 20 + 15,
+                duration: 12 + i * 3,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
             />
           ))}
         </div>
-        
-                 {/* Subtle Accent Glows */}
-         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-         <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-indigo-400/4 rounded-full blur-3xl" />
-         <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-purple-400/3 rounded-full blur-3xl" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md relative">
-          {/* Enhanced Glow Effect */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="absolute inset-0 rounded-2xl blur-2xl transform scale-110"
-            style={{
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%)'
-            }}
-          />
-          
           {/* Main Form Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="relative bg-white/95 backdrop-blur-sm rounded-2xl p-8 border border-white/50"
-            style={{
-              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-            }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm"
           >
             {/* Header */}
             <div className="text-center mb-8">
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="text-3xl font-bold mb-3 text-gray-900"
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-3xl font-bold mb-3 text-slate-900"
               >
                 {mode === 'login' ? t('signIn') : t('signUp')}
               </motion.h1>
@@ -277,16 +221,14 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               <motion.p
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                className="text-gray-600"
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-slate-600"
               >
                 {mode === 'login' 
                   ? 'Access your shared budget dashboard' 
                   : 'Join PairBudget to manage expenses together'
                 }
               </motion.p>
-
-
             </div>
 
             {/* Error Message */}
@@ -297,7 +239,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
-                  className="mb-6 p-4 bg-red-100 border-2 border-red-400 rounded-xl shadow-lg"
+                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
                 >
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
@@ -306,7 +248,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-red-900">{error}</p>
+                      <p className="text-sm font-medium text-red-900">{error}</p>
                       {error.includes('email address is already registered') && (
                         <button
                           type="button"
@@ -330,7 +272,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
-                  className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl"
+                  className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg"
                 >
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
@@ -365,7 +307,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                       transition={{ duration: 0.5, delay: 0.7 }}
                       className="relative group"
                     >
-                      <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input
                         type="text"
                         name="name"
@@ -373,11 +315,9 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white"
+                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
                       />
                     </motion.div>
-                    
-
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -389,7 +329,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                 transition={{ duration: 0.5, delay: mode === 'signup' ? 0.9 : 0.7 }}
                 className="relative group"
               >
-                <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="email"
                   name="email"
@@ -397,11 +337,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className={`w-full pl-12 pr-4 py-4 rounded-xl border bg-gray-50 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white ${
-                    error && (error.includes('email') || error.includes('Email')) 
-                      ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-200 focus:ring-blue-500'
-                  }`}
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
                 />
               </motion.div>
 
@@ -409,10 +345,10 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.0 : 0.8 }}
+                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.1 : 0.9 }}
                 className="relative group"
               >
-                <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
@@ -420,16 +356,12 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  className={`w-full pl-12 pr-12 py-4 rounded-xl border bg-gray-50 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white ${
-                    error && (error.includes('password') || error.includes('Password')) 
-                      ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-200 focus:ring-blue-500'
-                  }`}
+                  className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-200 p-1"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
                 </button>
@@ -439,141 +371,105 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               <AnimatePresence>
                 {mode === 'signup' && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.4 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.5, delay: 1.3 }}
+                    className="relative group"
                   >
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: 1.1 }}
-                      className="relative group"
+                    <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      placeholder={t('confirmPassword')}
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                     >
-                      <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        name="confirmPassword"
-                        placeholder={t('password')}
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full pl-12 pr-12 py-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white"
-                      />
-            <button
-              type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-200 p-1"
-                      >
-                        {showConfirmPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
-                      </button>
-                    </motion.div>
+                      {showConfirmPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Terms Checkbox for Signup */}
+              {/* Terms Agreement for Signup */}
               <AnimatePresence>
                 {mode === 'signup' && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.4, delay: 1.5 }}
+                    className="flex items-start space-x-3"
                   >
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 1.2 }}
-                      className="flex items-start space-x-3"
-                    >
-                      <label className="flex items-start space-x-3 cursor-pointer group">
-                        <div className="flex-shrink-0 mt-1">
-                          <input
-                            type="checkbox"
-                            checked={agreeToTerms}
-                            onChange={(e) => setAgreeToTerms(e.target.checked)}
-                            className="sr-only"
-                          />
-                          <div 
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-                              agreeToTerms 
-                                ? 'bg-blue-500 border-blue-500 shadow-lg shadow-blue-500/25' 
-                                : 'bg-gray-50 border-gray-300'
-                            }`}
-                          >
-                            {agreeToTerms && (
-                              <motion.svg
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </motion.svg>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-sm leading-relaxed text-gray-600">
-                          I agree to the{' '}
-                          <span className="text-blue-500 underline hover:text-blue-600 transition-colors cursor-pointer">
-                            Terms of Service
-                          </span>{' '}
-                          and{' '}
-                          <span className="text-blue-500 underline hover:text-blue-600 transition-colors cursor-pointer">
-                            Privacy Policy
-                          </span>
-                        </span>
-                      </label>
-                    </motion.div>
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      checked={agreeToTerms}
+                      onChange={(e) => setAgreeToTerms(e.target.checked)}
+                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded transition-colors"
+                    />
+                    <label htmlFor="terms" className="text-sm text-slate-600 leading-relaxed">
+                      I agree to the{' '}
+                      <a href="#" className="text-blue-600 hover:text-blue-700 underline">
+                        Terms of Service
+                      </a>{' '}
+                      and{' '}
+                      <a href="#" className="text-blue-600 hover:text-blue-700 underline">
+                        Privacy Policy
+                      </a>
+                    </label>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Submit Button */}
               <motion.button
-                type="submit"
-                disabled={isLoading || (mode === 'signup' && !agreeToTerms)}
-                whileTap={{ scale: 0.98 }}
-                whileHover={{ scale: 1.02 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.3 : 0.9 }}
-                className="w-full py-4 text-white font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 hover:-translate-y-0.5"
+                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.7 : 1.1 }}
+                type="submit"
+                disabled={isLoading || (mode === 'signup' && !agreeToTerms)}
+                className="w-full py-4 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 {isLoading ? (
-                  <LoadingSpinner />
+                  <>
+                    <LoadingSpinner size="sm" />
+                    <span>{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
+                  </>
                 ) : (
-                  <span className="text-base font-medium">
-                    {mode === 'login' ? t('signIn') : 'Create Account'}
-                  </span>
+                  <span>{mode === 'login' ? t('signIn') : t('signUp')}</span>
                 )}
               </motion.button>
             </form>
 
-            {/* Footer */}
+            {/* Toggle Mode */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: mode === 'signup' ? 1.4 : 1.0 }}
-              className="mt-8 text-center"
+              transition={{ duration: 0.5, delay: mode === 'signup' ? 1.9 : 1.3 }}
+              className="text-center mt-6 pt-6 border-t border-slate-200"
             >
-              <p className="text-sm text-gray-600">
-                {mode === 'login' ? "Don't have an account?" : "Already have an account?"}{' '}
+              <p className="text-slate-600">
+                {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
                 <button
                   type="button"
                   onClick={onToggleMode}
-                  className="font-semibold text-blue-500 hover:text-blue-600 transition-colors duration-200 underline"
+                  className="text-blue-600 hover:text-blue-700 font-medium underline transition-colors"
                 >
                   {mode === 'login' ? t('signUp') : t('signIn')}
-            </button>
+                </button>
               </p>
             </motion.div>
           </motion.div>
         </div>
       </div>
-          </div>
+    </div>
   );
 } 

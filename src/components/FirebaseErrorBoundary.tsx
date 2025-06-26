@@ -8,6 +8,7 @@ import {
   emergencyFirebaseReset
 } from '@/lib/firebase';
 import { getSubscriptionStats, cleanupAllSubscriptions } from '@/services/pocketService';
+import { AlertTriangle, Activity, RefreshCw, RotateCcw, Zap, Monitor } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -227,6 +228,19 @@ class FirebaseErrorBoundary extends Component<Props, State> {
     this.setState({ showDiagnostics: !this.state.showDiagnostics });
   };
 
+  getHealthStateColor = (state: string) => {
+    switch (state) {
+      case 'healthy':
+        return 'text-green-600 bg-green-50';
+      case 'recovering':
+        return 'text-yellow-600 bg-yellow-50';
+      case 'corrupted':
+        return 'text-red-600 bg-red-50';
+      default:
+        return 'text-slate-600 bg-slate-50';
+    }
+  };
+
   render() {
     const { 
       hasError, 
@@ -243,21 +257,19 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       const errorId = error.message?.match(/ID: (ca9|b815)/)?.[1];
       
       return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full border border-red-200">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-lg w-full">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 mx-auto mb-6 bg-red-50 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
               
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Firebase Connection Issue
+              <h2 className="text-2xl font-bold text-slate-900 mb-3">
+                Database Connection Issue
               </h2>
               
               {isInternalAssertion && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-red-800 font-semibold">
                     Internal Assertion Failure {errorId && `(ID: ${errorId})`}
                   </p>
@@ -267,100 +279,124 @@ class FirebaseErrorBoundary extends Component<Props, State> {
                 </div>
               )}
               
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-slate-600 mb-6 leading-relaxed">
                 {isRecovering 
                   ? 'Attempting to recover connection...'
-                  : 'We\'re experiencing connectivity issues with the database.'
+                  : 'We\'re experiencing connectivity issues with the database. Please try one of the recovery options below.'
                 }
               </p>
               
-              <div className="text-sm text-gray-500 space-y-1 mb-4">
-                <div>Health: <span className={`font-semibold ${
-                  healthState === 'healthy' ? 'text-green-600' :
-                  healthState === 'recovering' ? 'text-yellow-600' :
-                  healthState === 'corrupted' ? 'text-red-600' : 'text-gray-600'
-                }`}>{healthState}</span></div>
-                <div>Recovery attempts: <span className="font-semibold">{recoveryAttempts}</span></div>
-                <div>Active subscriptions: <span className="font-semibold">{subscriptionStats.activeSubscriptions}</span></div>
+              {/* Status Indicators */}
+              <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">Health Status</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${this.getHealthStateColor(healthState)}`}>
+                      {healthState}
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">Attempts</span>
+                    <span className="text-slate-900 font-semibold">{recoveryAttempts}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {isRecovering ? (
               <div className="text-center">
-                <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-                  <svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Recovering...
+                <div className="inline-flex items-center px-6 py-3 bg-blue-50 text-blue-700 rounded-lg border border-blue-200">
+                  <RefreshCw className="animate-spin w-4 h-4 mr-3" />
+                  <span className="font-medium">Recovering...</span>
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 <button
                   onClick={() => this.handleManualRecovery('cleanup')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                 >
-                  Retry Connection
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Retry Connection</span>
                 </button>
                 
                 <button
                   onClick={() => this.handleManualRecovery('reset')}
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                 >
-                  Reset Subscriptions
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reset Subscriptions</span>
                 </button>
                 
                 <button
                   onClick={() => this.handleManualRecovery('emergency')}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                 >
-                  Emergency Reset
+                  <Zap className="w-4 h-4" />
+                  <span>Emergency Reset</span>
                 </button>
                 
                 <button
                   onClick={() => this.handleManualRecovery('reload')}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                 >
-                  Reload Page
+                  <Monitor className="w-4 h-4" />
+                  <span>Reload Page</span>
                 </button>
                 
                 <button
                   onClick={this.toggleDiagnostics}
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                  className="w-full flex items-center justify-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-lg transition-colors text-sm border border-slate-200"
                 >
-                  {showDiagnostics ? 'Hide' : 'Show'} Diagnostics
+                  <Activity className="w-4 h-4" />
+                  <span>{showDiagnostics ? 'Hide' : 'Show'} Diagnostics</span>
                 </button>
               </div>
             )}
 
             {showDiagnostics && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-                <h3 className="font-semibold text-gray-900 mb-3">Diagnostics</h3>
-                <div className="space-y-2 text-sm">
+              <div className="mt-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
+                <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
+                  <Activity className="w-4 h-4 mr-2" />
+                  System Diagnostics
+                </h3>
+                <div className="space-y-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-slate-600">Active Subscriptions:</span>
+                      <div className="font-semibold text-slate-900">{subscriptionStats.activeSubscriptions}</div>
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Error Count:</span>
+                      <div className="font-semibold text-slate-900">{subscriptionStats.errorCount}</div>
+                    </div>
+                  </div>
+                  
                   <div>
-                    <span className="font-medium">Error:</span>
-                    <pre className="text-xs bg-white p-2 rounded mt-1 overflow-x-auto">
+                    <span className="text-slate-600">Last Success:</span>
+                    <div className="font-semibold text-slate-900">
+                      {new Date(subscriptionStats.lastSuccessfulOperation).toLocaleTimeString()}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <span className="text-slate-600">Time Since Success:</span>
+                    <div className="font-semibold text-slate-900">
+                      {Math.round(subscriptionStats.timeSinceLastSuccess / 1000)}s
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-slate-200">
+                    <span className="text-slate-600">Error Details:</span>
+                    <pre className="text-xs bg-white p-3 rounded mt-2 overflow-x-auto border border-slate-200 text-red-600">
                       {error.message}
                     </pre>
                   </div>
-                  <div>
-                    <span className="font-medium">Error Count:</span> {subscriptionStats.errorCount}
-                  </div>
-                  <div>
-                    <span className="font-medium">Last Success:</span> {
-                      new Date(subscriptionStats.lastSuccessfulOperation).toLocaleTimeString()
-                    }
-                  </div>
-                  <div>
-                    <span className="font-medium">Time Since Success:</span> {
-                      Math.round(subscriptionStats.timeSinceLastSuccess / 1000)
-                    }s
-                  </div>
-                  <div className="pt-2 border-t border-gray-200">
-                    <p className="text-xs text-gray-600">
-                      Press <kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">Ctrl+Shift+R</kbd> for emergency reset
-                    </p>
+                  
+                  <div className="pt-2 text-xs text-slate-500">
+                    Press <kbd className="px-1.5 py-0.5 bg-slate-200 rounded text-xs font-mono">Ctrl+Shift+R</kbd> for emergency reset
                   </div>
                 </div>
               </div>

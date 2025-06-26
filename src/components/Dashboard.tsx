@@ -12,7 +12,7 @@ import { formatCurrency, formatDate, generateInviteLink } from '@/lib/utils';
 import { resetFirestoreConnection } from '@/lib/firebase';
 import { EXPENSE_CATEGORIES } from '@/types';
 import PocketSelector from '@/components/PocketSelector';
-import PocketSetup from '@/components/PocketSetup';
+
 import { 
   Plus, 
   Share2, 
@@ -29,7 +29,12 @@ import {
   X,
   ArrowUpRight,
   ArrowDownRight,
-  Receipt
+  Receipt,
+  DollarSign,
+  Activity,
+  Settings,
+  BarChart3,
+  ArrowRight
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -42,7 +47,7 @@ const Dashboard: React.FC = () => {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [showLeavePocketModal, setShowLeavePocketModal] = useState(false);
-  const [showPocketSetup, setShowPocketSetup] = useState(false);
+
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [leavePocketLoading, setLeavePocketLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -56,7 +61,16 @@ const Dashboard: React.FC = () => {
     amount: ''
   });
 
-  // Calculate recent transactions
+  // Calculate statistics
+  const totalFunds = transactions
+    .filter(t => t.type === 'fund')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalExpenses = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const currentBalance = totalFunds - totalExpenses;
   const recentTransactions = transactions.slice(0, 3);
 
   // Load user names for recent transactions
@@ -199,440 +213,506 @@ const Dashboard: React.FC = () => {
       
     } catch (error) {
       console.error('Error leaving pocket:', error);
-      
-      // Even if there's an error, try to clear local state as a fallback
-      try {
-        console.log('Attempting to clear local state as fallback...');
-        await removePocketFromUser(user.uid, currentPocket.id);
-        const updatedPocketIds = (userProfile.pocketIds || []).filter(id => id !== currentPocket.id);
-        const newCurrentPocketId = updatedPocketIds.length > 0 ? updatedPocketIds[0] : undefined;
-        
-        setUserProfile({ 
-          ...userProfile, 
-          pocketIds: updatedPocketIds,
-          currentPocketId: newCurrentPocketId
-        });
-        clearPocketData();
-        setShowLeavePocketModal(false);
-        console.log('Fallback cleanup successful');
-      } catch (fallbackError) {
-        console.error('Fallback cleanup also failed:', fallbackError);
-        // Show user feedback that something went wrong
-        alert('There was an issue leaving the pocket. Please try refreshing the page.');
-      }
+      alert('Failed to leave pocket. Please try again.');
     } finally {
       setLeavePocketLoading(false);
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await cleanupAllSubscriptions();
+      clearPocketData();
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   if (!user || !userProfile || !currentPocket) {
-    return null;
+    return null; // This should be handled by the parent component
   }
 
-  const balance = currentPocket.balance || 0;
-  const totalFunded = transactions
-    .filter(t => t.type === 'fund')
-    .reduce((sum, t) => sum + t.amount, 0);
-  const totalSpent = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden">
-      {/* Grid Pattern Background */}
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      {/* Modern Grid Pattern Background */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{
           backgroundImage: `
             linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
           `,
-          backgroundSize: '20px 20px'
+          backgroundSize: '32px 32px'
         }}></div>
       </div>
 
-      {/* Animated Background Shapes */}
+      {/* Refined Animated Background Shapes */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: `${Math.random() * 60 + 40}px`,
-              height: `${Math.random() * 60 + 40}px`,
-              background: i % 3 === 0 
-                ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)'
-                : i % 3 === 1 
-                ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              filter: 'blur(1px)',
-            }}
-            animate={{
-              x: [0, Math.random() * 100, 0],
-              y: [0, Math.random() * 100, 0],
-              scale: [1, 1.3, 1],
-              rotate: [0, 180, 360],
-            }}
-            transition={{
-              duration: Math.random() * 15 + 10,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
+        <motion.div 
+          className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"
+          animate={{ 
+            y: [0, -20, 0], 
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-lg"
+          animate={{ 
+            y: [0, 15, 0], 
+            x: [0, 10, 0],
+            scale: [1, 0.9, 1]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-600/10 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-600/10 to-transparent rounded-full blur-3xl" />
       </div>
 
-      {/* Accent Glows */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-indigo-400/4 rounded-full blur-3xl" />
-      <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-purple-400/3 rounded-full blur-3xl" />
-
-      {/* Content */}
-      <div className="relative z-10 min-h-screen">
       {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/10 backdrop-blur-lg border-b border-white/20 sticky top-0 z-50"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-20">
-              <div className="flex items-center space-x-4 rtl:space-x-reverse flex-1 min-w-0">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                    <Wallet className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="hidden sm:block">
-                    <h1 className="text-xl font-bold text-white">PairBudget</h1>
-                    <div className="flex items-center space-x-2 text-sm text-gray-300">
-                      <span className="capitalize text-blue-400 font-medium">{t(`role.${userRole}`)}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Pocket Selector */}
-                <div className="flex-1 max-w-xs">
-                  <PocketSelector onCreateNew={() => setShowPocketSetup(true)} />
-                </div>
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
+      >
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
+          <div className="flex items-center justify-between">
+            {/* Logo and Pocket Info */}
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-white" />
               </div>
-
-              <div className="flex items-center space-x-3 flex-shrink-0">
-                <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-300">
-                  <span className="truncate max-w-32">{t('welcome')}, {userProfile?.name || user?.email?.split('@')[0]}</span>
-                  <span className="text-gray-400">•</span>
-                  <span className="capitalize text-blue-400 font-medium">{t('youAreThe')} {t(`role.${userRole}`)}</span>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  {showRecoveryButton && (
-                    <button
-                      onClick={handleFirebaseRecovery}
-                      disabled={isRecovering}
-                      className="p-2 text-blue-400 hover:text-blue-300 transition-colors rounded-lg hover:bg-white/10"
-                      title="Manual Firebase Recovery"
-                    >
-                      <RefreshCw className={`w-5 h-5 ${isRecovering ? 'animate-spin' : ''}`} />
-                    </button>
-                  )}
-                  
-                  <button
-                    onClick={() => setShowInviteCode(true)}
-                    className="p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
-                    title={t('quickActions.invitePartnerDesc')}
-                  >
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                  
-                  <button
-                    onClick={signOut}
-                    className="p-2 text-gray-300 hover:text-red-400 transition-colors rounded-lg hover:bg-white/10"
-                    title={tCommon('signOut')}
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
-                </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">{currentPocket.name}</h1>
+                <p className="text-sm text-white/70">
+                  {userRole === 'provider' ? 'Provider' : 'Spender'} • {Object.keys(currentPocket.roles).length} members
+                </p>
               </div>
             </div>
-          </div>
-        </motion.header>
 
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          {/* Stats Cards */}
+            {/* Header Actions */}
+            <div className="flex items-center space-x-2">
+              {/* Pocket Switcher */}
+              <PocketSelector onCreateNew={() => router.push(`/${locale}/pocket-setup`)} />
+              
+              <button
+                onClick={() => setShowInviteCode(true)}
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                title="Share Invite Link"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                title="Sign Out"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-32 relative z-10">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Current Balance */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-white/70">Current Balance</p>
+                <p className={`text-3xl font-bold ${currentBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {formatCurrency(Math.abs(currentBalance))}
+                </p>
+                <p className="text-sm text-white/50 mt-1">
+                  {currentBalance >= 0 ? 'Available funds' : 'Overspent'}
+                </p>
+              </div>
+              <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                currentBalance >= 0 ? 'bg-green-500/20 backdrop-blur-sm' : 'bg-red-500/20 backdrop-blur-sm'
+              }`}>
+                <DollarSign className={`w-7 h-7 ${
+                  currentBalance >= 0 ? 'text-green-400' : 'text-red-400'
+                }`} />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Total Funds */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl"
           >
-            {/* Current Balance */}
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.currentBalance')}</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-white/70">Total Funds</p>
+                <p className="text-3xl font-bold text-blue-400">{formatCurrency(totalFunds)}</p>
+                <p className="text-sm text-white/50 mt-1">Added this month</p>
               </div>
-              <div className="text-3xl font-bold text-white mb-2">
-                {formatCurrency(balance)}
+              <div className="w-14 h-14 bg-blue-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-7 h-7 text-blue-400" />
               </div>
-              <p className="text-sm text-gray-300">
-                {balance >= 0 ? t('stats.availableToSpend') : t('stats.overBudget')}
-              </p>
-            </div>
-
-            {/* Total Funded */}
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                  <ArrowUpRight className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.totalFunded')}</span>
-              </div>
-              <div className="text-3xl font-bold text-white mb-2">
-                {formatCurrency(totalFunded)}
-              </div>
-              <p className="text-sm text-gray-300">{t('stats.moneyAdded')}</p>
-            </div>
-
-            {/* Total Spent */}
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <ArrowDownRight className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.totalSpent')}</span>
-              </div>
-              <div className="text-3xl font-bold text-white mb-2">
-                {formatCurrency(totalSpent)}
-              </div>
-              <p className="text-sm text-gray-300">{t('stats.moneySpent')}</p>
             </div>
           </motion.div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-4 shadow-xl">
-                <h2 className="text-lg font-semibold text-white mb-4">{t('quickActions.title')}</h2>
-                
-                <div className="space-y-2">
-                  {canAddFunds && (
-                    <button
-                      onClick={() => {
-                        setFormData({ ...formData, type: 'fund' });
-                        setShowTransactionForm(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-3 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center space-x-2 group"
-                    >
-                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                        <Plus className="w-4 h-4" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-sm">{t('quickActions.addFunds')}</div>
-                      </div>
-                    </button>
-                  )}
-
-                  {canAddExpenses && (
-                    <button
-                      onClick={() => {
-                        setFormData({ ...formData, type: 'expense' });
-                        setShowTransactionForm(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg p-3 hover:from-orange-600 hover:to-red-600 transition-all shadow-lg shadow-orange-500/25 flex items-center space-x-2 group"
-                    >
-                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                        <Receipt className="w-4 h-4" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-sm">{t('quickActions.addExpense')}</div>
-                      </div>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => setShowInviteCode(true)}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-3 hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/25 flex items-center space-x-2 group"
-                  >
-                    <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                      <Share2 className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm">{t('quickActions.invitePartner')}</div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Recent Transactions */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg md:text-xl font-semibold text-white">{t('recentTransactions.title')}</h2>
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={() => router.push(`/${locale}/all-transactions`)}
-                      className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
-                    >
-                      {t('recentTransactions.viewAll')}
-                    </button>
-                    <Calendar className="w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-
-                {recentTransactions.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentTransactions.map((transaction) => (
-                      <motion.div
-                        key={transaction.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center justify-between p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
-                      >
-                        <div className="flex items-center space-x-4 flex-1 min-w-0">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            transaction.type === 'fund' 
-                              ? 'bg-blue-500/20 text-blue-400' 
-                              : 'bg-orange-500/20 text-orange-400'
-                          }`}>
-                            {transaction.type === 'fund' ? (
-                              <ArrowUpRight className="w-5 h-5" />
-                            ) : (
-                              <ArrowDownRight className="w-5 h-5" />
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-white text-base truncate">{transaction.description}</div>
-                            <div className="flex items-center space-x-3 text-sm text-gray-300 flex-wrap">
-                              <span className="flex items-center space-x-1">
-                                <User className="w-3 h-3" />
-                                <span className="truncate max-w-20 md:max-w-none">{userNames[transaction.userId] || 'Loading...'}</span>
-                              </span>
-                              <span className="hidden sm:inline">{transaction.category}</span>
-                              <span className="hidden md:inline">{formatDate(transaction.date)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`text-lg font-semibold flex-shrink-0 ${
-                          transaction.type === 'fund' ? 'text-blue-400' : 'text-orange-400'
-                        }`}>
-                          {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Receipt className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-white mb-2">{t('recentTransactions.noTransactions')}</h3>
-                    <p className="text-gray-300 mb-6">{t('recentTransactions.noTransactionsDesc')}</p>
-                    <div className="flex space-x-3 justify-center">
-                      {(canAddFunds || canAddExpenses) && (
-                        <button
-                          onClick={() => setShowTransactionForm(true)}
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-6 py-3 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center space-x-2"
-                        >
-                          <Plus className="w-4 h-4" />
-                          <span>{t('recentTransactions.addTransaction')}</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => router.push(`/${locale}/all-transactions`)}
-                        className="bg-white/10 backdrop-blur-sm text-white rounded-xl px-6 py-3 hover:bg-white/20 transition-all border border-white/20"
-                      >
-                        {t('recentTransactions.viewAll')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Leave Pocket Section */}
+          {/* Total Expenses */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-8 pt-8 border-t border-white/20"
+            transition={{ delay: 0.2 }}
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl"
           >
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <UserMinus className="w-6 h-6 text-orange-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{t('pocketManagement.title')}</h3>
-                <p className="text-gray-300 mb-6">{t('pocketManagement.description')}</p>
-                
-                <button
-                  onClick={() => setShowLeavePocketModal(true)}
-                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl px-6 py-3 hover:from-orange-600 hover:to-red-600 transition-all shadow-lg shadow-orange-500/25 flex items-center space-x-2 mx-auto"
-                >
-                  <UserMinus className="w-4 h-4" />
-                  <span>{t('pocketManagement.leavePocket')}</span>
-                </button>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-white/70">Total Expenses</p>
+                <p className="text-3xl font-bold text-orange-400">{formatCurrency(totalExpenses)}</p>
+                <p className="text-sm text-white/50 mt-1">Spent this month</p>
+              </div>
+              <div className="w-14 h-14 bg-orange-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <Activity className="w-7 h-7 text-orange-400" />
               </div>
             </div>
           </motion.div>
         </div>
-      </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Recent Transactions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl"
+          >
+            <div className="p-6 border-b border-white/20">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Recent Transactions</h2>
+                <button
+                  onClick={() => router.push(`/${locale}/all-transactions`)}
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center space-x-1 hover:bg-white/10 px-3 py-2 rounded-lg transition-all duration-200"
+                >
+                  <span>View All</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {recentTransactions.length > 0 ? (
+                <div className="space-y-4">
+                  {recentTransactions.map((transaction, index) => (
+                    <motion.div
+                      key={transaction.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center space-x-4 p-4 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10"
+                    >
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        transaction.type === 'fund' 
+                          ? 'bg-green-500/20 text-green-400' 
+                          : 'bg-orange-500/20 text-orange-400'
+                      }`}>
+                        {transaction.type === 'fund' ? (
+                          <ArrowUpRight className="w-6 h-6" />
+                        ) : (
+                          <ArrowDownRight className="w-6 h-6" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white truncate">{transaction.description}</p>
+                        <div className="flex items-center space-x-2 text-sm text-white/60">
+                          <span>{userNames[transaction.userId] || 'Loading...'}</span>
+                          <span>•</span>
+                          <span>{formatDate(transaction.date)}</span>
+                          {transaction.category && (
+                            <>
+                              <span>•</span>
+                              <span className="px-2 py-0.5 bg-white/20 rounded text-xs">
+                                {transaction.category}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`text-lg font-bold ${
+                        transaction.type === 'fund' ? 'text-green-400' : 'text-orange-400'
+                      }`}>
+                        {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Receipt className="w-8 h-8 text-white/40" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">No transactions yet</h3>
+                  <p className="text-white/60 mb-6">Start by adding funds or recording an expense</p>
+                  <button
+                    onClick={() => setShowTransactionForm(true)}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-lg"
+                  >
+                    Add First Transaction
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-xl"
+          >
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-white mb-6">Quick Actions</h2>
+              
+              <div className="space-y-4">
+                {canAddFunds && (
+                  <button
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, type: 'fund' }));
+                      setShowTransactionForm(true);
+                    }}
+                    className="w-full p-4 bg-green-500/10 border border-green-500/30 rounded-xl hover:bg-green-500/20 transition-all duration-200 group backdrop-blur-sm"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                        <ArrowUpRight className="w-5 h-5 text-green-400" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-white">Add Funds</p>
+                        <p className="text-sm text-white/60">Add money to the pocket</p>
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {canAddExpenses && (
+                  <button
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, type: 'expense' }));
+                      setShowTransactionForm(true);
+                    }}
+                    className="w-full p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl hover:bg-orange-500/20 transition-all duration-200 group backdrop-blur-sm"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
+                        <ArrowDownRight className="w-5 h-5 text-orange-400" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-white">Record Expense</p>
+                        <p className="text-sm text-white/60">Log a purchase or expense</p>
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setShowInviteCode(true)}
+                  className="w-full p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl hover:bg-purple-500/20 transition-all duration-200 group backdrop-blur-sm"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                      <Share2 className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white">Invite Partner</p>
+                      <p className="text-sm text-white/60">Share pocket access</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => router.push(`/${locale}/all-transactions`)}
+                  className="w-full p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl hover:bg-blue-500/20 transition-all duration-200 group backdrop-blur-sm"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                      <BarChart3 className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white">View Reports</p>
+                      <p className="text-sm text-white/60">See all transactions</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const pocketSetupUrl = `/${locale}/pocket-setup`;
+                    router.push(pocketSetupUrl);
+                  }}
+                  className="w-full p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/20 transition-all duration-200 group backdrop-blur-sm"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:bg-cyan-500/30 transition-colors">
+                      <Settings className="w-5 h-5 text-cyan-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white">Manage Pockets</p>
+                      <p className="text-sm text-white/60">Create or manage pockets</p>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Leave Pocket Button */}
+                <button
+                  onClick={() => setShowLeavePocketModal(true)}
+                  className="w-full p-4 bg-red-500/10 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all duration-200 group backdrop-blur-sm"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center group-hover:bg-red-500/30 transition-colors">
+                      <LogOut className="w-5 h-5 text-red-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white">Leave Pocket</p>
+                      <p className="text-sm text-white/60">Exit this shared pocket</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {/* Recovery Button (Development) */}
+              {showRecoveryButton && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  onClick={handleFirebaseRecovery}
+                  disabled={isRecovering}
+                  className="w-full mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-all duration-200 disabled:opacity-50"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    {isRecovering ? (
+                      <RefreshCw className="w-4 h-4 text-yellow-600 animate-spin" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                    )}
+                    <span className="text-sm font-medium text-yellow-800">
+                      {isRecovering ? 'Recovering...' : 'Recovery Mode'}
+                    </span>
+                  </div>
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </main>
 
       {/* Transaction Form Modal */}
       <AnimatePresence>
-      {showTransactionForm && (
+        {showTransactionForm && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={() => setShowTransactionForm(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white/95 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {formData.type === 'fund' ? t('quickActions.addFunds') : t('quickActions.addExpense')}
-                </h3>
-                <button
-                  onClick={() => setShowTransactionForm(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              <div className="p-6 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {formData.type === 'fund' ? 'Add Funds' : 'Record Expense'}
+                  </h3>
+                  <button
+                    onClick={() => setShowTransactionForm(false)}
+                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-200"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
-              <form onSubmit={handleAddTransaction} className="space-y-4">
+              <form onSubmit={handleAddTransaction} className="p-6 space-y-6">
+                {/* Transaction Type Toggle */}
+                <div className="bg-slate-100 rounded-lg p-1">
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, type: 'fund' }))}
+                      className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 ${
+                        formData.type === 'fund'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Add Funds
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, type: 'expense' }))}
+                      className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 ${
+                        formData.type === 'expense'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Record Expense
+                    </button>
+                  </div>
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0.00"
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder={formData.type === 'fund' ? 'Monthly allowance' : 'Grocery shopping'}
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                {/* Category (for expenses) */}
                 {formData.type === 'expense' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Category
                     </label>
                     <select
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     >
-                      <option value="">Select category</option>
+                      <option value="">Select a category</option>
                       {EXPENSE_CATEGORIES.map((category) => (
                         <option key={category} value={category}>{category}</option>
                       ))}
@@ -640,59 +720,27 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                        <input
-                    type="text"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder={formData.type === 'fund' ? 'e.g., Monthly allowance' : 'e.g., Grocery shopping'}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount (MAD)
-                  </label>
-                  <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="0.00"
-                  required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-
+                {/* Actions */}
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowTransactionForm(false)}
-                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+                    className="flex-1 py-3 px-4 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-all duration-200 font-medium"
                   >
-                    {tCommon('cancel')}
+                    Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={transactionLoading}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 font-medium disabled:opacity-50"
+                    className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center space-x-2"
                   >
                     {transactionLoading ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
                         <span>Adding...</span>
-                      </div>
+                      </>
                     ) : (
-                      <div className="flex items-center justify-center space-x-2">
-                        <Plus className="w-4 h-4" />
-                        <span>{formData.type === 'fund' ? t('quickActions.addFunds') : t('quickActions.addExpense')}</span>
-                      </div>
+                      <span>{formData.type === 'fund' ? 'Add Funds' : 'Record Expense'}</span>
                     )}
                   </button>
                 </div>
@@ -709,56 +757,69 @@ const Dashboard: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={() => setShowInviteCode(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white/95 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full"
             >
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Share2 className="w-8 h-8 text-white" />
-                    </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('quickActions.invitePartner')}</h3>
-                <p className="text-gray-600 mb-6">Share this code for them to join your pocket</p>
-                
-                <div className="bg-gray-100 rounded-xl p-6 mb-6">
-                  <div className="text-3xl font-mono font-bold text-gray-800 mb-2 tracking-wider">
-                    {currentPocket.inviteCode}
-                  </div>
-                  <p className="text-sm text-gray-500">Invite Code</p>
-                </div>
-
-                <div className="space-y-3">
-                  <button
-                    onClick={copyInviteLink}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 font-medium"
-                  >
-                    {copySuccess ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <Check className="w-4 h-4" />
-                        <span>Copied!</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center space-x-2">
-                        <Copy className="w-4 h-4" />
-                        <span>Copy Invite Link</span>
-                      </div>
-                    )}
-                  </button>
-                  
+              <div className="p-6 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-slate-900">Invite Partner</h3>
                   <button
                     onClick={() => setShowInviteCode(false)}
-                    className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-200"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Share2 className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <p className="text-slate-600">
+                    Share this link with your partner to give them access to this pocket
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1 mr-3">
+                      <p className="text-sm font-medium text-slate-700 mb-1">Invite Link</p>
+                                             <p className="text-xs text-slate-500 break-all">
+                         {generateInviteLink(currentPocket.inviteCode || '')}
+                       </p>
+                    </div>
+                    <button
+                      onClick={copyInviteLink}
+                      className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-all duration-200"
+                    >
+                      {copySuccess ? (
+                        <Check className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Copy className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-sm text-slate-500 mb-4">
+                    Invite Code: <span className="font-mono font-bold">{currentPocket.inviteCode}</span>
+                  </p>
+                  <button
+                    onClick={() => setShowInviteCode(false)}
+                    className="bg-slate-100 text-slate-700 px-6 py-3 rounded-lg hover:bg-slate-200 transition-all duration-200 font-medium"
                   >
                     Close
                   </button>
                 </div>
-                  </div>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -771,49 +832,59 @@ const Dashboard: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={() => setShowLeavePocketModal(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white/95 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-xl max-w-md w-full"
             >
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertTriangle className="w-8 h-8 text-orange-600" />
+              <div className="p-6 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-slate-900">Leave Pocket</h3>
+                  <button
+                    onClick={() => setShowLeavePocketModal(false)}
+                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-200"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('pocketManagement.leavePocket')}</h3>
-                <p className="text-gray-600 mb-6">
-                  Are you sure you want to leave this pocket? This action cannot be undone.
-                </p>
-                
-                <div className="space-y-3">
+              </div>
+
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <UserMinus className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-slate-900 mb-2">
+                    Are you sure you want to leave?
+                  </h4>
+                  <p className="text-slate-600">
+                    You will lose access to this pocket and all its transactions. You can rejoin later with an invite link.
+                  </p>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowLeavePocketModal(false)}
+                    className="flex-1 py-3 px-4 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-all duration-200 font-medium"
+                  >
+                    Cancel
+                  </button>
                   <button
                     onClick={handleLeavePocket}
                     disabled={leavePocketLoading}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg shadow-orange-500/25 font-medium disabled:opacity-50"
+                    className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center space-x-2"
                   >
                     {leavePocketLoading ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
                         <span>Leaving...</span>
-                      </div>
+                      </>
                     ) : (
-                      <div className="flex items-center justify-center space-x-2">
-                        <UserMinus className="w-4 h-4" />
-                        <span>Yes, Leave Pocket</span>
-            </div>
-          )}
-                  </button>
-                  
-                  <button
-                    onClick={() => setShowLeavePocketModal(false)}
-                    className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
-                  >
-                    {tCommon('cancel')}
+                      <span>Leave Pocket</span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -822,48 +893,7 @@ const Dashboard: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Pocket Setup Modal */}
-      <AnimatePresence>
-        {showPocketSetup && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={() => setShowPocketSetup(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Pocket Management</h2>
-                <button
-                  onClick={() => setShowPocketSetup(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
-                <PocketSetup onSuccess={() => setShowPocketSetup(false)} isModal={true} />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          25% { transform: translateY(-20px) rotate(5deg); }
-          50% { transform: translateY(-10px) rotate(0deg); }
-          75% { transform: translateY(-30px) rotate(-5deg); }
-        }
-      `}</style>
     </div>
   );
 };
