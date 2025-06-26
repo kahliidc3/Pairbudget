@@ -849,7 +849,7 @@ const Dashboard: React.FC = () => {
                 </button>
               </div>
               <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
-                <PocketSetup onSuccess={() => setShowPocketSetup(false)} />
+                <PocketSetup onSuccess={() => setShowPocketSetup(false)} isModal={true} />
               </div>
             </motion.div>
           </motion.div>

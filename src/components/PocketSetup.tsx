@@ -19,9 +19,10 @@ import {
 
 interface PocketSetupProps {
   onSuccess?: () => void;
+  isModal?: boolean;
 }
 
-const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
+const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false }) => {
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -96,47 +97,51 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden">
-      {/* Grid Pattern Overlay */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: '20px 20px'
-        }}
-      />
-      
-      {/* Animated Floating Shapes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className={`absolute w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-r ${
-              i % 3 === 0 ? 'from-blue-500/20 to-indigo-600/20' :
-              i % 3 === 1 ? 'from-indigo-500/20 to-purple-600/20' :
-              'from-purple-500/20 to-blue-600/20'
-            } blur-sm`}
+    <div className={isModal ? "p-6" : "min-h-screen bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden"}>
+      {!isModal && (
+        <>
+          {/* Grid Pattern Overlay */}
+          <div 
+            className="absolute inset-0 opacity-10"
             style={{
-              left: `${10 + (i * 15)}%`,
-              top: `${20 + (i * 12)}%`,
-            }}
-            animate={{
-              y: [0, -20, 0],
-              x: [0, i % 2 === 0 ? 15 : -15, 0],
-              rotate: [0, 180, 360],
-            }}
-            transition={{
-              duration: 6 + i,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.5,
+              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+              backgroundSize: '20px 20px'
             }}
           />
-        ))}
-      </div>
+          
+          {/* Animated Floating Shapes */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className={`absolute w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-r ${
+                  i % 3 === 0 ? 'from-blue-500/20 to-indigo-600/20' :
+                  i % 3 === 1 ? 'from-indigo-500/20 to-purple-600/20' :
+                  'from-purple-500/20 to-blue-600/20'
+                } blur-sm`}
+                style={{
+                  left: `${10 + (i * 15)}%`,
+                  top: `${20 + (i * 12)}%`,
+                }}
+                animate={{
+                  y: [0, -20, 0],
+                  x: [0, i % 2 === 0 ? 15 : -15, 0],
+                  rotate: [0, 180, 360],
+                }}
+                transition={{
+                  duration: 6 + i,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: i * 0.5,
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen p-6 md:p-6 lg:p-8">
+      <div className={isModal ? "" : "relative z-10 min-h-screen p-6 md:p-6 lg:p-8"}>
         <div className="w-full max-w-2xl mx-auto">
           {/* Header */}
           <motion.div
@@ -150,10 +155,10 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
             </div>
-            <h1 className="text-3xl md:text-3xl font-bold mb-4 text-white">
+            <h1 className={`text-3xl md:text-3xl font-bold mb-4 ${isModal ? 'text-gray-900' : 'text-white'}`}>
               Welcome to PairBudget
             </h1>
-            <p className="text-lg text-gray-300 max-w-xl mx-auto leading-relaxed">
+            <p className={`text-lg max-w-xl mx-auto leading-relaxed ${isModal ? 'text-gray-600' : 'text-gray-300'}`}>
               Create a new shared pocket or join an existing one to start tracking expenses together.
             </p>
           </motion.div>
@@ -163,15 +168,15 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-4 mb-8"
+            className={isModal ? "bg-gray-100 border border-gray-200 rounded-2xl p-4 mb-8" : "bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-4 mb-8"}
           >
-            <div className="flex p-2 bg-white/10 rounded-xl">
+                          <div className={`flex p-2 rounded-xl ${isModal ? 'bg-gray-200' : 'bg-white/10'}`}>
               <button
                 onClick={() => setMode('create')}
                 className={`flex-1 py-4 px-4 text-base font-medium rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
                   mode === 'create'
-                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-lg border border-white/30'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    ? isModal ? 'bg-blue-500 text-white shadow-lg' : 'bg-white/20 text-white shadow-lg backdrop-blur-lg border border-white/30'
+                    : isModal ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-300' : 'text-gray-300 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <Plus className="w-5 h-5" />
@@ -181,8 +186,8 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                 onClick={() => setMode('join')}
                 className={`flex-1 py-4 px-4 text-base font-medium rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
                   mode === 'join'
-                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-lg border border-white/30'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    ? isModal ? 'bg-blue-500 text-white shadow-lg' : 'bg-white/20 text-white shadow-lg backdrop-blur-lg border border-white/30'
+                    : isModal ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-300' : 'text-gray-300 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <UserPlus className="w-5 h-5" />
