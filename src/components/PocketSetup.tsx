@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { createPocket, joinPocket, deletePocket, getPocket } from '@/services/pocketService';
-import { addPocketToUser, removePocketFromUser, getUserProfile } from '@/services/authService';
+import { addPocketToUser, removePocketFromUser, getUserProfile, signOut } from '@/services/authService';
 import { UserRole, Pocket } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -52,7 +52,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
     role: 'provider' as UserRole
   });
   
-  const { user, userProfile, setUserProfile, signOut } = useAuthStore();
+  const { user, userProfile, setUserProfile } = useAuthStore();
   const { setCurrentPocket } = usePocketStore();
 
   // Load user's existing pockets
@@ -325,23 +325,26 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
       <motion.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
+        className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-2 sm:mx-4"
       >
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-white" />
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-4 shadow-xl mobile-nav">
+          <div className="flex items-center justify-between nav-content">
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+                <Wallet className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="font-bold text-white text-lg">{tNav('pairbudget')}</span>
+              <span className="font-bold text-white text-sm sm:text-lg nav-logo truncate">{tNav('pairbudget')}</span>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1 sm:space-x-4 nav-actions">
+              <div className="hidden lg:flex items-center text-sm text-white/80 font-medium mr-2">
+                Welcome, {userProfile?.name || user?.displayName || user?.email?.split('@')[0]}
+              </div>
               <LanguageSelector />
               {userPockets.length > 0 && (
                 <button
                   onClick={handleBackToDashboard}
-                  className="flex items-center space-x-2 px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium min-w-[40px] min-h-[40px] justify-center mobile-btn"
                 >
                   <Home className="w-4 h-4" />
                   <span className="hidden sm:inline">{t('backToDashboard')}</span>
@@ -349,9 +352,10 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
               )}
               <button
                 onClick={handleSignOut}
-                className="px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium min-w-[40px] min-h-[40px] mobile-btn"
               >
-                {tCommon('signOut')}
+                <span className="hidden sm:inline">{tCommon('signOut')}</span>
+                <span className="sm:hidden">Out</span>
               </button>
             </div>
           </div>
@@ -359,18 +363,18 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
       </motion.nav>
 
       {/* Main Content */}
-      <div className="min-h-screen flex items-center justify-center px-4 py-24 relative z-10">
+      <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-16 sm:py-24 relative z-10 mobile-content">
         <div className="max-w-4xl mx-auto w-full">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="text-center mb-6 sm:mb-8"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4 mobile-title">
               {userPockets.length === 0 ? t('title') : t('managePockets')}
             </h1>
-            <p className="text-xl text-white/70 max-w-2xl mx-auto">
+            <p className="text-base sm:text-xl text-white/70 max-w-2xl mx-auto mobile-subtitle">
               {userPockets.length === 0 ? t('subtitle') : t('manageSubtitle')}
             </p>
           </motion.div>
@@ -380,19 +384,19 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
             <button
               onClick={() => setMode('manage')}
-              className="inline-flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-lg font-semibold"
+              className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl sm:rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-sm sm:text-lg font-semibold mobile-btn-lg"
             >
-              <Wallet className="w-6 h-6" />
+              <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
               <span>Manage My Pockets</span>
-              <span className="bg-white/20 px-2 py-1 rounded-lg text-sm font-medium">
+              <span className="bg-white/20 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs sm:text-sm font-medium">
                 {userPockets.length}
               </span>
             </button>
-            <p className="text-white/60 mt-3 text-sm">
+            <p className="text-white/60 mt-2 sm:mt-3 text-xs sm:text-sm">
               View, select, and manage all your existing budget pockets
             </p>
           </motion.div>

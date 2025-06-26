@@ -3,6 +3,8 @@
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { useAuthStore } from '@/store/authStore';
+import { updateUserProfile } from '@/services/authService';
 import { setUserLocale } from '@/i18n/locale';
 import { ChevronDown } from 'lucide-react';
 
@@ -11,6 +13,7 @@ const LanguageSelector: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('languages');
+  const { user, userProfile, setUserProfile } = useAuthStore();
 
   const languages = [
     { code: 'en', name: t('en') },
@@ -18,9 +21,19 @@ const LanguageSelector: React.FC = () => {
     { code: 'ar', name: t('ar') },
   ];
 
-  const handleLanguageChange = (newLocale: string) => {
+  const handleLanguageChange = async (newLocale: string) => {
     // Set the user's locale preference in cookie
     setUserLocale(newLocale as 'en' | 'fr' | 'ar');
+    
+    // Update user's preferred language in their profile if they're logged in
+    if (user && userProfile) {
+      try {
+        await updateUserProfile(user.uid, { preferredLanguage: newLocale });
+        setUserProfile({ ...userProfile, preferredLanguage: newLocale });
+      } catch (error) {
+        console.error('Error updating preferred language:', error);
+      }
+    }
     
     // Navigate to the same page with the new locale
     // pathname is like "/fr" or "/fr/dashboard", we need to replace the first part

@@ -186,6 +186,9 @@ function JoinPageContent() {
               </div>
               
               <div className="flex items-center space-x-4">
+                <div className="hidden sm:flex items-center text-sm text-white/80 font-medium mr-2">
+                  Welcome, {userProfile?.name || user?.displayName || user?.email?.split('@')[0]}
+                </div>
                 <LanguageSelector />
                 <button
                   onClick={() => router.push(`/${locale}/dashboard`)}

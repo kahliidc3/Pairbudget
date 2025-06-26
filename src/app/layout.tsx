@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import AuthProvider from '@/components/AuthProvider';
 import FirebaseErrorBoundary from '@/components/FirebaseErrorBoundary';
 
 const inter = Inter({ 
@@ -21,8 +20,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  minimumScale: 1,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
@@ -34,11 +36,9 @@ export default function RootLayout({
     <html className={`scroll-smooth ${inter.variable}`} lang="en">
       <body className={`${inter.className} font-sans antialiased bg-slate-50 text-slate-900`}>
         <FirebaseErrorBoundary>
-          <AuthProvider>
-            <main className="min-h-screen">
-              {children}
-            </main>
-          </AuthProvider>
+          <main className="min-h-screen">
+            {children}
+          </main>
         </FirebaseErrorBoundary>
       </body>
     </html>

@@ -279,28 +279,228 @@ body {
   background: var(--color-slate-400);
 }
 
-/* Responsive Design */
+/* Mobile Responsive Updates */
 @media (max-width: 768px) {
   .card-base {
     padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
   }
-  
+
   .text-hero {
     font-size: var(--font-size-3xl);
+    line-height: var(--line-height-tight);
   }
-  
+
   .text-title {
     font-size: var(--font-size-xl);
+  }
+
+  /* Mobile Navigation Adjustments */
+  .mobile-nav {
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+  }
+
+  .mobile-nav .nav-content {
+    gap: 0.5rem;
+  }
+
+  .mobile-nav .nav-logo {
+    font-size: 1rem;
+  }
+
+  .mobile-nav .nav-actions {
+    gap: 0.25rem;
+  }
+
+  .mobile-nav .nav-actions button {
+    padding: 0.5rem;
+    min-width: auto;
+  }
+
+  /* Mobile Content Spacing */
+  .mobile-content {
+    padding-top: 6rem !important;
+    padding-bottom: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Mobile Cards */
+  .mobile-card {
+    padding: 1rem;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Mobile Typography */
+  .mobile-title {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-subtitle {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Mobile Buttons */
+  .mobile-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    min-height: 2.75rem;
+  }
+
+  .mobile-btn-lg {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    min-height: 3rem;
+  }
+
+  /* Mobile Grid Adjustments */
+  .mobile-grid-1 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Mobile Form Elements */
+  .mobile-input {
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.75rem;
+  }
+
+  /* Mobile Statistics Cards */
+  .mobile-stat-card {
+    padding: 1.25rem;
+    text-align: center;
+  }
+
+  .mobile-stat-card .stat-value {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .mobile-stat-card .stat-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-stat-card .stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0 auto 0.75rem;
   }
 }
 
 @media (max-width: 640px) {
   .card-base {
     padding: var(--spacing-md);
+    border-radius: var(--radius-md);
   }
-  
+
   .text-hero {
     font-size: var(--font-size-2xl);
+    line-height: var(--line-height-tight);
+  }
+
+  /* Extra Small Mobile Adjustments */
+  .xs-mobile-nav {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .xs-mobile-title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .xs-mobile-subtitle {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .xs-mobile-btn {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+    min-height: 2.5rem;
+  }
+
+  .xs-mobile-card {
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+  }
+
+  /* Compact Statistics for Very Small Screens */
+  .xs-stat-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .xs-stat-card {
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    text-align: left;
+  }
+
+  .xs-stat-card .stat-icon {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 0.75rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .xs-stat-card .stat-content {
+    flex: 1;
+  }
+
+  .xs-stat-card .stat-value {
+    font-size: 1.25rem;
+    line-height: 1.5rem;
+  }
+
+  .xs-stat-card .stat-label {
+    font-size: 0.6875rem;
+    margin-bottom: 0.125rem;
+  }
+
+  .xs-stat-card .stat-desc {
+    font-size: 0.625rem;
+  }
+}
+
+/* Touch-Friendly Interactions */
+@media (hover: none) and (pointer: coarse) {
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .input-base {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Larger touch targets */
+  button, 
+  [role="button"],
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Improved Focus States for Mobile */
+@media (max-width: 768px) {
+  :focus-visible {
+    outline: 2px solid var(--color-blue-600);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 }
 

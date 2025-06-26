@@ -7,7 +7,7 @@ import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { addTransaction, leavePocket, cleanupAllSubscriptions } from '@/services/pocketService';
-import { removePocketFromUser, getUserProfile } from '@/services/authService';
+import { removePocketFromUser, getUserProfile, signOut } from '@/services/authService';
 import { formatCurrency, formatDate, generateInviteLink } from '@/lib/utils';
 import { resetFirestoreConnection } from '@/lib/firebase';
 import { EXPENSE_CATEGORIES } from '@/types';
@@ -38,7 +38,7 @@ import {
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const locale = useLocale();
-  const { user, userProfile, signOut, setUserProfile } = useAuthStore();
+  const { user, userProfile, setUserProfile } = useAuthStore();
   const { currentPocket, transactions, clearPocketData } = usePocketStore();
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
@@ -270,41 +270,48 @@ const Dashboard: React.FC = () => {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
+        className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-2 sm:mx-4"
       >
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
-          <div className="flex items-center justify-between">
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-4 shadow-xl mobile-nav">
+          <div className="flex items-center justify-between nav-content">
             {/* Logo and Pocket Info */}
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+                <Wallet className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">{currentPocket.name}</h1>
-                <p className="text-sm text-white/70">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm sm:text-xl font-bold text-white truncate nav-logo">{currentPocket.name}</h1>
+                <p className="text-xs sm:text-sm text-white/70 hidden sm:block">
                   {userRole === 'provider' ? 'Provider' : 'Spender'} • {Object.keys(currentPocket.roles).length} members
                 </p>
               </div>
             </div>
 
+            {/* User Welcome - Hidden on mobile, shown on desktop */}
+            <div className="hidden lg:flex items-center">
+              <span className="text-sm text-white/80 font-medium">
+                Welcome, {userProfile?.name || user?.displayName || user?.email?.split('@')[0]}
+              </span>
+            </div>
+
             {/* Header Actions */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 sm:space-x-2 nav-actions">
               {/* Pocket Switcher */}
               <PocketSelector onCreateNew={() => router.push(`/${locale}/pocket-setup`)} />
               
               <button
                 onClick={() => setShowInviteCode(true)}
-                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                className="p-1.5 sm:p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center"
                 title="Share Invite Link"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={handleSignOut}
-                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                className="p-1.5 sm:p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center"
                 title="Sign Out"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
@@ -312,29 +319,29 @@ const Dashboard: React.FC = () => {
       </motion.header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-32 relative z-10">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8 pt-20 sm:pt-32 relative z-10 mobile-content">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
           {/* Current Balance */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl"
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-xl mobile-card xs-stat-card sm:block"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-white/70">Current Balance</p>
-                <p className={`text-3xl font-bold ${currentBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className="flex items-center justify-between sm:block">
+              <div className="stat-content sm:mb-4">
+                <p className="text-xs sm:text-sm font-medium text-white/70 stat-label">Current Balance</p>
+                <p className={`text-lg sm:text-3xl font-bold stat-value ${currentBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {formatCurrency(Math.abs(currentBalance))}
                 </p>
-                <p className="text-sm text-white/50 mt-1">
+                <p className="text-xs sm:text-sm text-white/50 mt-1 stat-desc">
                   {currentBalance >= 0 ? 'Available funds' : 'Overspent'}
                 </p>
               </div>
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+              <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center stat-icon ${
                 currentBalance >= 0 ? 'bg-green-500/20 backdrop-blur-sm' : 'bg-red-500/20 backdrop-blur-sm'
               }`}>
-                <DollarSign className={`w-7 h-7 ${
+                <DollarSign className={`w-5 h-5 sm:w-7 sm:h-7 ${
                   currentBalance >= 0 ? 'text-green-400' : 'text-red-400'
                 }`} />
               </div>
@@ -346,16 +353,16 @@ const Dashboard: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl"
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-xl mobile-card xs-stat-card sm:block"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-white/70">Total Funds</p>
-                <p className="text-3xl font-bold text-blue-400">{formatCurrency(totalFunds)}</p>
-                <p className="text-sm text-white/50 mt-1">Added this month</p>
+            <div className="flex items-center justify-between sm:block">
+              <div className="stat-content sm:mb-4">
+                <p className="text-xs sm:text-sm font-medium text-white/70 stat-label">Total Funds</p>
+                <p className="text-lg sm:text-3xl font-bold text-blue-400 stat-value">{formatCurrency(totalFunds)}</p>
+                <p className="text-xs sm:text-sm text-white/50 mt-1 stat-desc">Added this month</p>
               </div>
-              <div className="w-14 h-14 bg-blue-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-7 h-7 text-blue-400" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-blue-500/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center stat-icon">
+                <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-blue-400" />
               </div>
             </div>
           </motion.div>
@@ -365,16 +372,16 @@ const Dashboard: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl"
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-xl mobile-card xs-stat-card sm:block"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-white/70">Total Expenses</p>
-                <p className="text-3xl font-bold text-orange-400">{formatCurrency(totalExpenses)}</p>
-                <p className="text-sm text-white/50 mt-1">Spent this month</p>
+            <div className="flex items-center justify-between sm:block">
+              <div className="stat-content sm:mb-4">
+                <p className="text-xs sm:text-sm font-medium text-white/70 stat-label">Total Expenses</p>
+                <p className="text-lg sm:text-3xl font-bold text-orange-400 stat-value">{formatCurrency(totalExpenses)}</p>
+                <p className="text-xs sm:text-sm text-white/50 mt-1 stat-desc">Spent this month</p>
               </div>
-              <div className="w-14 h-14 bg-orange-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Activity className="w-7 h-7 text-orange-400" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-orange-500/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center stat-icon">
+                <Activity className="w-5 h-5 sm:w-7 sm:h-7 text-orange-400" />
               </div>
             </div>
           </motion.div>

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiGlobe } from 'react-icons/fi';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { signIn, signUp } from '@/services/authService';
+import { clearAuthCache } from '@/lib/utils';
 import LoadingSpinner from './LoadingSpinner';
 
 interface AuthFormProps {
@@ -152,6 +153,20 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
     }));
   };
 
+  const handleClearCacheAndRetry = () => {
+    clearAuthCache();
+    setError('');
+    setSuccess('Cache cleared. Please try signing in again.');
+    // Reset form
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      name: '',
+      preferredLanguage: locale
+    });
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50">
       {/* Subtle Background Pattern */}
@@ -198,22 +213,22 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-3 sm:p-4">
         <div className="w-full max-w-md relative">
           {/* Main Form Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm"
+            className="bg-white rounded-lg sm:rounded-xl p-6 sm:p-8 border border-slate-200 shadow-sm mobile-card"
           >
             {/* Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6 sm:mb-8">
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-3xl font-bold mb-3 text-slate-900"
+                className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 text-slate-900 mobile-title"
               >
                 {mode === 'login' ? t('signIn') : t('signUp')}
               </motion.h1>
@@ -222,7 +237,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="text-slate-600"
+                className="text-sm sm:text-base text-slate-600 mobile-subtitle"
               >
                 {mode === 'login' 
                   ? 'Access your shared budget dashboard' 
@@ -249,15 +264,30 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-red-900">{error}</p>
-                      {error.includes('email address is already registered') && (
-                        <button
-                          type="button"
-                          onClick={onToggleMode}
-                          className="mt-2 text-sm text-red-600 hover:text-red-800 underline font-medium"
-                        >
-                          Sign in instead
-                        </button>
-                      )}
+                      <div className="mt-2 space-y-2">
+                        {error.includes('email address is already registered') && (
+                          <button
+                            type="button"
+                            onClick={onToggleMode}
+                            className="block text-sm text-red-600 hover:text-red-800 underline font-medium"
+                          >
+                            Sign in instead
+                          </button>
+                        )}
+                        {(error.includes('Invalid login credentials') || 
+                          error.includes('user-not-found') || 
+                          error.includes('wrong-password') ||
+                          error.includes('too-many-requests') ||
+                          error.includes('unexpected error')) && (
+                          <button
+                            type="button"
+                            onClick={handleClearCacheAndRetry}
+                            className="block text-sm text-red-600 hover:text-red-800 underline font-medium"
+                          >
+                            Clear cache & retry
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -289,7 +319,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
             </AnimatePresence>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Name and Language Fields for Signup */}
               <AnimatePresence>
                 {mode === 'signup' && (
@@ -315,8 +345,33 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
+                        className="w-full pl-12 pr-4 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white mobile-input text-base"
                       />
+                    </motion.div>
+
+                    {/* Preferred Language Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.8 }}
+                      className="relative group"
+                    >
+                      <FiGlobe className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <select
+                        name="preferredLanguage"
+                        value={formData.preferredLanguage}
+                        onChange={handleInputChange}
+                        className="w-full pl-12 pr-4 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-slate-300 bg-slate-50 text-slate-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white appearance-none mobile-input text-base"
+                      >
+                        <option value="en">English</option>
+                        <option value="fr">Français</option>
+                        <option value="ar">العربية</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     </motion.div>
                   </motion.div>
                 )}
@@ -326,7 +381,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: mode === 'signup' ? 0.9 : 0.7 }}
+                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.0 : 0.7 }}
                 className="relative group"
               >
                 <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -337,7 +392,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
+                  className="w-full pl-12 pr-4 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white mobile-input text-base"
                 />
               </motion.div>
 
@@ -345,7 +400,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.1 : 0.9 }}
+                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.2 : 0.9 }}
                 className="relative group"
               >
                 <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -356,7 +411,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
+                  className="w-full pl-12 pr-12 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white mobile-input text-base"
                 />
                 <button
                   type="button"
@@ -374,7 +429,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.5, delay: 1.3 }}
+                    transition={{ duration: 0.5, delay: 1.4 }}
                     className="relative group"
                   >
                     <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -385,7 +440,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
-                      className="w-full pl-12 pr-12 py-4 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white"
+                      className="w-full pl-12 pr-12 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white mobile-input text-base"
                     />
                     <button
                       type="button"
@@ -405,7 +460,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.4, delay: 1.5 }}
+                    transition={{ duration: 0.4, delay: 1.6 }}
                     className="flex items-start space-x-3"
                   >
                     <input
@@ -433,18 +488,18 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.7 : 1.1 }}
+                transition={{ duration: 0.5, delay: mode === 'signup' ? 1.8 : 1.2 }}
                 type="submit"
                 disabled={isLoading || (mode === 'signup' && !agreeToTerms)}
-                className="w-full py-4 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                className="w-full py-3 sm:py-4 px-4 bg-blue-600 text-white rounded-lg sm:rounded-xl hover:bg-blue-700 transition-all shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 mobile-btn-lg text-base min-h-[48px]"
               >
                 {isLoading ? (
                   <>
                     <LoadingSpinner size="sm" />
-                    <span>{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
+                    <span className="text-sm sm:text-base">{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
                   </>
                 ) : (
-                  <span>{mode === 'login' ? t('signIn') : t('signUp')}</span>
+                  <span className="text-sm sm:text-base">{mode === 'login' ? t('signIn') : t('signUp')}</span>
                 )}
               </motion.button>
             </form>
@@ -453,10 +508,10 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: mode === 'signup' ? 1.9 : 1.3 }}
-              className="text-center mt-6 pt-6 border-t border-slate-200"
+              transition={{ duration: 0.5, delay: mode === 'signup' ? 2.0 : 1.4 }}
+              className="text-center mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-slate-200"
             >
-              <p className="text-slate-600">
+              <p className="text-sm sm:text-base text-slate-600">
                 {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
                 <button
                   type="button"

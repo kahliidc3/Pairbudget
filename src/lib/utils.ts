@@ -27,4 +27,38 @@ export function formatDate(date: Date): string {
 export function generateInviteLink(inviteCode: string): string {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   return `${baseUrl}/join?code=${inviteCode}`;
+}
+
+export function clearAuthCache() {
+  try {
+    // Clear localStorage items that might contain cached auth data
+    const keysToRemove = [
+      'firebase:authUser',
+      'firebase:host',
+      'firebaseui::rememberedAccounts',
+      'firebase:previous_websocket_failure'
+    ];
+    
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Clear any items that start with 'firebase:'
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('firebase:')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Clear sessionStorage as well
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('firebase:')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+    
+    console.log('Auth cache cleared');
+  } catch (error) {
+    console.error('Error clearing auth cache:', error);
+  }
 } 

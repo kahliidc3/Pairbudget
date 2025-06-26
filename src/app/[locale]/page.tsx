@@ -140,36 +140,38 @@ export default function HomePage() {
         <motion.nav
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
+          className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-2 sm:mx-4"
         >
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-white" />
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-4 shadow-xl mobile-nav">
+            <div className="flex items-center justify-between nav-content">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  <Wallet className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <span className="font-bold text-white text-lg">{tNav('pairbudget')}</span>
+                <span className="font-bold text-white text-sm sm:text-lg nav-logo truncate">{tNav('pairbudget')}</span>
               </div>
               
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1 sm:space-x-4 nav-actions">
                 <LanguageSelector />
                 <button
                   onClick={() => {
                     setAuthMode('login');
                     setShowAuth(true);
                   }}
-                  className="px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
+                  className="px-2 sm:px-4 py-1.5 sm:py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium text-sm min-w-[40px] min-h-[40px] mobile-btn"
                 >
-                  {tNav('signIn')}
+                  <span className="hidden sm:inline">{tNav('signIn')}</span>
+                  <span className="sm:hidden">In</span>
                 </button>
                 <button
                   onClick={() => {
                     setAuthMode('signup');
                     setShowAuth(true);
                   }}
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg font-medium"
+                  className="px-3 sm:px-6 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg font-medium text-sm min-w-[40px] min-h-[40px] mobile-btn"
                 >
-                  {tNav('getStarted')}
+                  <span className="hidden sm:inline">{tNav('getStarted')}</span>
+                  <span className="sm:hidden">Start</span>
                 </button>
               </div>
             </div>
@@ -177,21 +179,21 @@ export default function HomePage() {
         </motion.nav>
 
         {/* Hero Section */}
-        <div className="min-h-screen flex items-center justify-center px-4 py-24 relative z-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-16 sm:py-24 relative z-10 mobile-content">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left Content */}
             <motion.div 
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-center lg:text-left space-y-8"
+              className="text-center lg:text-left space-y-6 sm:space-y-8"
             >
               <div>
                 <motion.h1 
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.8 }}
-                  className="text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 leading-tight mobile-title"
                 >
                   <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
                     {t('heroTitle')}
@@ -204,7 +206,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.8 }}
-                  className="text-xl text-slate-200 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0"
+                  className="text-base sm:text-lg lg:text-xl text-slate-200 mb-6 sm:mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 mobile-subtitle"
                 >
                   {t('heroDescription')}
                 </motion.p>
@@ -213,17 +215,17 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.8 }}
-                  className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                  className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start"
                 >
                   <button
                     onClick={() => {
                       setAuthMode('signup');
                       setShowAuth(true);
                     }}
-                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-xl font-semibold text-lg flex items-center justify-center space-x-2 group"
+                    className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-xl font-semibold text-base sm:text-lg flex items-center justify-center space-x-2 group mobile-btn-lg"
                   >
                     <span>{t('startJourney')}</span>
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
                   </button>
                   
                   <button
@@ -231,7 +233,7 @@ export default function HomePage() {
                       setAuthMode('login');
                       setShowAuth(true);
                     }}
-                    className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all border border-white/20 font-semibold text-lg"
+                    className="px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm text-white rounded-lg sm:rounded-xl hover:bg-white/20 transition-all border border-white/20 font-semibold text-base sm:text-lg mobile-btn-lg"
                   >
                     {tNav('signIn')}
                   </button>
@@ -243,19 +245,19 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.8 }}
-                className="grid grid-cols-3 gap-8 pt-8 border-t border-white/20 max-w-lg mx-auto lg:mx-0"
+                className="grid grid-cols-3 gap-4 sm:gap-8 pt-6 sm:pt-8 border-t border-white/20 max-w-lg mx-auto lg:mx-0"
               >
                 <div className="text-center lg:text-left">
-                  <div className="text-3xl font-bold text-blue-400 mb-2">2</div>
-                  <div className="text-sm text-slate-300 font-medium">{t('quickStats.peoplePerPocket')}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-1 sm:mb-2">2</div>
+                  <div className="text-xs sm:text-sm text-slate-300 font-medium">{t('quickStats.peoplePerPocket')}</div>
                 </div>
                 <div className="text-center lg:text-left">
-                  <div className="text-3xl font-bold text-cyan-400 mb-2">∞</div>
-                  <div className="text-sm text-slate-300 font-medium">{t('quickStats.transactions')}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-cyan-400 mb-1 sm:mb-2">∞</div>
+                  <div className="text-xs sm:text-sm text-slate-300 font-medium">{t('quickStats.transactions')}</div>
                 </div>
                 <div className="text-center lg:text-left">
-                  <div className="text-3xl font-bold text-purple-400 mb-2">24/7</div>
-                  <div className="text-sm text-slate-300 font-medium">{t('quickStats.realTimeSync')}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-400 mb-1 sm:mb-2">24/7</div>
+                  <div className="text-xs sm:text-sm text-slate-300 font-medium">{t('quickStats.realTimeSync')}</div>
                 </div>
               </motion.div>
             </motion.div>

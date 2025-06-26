@@ -61,9 +61,20 @@ export const getUserProfile = async (uid: string): Promise<User | null> => {
         createdAt: data.createdAt?.toDate() || new Date(),
       } as User;
     }
+    
+    // User document doesn't exist in Firestore
+    console.warn(`User profile not found for UID: ${uid}`);
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching user profile:', error);
+    
+    // Check if it's a network error or permission error
+    const firebaseError = error as { code?: string };
+    if (firebaseError.code === 'unavailable' || firebaseError.code === 'permission-denied') {
+      console.error('Network or permission error when fetching user profile');
+      throw error; // Re-throw to trigger sign-out in AuthProvider
+    }
+    
     return null;
   }
 };
