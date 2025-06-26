@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { auth } from '@/lib/firebase';
 import { useAuthStore } from '@/store/authStore';
-import { getUserProfile, updateUserProfile, signOut } from '@/services/authService';
+import { getUserProfile, updateUserProfile } from '@/services/authService';
 import { setUserLocale } from '@/i18n/locale';
 import { clearAuthCache } from '@/lib/utils';
 
