@@ -29,7 +29,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
-  const { user, loading } = useAuthStore();
+  const { user, loading, setLoading } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
@@ -72,15 +72,26 @@ export default function HomePage() {
       clearAuthCache();
       await firebaseSignOut(auth);
       
-      // Force reload to clear everything
+      // Show login form directly instead of reloading
       setTimeout(() => {
-        window.location.reload();
+        setAuthMode('login');
+        setShowAuth(true);
+        setLoading(false);
+        // Also update the URL to reflect the auth state
+        const url = new URL(window.location.href);
+        url.searchParams.set('auth', 'login');
+        window.history.replaceState({}, '', url.toString());
       }, 100);
     } catch (error) {
       console.error('Error during emergency reset:', error);
-      // Force reload even if sign out fails
+      // Show login form even if sign out fails
       setTimeout(() => {
-        window.location.reload();
+        setAuthMode('login');
+        setShowAuth(true);
+        setLoading(false);
+        const url = new URL(window.location.href);
+        url.searchParams.set('auth', 'login');
+        window.history.replaceState({}, '', url.toString());
       }, 500);
     }
   };

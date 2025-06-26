@@ -63,13 +63,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setLoading(false);
             
             // Delayed cleanup to prevent redirect conflicts
-            cleanupTimeoutRef.current = setTimeout(() => {
-              if (pathname.includes('/dashboard')) {
-                router.replace(`/${currentLocale}`);
-              } else {
-                window.location.reload();
-              }
-            }, 1000);
+                         cleanupTimeoutRef.current = setTimeout(() => {
+               if (pathname.includes('/dashboard')) {
+                 router.replace(`/${currentLocale}?auth=login`);
+               } else {
+                 router.replace(`/${currentLocale}?auth=login`);
+               }
+             }, 1000);
           } catch (error) {
             console.error('Error force signing out orphaned user:', error);
             // Fallback: redirect to home
@@ -101,18 +101,18 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setLoading(false);
               
               // Graceful redirect without immediate reload
-              cleanupTimeoutRef.current = setTimeout(() => {
-                console.log('Redirecting orphaned user to login');
-                if (pathname.includes('/dashboard')) {
-                  router.replace(`/${currentLocale}`);
-                } else {
-                  window.location.reload();
-                }
-              }, 500);
+                             cleanupTimeoutRef.current = setTimeout(() => {
+                 console.log('Redirecting orphaned user to login');
+                 if (pathname.includes('/dashboard')) {
+                   router.replace(`/${currentLocale}?auth=login`);
+                 } else {
+                   router.replace(`/${currentLocale}?auth=login`);
+                 }
+               }, 500);
             } catch (signOutError) {
               console.error('Error signing out orphaned user:', signOutError);
-              // Fallback: redirect to home
-              router.replace(`/${currentLocale}`);
+              // Fallback: redirect to login
+              router.replace(`/${currentLocale}?auth=login`);
             } finally {
               signOutAttemptRef.current = false;
             }
@@ -172,13 +172,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(null);
             setUserProfile(null);
             
-            cleanupTimeoutRef.current = setTimeout(() => {
-              router.replace(`/${currentLocale}`);
-            }, 500);
-          } catch (signOutError) {
-            console.error('Error signing out after profile fetch error:', signOutError);
-            router.replace(`/${currentLocale}`);
-          } finally {
+                         cleanupTimeoutRef.current = setTimeout(() => {
+               router.replace(`/${currentLocale}?auth=login`);
+             }, 500);
+                      } catch (signOutError) {
+              console.error('Error signing out after profile fetch error:', signOutError);
+              router.replace(`/${currentLocale}?auth=login`);
+            } finally {
             signOutAttemptRef.current = false;
           }
         }
