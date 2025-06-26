@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { addTransaction, leavePocket, cleanupAllSubscriptions } from '@/services/pocketService';
@@ -14,15 +14,13 @@ import { EXPENSE_CATEGORIES } from '@/types';
 import PocketSelector from '@/components/PocketSelector';
 
 import { 
-  Plus, 
   Share2, 
   LogOut, 
   TrendingUp, 
   Wallet,
   Copy,
   Check,
-  Calendar,
-  User,
+
   UserMinus,
   AlertTriangle,
   RefreshCw,
@@ -40,8 +38,6 @@ import {
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const locale = useLocale();
-  const t = useTranslations('dashboard');
-  const tCommon = useTranslations('common');
   const { user, userProfile, signOut, setUserProfile } = useAuthStore();
   const { currentPocket, transactions, clearPocketData } = usePocketStore();
   const [showTransactionForm, setShowTransactionForm] = useState(false);

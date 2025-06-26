@@ -17,13 +17,10 @@ import {
   CreditCard,
   Plus,
   UserPlus,
-  Sparkles,
   AlertCircle,
   Trash2,
   Users,
-  TrendingUp,
   Calendar,
-  ArrowLeft,
   Home,
   X,
   AlertTriangle

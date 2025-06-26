@@ -18,10 +18,7 @@ import {
   ArrowRight,
   Wallet,
   TrendingUp,
-  CreditCard,
-  CheckCircle,
-  Activity,
-  Globe
+  CreditCard
 } from 'lucide-react';
 
 // Force dynamic rendering

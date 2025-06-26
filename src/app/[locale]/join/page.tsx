@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
@@ -33,7 +33,7 @@ function JoinPageContent() {
   const [error, setError] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>('spender');
   const [loadingPockets, setLoadingPockets] = useState(true);
-  const [userPockets, setUserPockets] = useState<any[]>([]);
+  const [userPockets, setUserPockets] = useState<Pocket[]>([]);
   const { user, userProfile, setUserProfile } = useAuthStore();
   const { setCurrentPocket } = usePocketStore();
   const router = useRouter();
@@ -82,7 +82,7 @@ function JoinPageContent() {
     if (userProfile) {
       loadUserPockets();
     }
-  }, [userProfile?.pocketIds]);
+  }, [userProfile?.pocketIds, userProfile]);
 
   const handleJoin = async () => {
     if (!user || !userProfile || !inviteCode) return;
@@ -387,7 +387,7 @@ function JoinPageContent() {
                 <div className="mb-6 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
                   <h4 className="font-semibold text-white mb-3 flex items-center space-x-2">
                     <Sparkles className="w-4 h-4 text-purple-400" />
-                    <span>What you'll get access to:</span>
+                    <span>What you&apos;ll get access to:</span>
                   </h4>
                   <div className="space-y-2 text-sm text-white/70">
                     <div className="flex items-center space-x-2">
