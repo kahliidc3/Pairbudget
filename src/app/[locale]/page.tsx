@@ -10,6 +10,9 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import FirebaseStatus from '@/components/FirebaseStatus';
 import LanguageSelector from '@/components/LanguageSelector';
 import { isFirebaseConfigured } from '@/lib/firebase-init';
+import { clearAuthCache } from '@/lib/utils';
+import { signOut as firebaseSignOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { 
   Users, 
   Shield, 
@@ -18,7 +21,8 @@ import {
   ArrowRight,
   Wallet,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  RefreshCw
 } from 'lucide-react';
 
 // Force dynamic rendering
@@ -62,6 +66,25 @@ export default function HomePage() {
     setAuthMode(mode => mode === 'login' ? 'signup' : 'login');
   };
 
+  const handleEmergencyReset = async () => {
+    try {
+      console.log('Emergency reset initiated...');
+      clearAuthCache();
+      await firebaseSignOut(auth);
+      
+      // Force reload to clear everything
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    } catch (error) {
+      console.error('Error during emergency reset:', error);
+      // Force reload even if sign out fails
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    }
+  };
+
   // Check if Firebase is configured first
   if (!isFirebaseConfigured()) {
     return <FirebaseStatus />;
@@ -72,7 +95,17 @@ export default function HomePage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 text-center max-w-md w-full mx-4">
           <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-slate-600 font-medium">{tCommon('loading')}</p>
+          <p className="text-slate-600 font-medium mb-6">{tCommon('loading')}</p>
+          <p className="text-slate-500 text-sm mb-4">
+            Taking longer than expected? This might be due to authentication cache issues.
+          </p>
+          <button
+            onClick={handleEmergencyReset}
+            className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Emergency Reset
+          </button>
         </div>
       </div>
     );

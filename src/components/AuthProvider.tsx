@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { auth } from '@/lib/firebase';
@@ -21,6 +21,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const currentLocale = useLocale();
   const hasRedirectedRef = useRef(false);
   const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const orphanedUsersRef = useRef<Set<string>>(new Set());
+  const signOutAttemptRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Set a timeout to prevent infinite loading
@@ -36,20 +38,75 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         authTimeoutRef.current = null;
       }
 
+      // If we're in the middle of signing out, ignore this auth state change
+      if (signOutAttemptRef.current) {
+        console.log('Ignoring auth state change during sign-out process');
+        return;
+      }
+
       setUser(user);
       
       if (user) {
+        // Check if this user has already been identified as orphaned
+        if (orphanedUsersRef.current.has(user.uid)) {
+          console.warn(`Orphaned user ${user.uid} trying to re-authenticate. Force signing out...`);
+          signOutAttemptRef.current = true;
+          
+          try {
+            clearAuthCache();
+            await firebaseSignOut(auth); // Use Firebase's direct signOut
+            
+            // Clear all local state immediately
+            setUser(null);
+            setUserProfile(null);
+            setLoading(false);
+            
+            // Force reload to clear any remaining auth state
+            setTimeout(() => {
+              window.location.reload();
+            }, 100);
+          } catch (error) {
+            console.error('Error force signing out orphaned user:', error);
+          } finally {
+            signOutAttemptRef.current = false;
+          }
+          return;
+        }
+
         try {
           const userProfile = await getUserProfile(user.uid);
           
           // If user exists in Firebase Auth but not in our database, sign them out
           if (!userProfile) {
             console.warn(`User ${user.uid} exists in Firebase Auth but not in database. Signing out...`);
-            clearAuthCache(); // Clear cached auth data
-            await signOut();
-            setUser(null);
-            setUserProfile(null);
-            setLoading(false);
+            
+            // Mark this user as orphaned to prevent re-authentication loops
+            orphanedUsersRef.current.add(user.uid);
+            signOutAttemptRef.current = true;
+            
+            try {
+              clearAuthCache();
+              await firebaseSignOut(auth); // Use Firebase's direct signOut
+              
+              // Clear all local state immediately
+              setUser(null);
+              setUserProfile(null);
+              setLoading(false);
+              
+              // Force reload to clear any remaining auth state
+              setTimeout(() => {
+                console.log('Reloading page to clear orphaned user session');
+                window.location.reload();
+              }, 500);
+            } catch (signOutError) {
+              console.error('Error signing out orphaned user:', signOutError);
+              // Force reload even if sign out fails
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            } finally {
+              signOutAttemptRef.current = false;
+            }
             return;
           }
 
@@ -96,20 +153,35 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         } catch (error) {
           console.error('Error fetching user profile:', error);
-          // If there's an error fetching profile, sign out the user to prevent loading loop
+          // If there's an error fetching profile, treat as orphaned user
+          orphanedUsersRef.current.add(user.uid);
+          signOutAttemptRef.current = true;
+          
           try {
-            clearAuthCache(); // Clear cached auth data
-            await signOut();
+            clearAuthCache();
+            await firebaseSignOut(auth);
             setUser(null);
             setUserProfile(null);
+            
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
           } catch (signOutError) {
             console.error('Error signing out after profile fetch error:', signOutError);
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } finally {
+            signOutAttemptRef.current = false;
           }
         }
       } else {
         setUserProfile(null);
         // Reset redirect flag when user signs out
         hasRedirectedRef.current = false;
+        // Clear orphaned users list when successfully signed out
+        orphanedUsersRef.current.clear();
+        signOutAttemptRef.current = false;
       }
       
       setLoading(false);

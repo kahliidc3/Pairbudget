@@ -31,34 +31,64 @@ export function generateInviteLink(inviteCode: string): string {
 
 export function clearAuthCache() {
   try {
+    console.log('Starting aggressive auth cache clearing...');
+    
     // Clear localStorage items that might contain cached auth data
     const keysToRemove = [
       'firebase:authUser',
       'firebase:host',
       'firebaseui::rememberedAccounts',
-      'firebase:previous_websocket_failure'
+      'firebase:previous_websocket_failure',
+      'firebase:persistence',
+      'firebase:persistenceKey'
     ];
     
     keysToRemove.forEach(key => {
       localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
     });
     
     // Clear any items that start with 'firebase:'
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('firebase:')) {
+      if (key.startsWith('firebase:') || key.includes('firebase')) {
         localStorage.removeItem(key);
+        console.log(`Removed localStorage key: ${key}`);
       }
     });
     
     // Clear sessionStorage as well
     Object.keys(sessionStorage).forEach(key => {
-      if (key.startsWith('firebase:')) {
+      if (key.startsWith('firebase:') || key.includes('firebase')) {
         sessionStorage.removeItem(key);
+        console.log(`Removed sessionStorage key: ${key}`);
       }
     });
     
-    console.log('Auth cache cleared');
+    // Clear any IndexedDB data related to Firebase
+    if ('indexedDB' in window) {
+      try {
+        // Firebase uses IndexedDB for persistence
+        indexedDB.deleteDatabase('firebaseLocalStorageDb');
+        console.log('Deleted Firebase IndexedDB');
+      } catch (error) {
+        console.warn('Could not delete Firebase IndexedDB:', error);
+      }
+    }
+    
+    // Clear cookies related to Firebase if possible
+    if (document.cookie) {
+      document.cookie.split(";").forEach(cookie => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        if (name.includes('firebase') || name.includes('Firebase')) {
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          console.log(`Cleared cookie: ${name}`);
+        }
+      });
+    }
+    
+    console.log('Aggressive auth cache clearing completed');
   } catch (error) {
-    console.error('Error clearing auth cache:', error);
+    console.error('Error during aggressive auth cache clearing:', error);
   }
 } 
