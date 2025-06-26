@@ -73,11 +73,15 @@ export default function DashboardPage() {
 
   // Handle authentication redirect
   useEffect(() => {
-    if (!userStatus.isAuthenticated) {
-      router.push(`/${locale}`);
-      return;
+    if (!authLoading && !userStatus.isAuthenticated) {
+      // Immediate redirect for unauthenticated users
+      const timeoutId = setTimeout(() => {
+        router.replace(`/${locale}`);
+      }, 100); // Very short delay to prevent race conditions
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [userStatus.isAuthenticated, router, locale]);
+  }, [userStatus.isAuthenticated, authLoading, router, locale]);
 
   // Setup subscriptions with optimized logic
   useEffect(() => {
@@ -162,9 +166,9 @@ export default function DashboardPage() {
 
   // Optimized loading conditions - only show loading when truly necessary
   const shouldShowLoading = authLoading || 
-                           !userStatus.isAuthenticated || 
                            (!initialLoadComplete && userStatus.hasProfile && userStatus.currentPocketId);
 
+  // Show loading only for authenticated users with valid profiles
   if (shouldShowLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -173,15 +177,24 @@ export default function DashboardPage() {
             size="lg" 
             className="mb-6" 
             showProgress={true}
-            text={authLoading ? 'Authenticating...' : 
-                  !userStatus.isAuthenticated ? 'Redirecting to login...' : 
-                  'Loading your budget...'}
+            text={authLoading ? 'Authenticating...' : 'Loading your budget...'}
           />
           <div className="mt-4 text-sm text-slate-600 font-medium">
-            {authLoading ? 'Verifying your credentials...' :
-             !userStatus.isAuthenticated ? 'Please wait while we redirect you...' :
-             'Setting up your financial dashboard...'}
+            {authLoading ? 'Verifying your credentials...' : 'Setting up your financial dashboard...'}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle unauthenticated users - this should be very brief due to the redirect
+  if (!userStatus.isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center max-w-md w-full mx-4 shadow-sm">
+          <LoadingSpinner size="lg" className="mb-4" />
+          <p className="text-slate-600 font-medium mb-2">Redirecting...</p>
+          <p className="text-slate-500 text-sm">Taking you back to the login page</p>
         </div>
       </div>
     );

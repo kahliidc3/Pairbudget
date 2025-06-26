@@ -23,6 +23,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const orphanedUsersRef = useRef<Set<string>>(new Set());
   const signOutAttemptRef = useRef<boolean>(false);
+  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Set a timeout to prevent infinite loading
@@ -54,19 +55,25 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           try {
             clearAuthCache();
-            await firebaseSignOut(auth); // Use Firebase's direct signOut
+            await firebaseSignOut(auth);
             
             // Clear all local state immediately
             setUser(null);
             setUserProfile(null);
             setLoading(false);
             
-            // Force reload to clear any remaining auth state
-            setTimeout(() => {
-              window.location.reload();
-            }, 100);
+            // Delayed cleanup to prevent redirect conflicts
+            cleanupTimeoutRef.current = setTimeout(() => {
+              if (pathname.includes('/dashboard')) {
+                router.replace(`/${currentLocale}`);
+              } else {
+                window.location.reload();
+              }
+            }, 1000);
           } catch (error) {
             console.error('Error force signing out orphaned user:', error);
+            // Fallback: redirect to home
+            router.replace(`/${currentLocale}`);
           } finally {
             signOutAttemptRef.current = false;
           }
@@ -86,24 +93,26 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
             try {
               clearAuthCache();
-              await firebaseSignOut(auth); // Use Firebase's direct signOut
+              await firebaseSignOut(auth);
               
               // Clear all local state immediately
               setUser(null);
               setUserProfile(null);
               setLoading(false);
               
-              // Force reload to clear any remaining auth state
-              setTimeout(() => {
-                console.log('Reloading page to clear orphaned user session');
-                window.location.reload();
+              // Graceful redirect without immediate reload
+              cleanupTimeoutRef.current = setTimeout(() => {
+                console.log('Redirecting orphaned user to login');
+                if (pathname.includes('/dashboard')) {
+                  router.replace(`/${currentLocale}`);
+                } else {
+                  window.location.reload();
+                }
               }, 500);
             } catch (signOutError) {
               console.error('Error signing out orphaned user:', signOutError);
-              // Force reload even if sign out fails
-              setTimeout(() => {
-                window.location.reload();
-              }, 1000);
+              // Fallback: redirect to home
+              router.replace(`/${currentLocale}`);
             } finally {
               signOutAttemptRef.current = false;
             }
@@ -163,14 +172,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(null);
             setUserProfile(null);
             
-            setTimeout(() => {
-              window.location.reload();
+            cleanupTimeoutRef.current = setTimeout(() => {
+              router.replace(`/${currentLocale}`);
             }, 500);
           } catch (signOutError) {
             console.error('Error signing out after profile fetch error:', signOutError);
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
+            router.replace(`/${currentLocale}`);
           } finally {
             signOutAttemptRef.current = false;
           }
@@ -191,6 +198,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       unsubscribe();
       if (authTimeoutRef.current) {
         clearTimeout(authTimeoutRef.current);
+      }
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
       }
     };
   }, [setUser, setUserProfile, setLoading, router, pathname, currentLocale]);
