@@ -1,46 +1,57 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  text?: string;
+  showProgress?: boolean;
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
   size = 'md', 
-  className = '' 
+  className = '',
+  text,
+  showProgress = false
 }) => {
-  const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-8 h-8',
-    lg: 'w-12 h-12'
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'sm':
+        return 'h-4 w-4';
+      case 'lg':
+        return 'h-12 w-12';
+      default:
+        return 'h-8 w-8';
+    }
   };
 
   return (
-    <div className={`inline-flex items-center justify-center ${className}`}>
-      <motion.div
-        className={`${sizeClasses[size]} border-2 border-transparent rounded-full`}
-        style={{
-          background: 'linear-gradient(45deg, #8B5FBF, #4F7EF7)',
-          backgroundClip: 'padding-box',
-        }}
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
+    <div className={`flex flex-col items-center justify-center ${className}`}>
+      <div className="relative">
+        {/* Main spinner */}
         <div 
-          className="w-full h-full rounded-full border-2 border-transparent"
-          style={{
-            background: 'linear-gradient(45deg, transparent, transparent, #FFFFFF)',
-            backgroundClip: 'padding-box',
-          }}
+          className={`${getSizeClasses()} border-2 border-gray-200 border-t-purple-500 rounded-full animate-spin`}
+          style={{ animationDuration: '0.8s' }}
         />
-      </motion.div>
+        
+        {/* Optional progress ring */}
+        {showProgress && (
+          <div 
+            className={`${getSizeClasses()} absolute inset-0 border-2 border-transparent border-t-blue-400 rounded-full animate-spin opacity-50`}
+            style={{ animationDuration: '1.2s', animationDirection: 'reverse' }}
+          />
+        )}
+      </div>
+      
+      {text && (
+        <p className={`mt-3 text-gray-600 animate-pulse ${
+          size === 'sm' ? 'text-sm' : 
+          size === 'lg' ? 'text-lg' : 'text-base'
+        }`}>
+          {text}
+        </p>
+      )}
     </div>
   );
 };

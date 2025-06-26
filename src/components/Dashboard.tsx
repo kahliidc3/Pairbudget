@@ -3,20 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { addTransaction, leavePocket, cleanupAllSubscriptions } from '@/services/pocketService';
 import { removePocketFromUser, getUserProfile } from '@/services/authService';
-import PocketSelector from '@/components/PocketSelector';
 import { formatCurrency, formatDate, generateInviteLink } from '@/lib/utils';
 import { resetFirestoreConnection } from '@/lib/firebase';
 import { EXPENSE_CATEGORIES } from '@/types';
+import PocketSelector from '@/components/PocketSelector';
+import PocketSetup from '@/components/PocketSetup';
 import { 
   Plus, 
   Share2, 
   LogOut, 
   TrendingUp, 
-  TrendingDown, 
   Wallet,
   Copy,
   Check,
@@ -25,25 +26,23 @@ import {
   UserMinus,
   AlertTriangle,
   RefreshCw,
-  Users,
   X,
   ArrowUpRight,
   ArrowDownRight,
   Receipt
 } from 'lucide-react';
-// Using Font Awesome CSS classes instead of React components for better compatibility
 
-interface DashboardProps {
-  onCreateNewPocket?: () => void;
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
+const Dashboard: React.FC = () => {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
   const { user, userProfile, signOut, setUserProfile } = useAuthStore();
   const { currentPocket, transactions, clearPocketData } = usePocketStore();
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [showLeavePocketModal, setShowLeavePocketModal] = useState(false);
+  const [showPocketSetup, setShowPocketSetup] = useState(false);
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [leavePocketLoading, setLeavePocketLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -226,338 +225,370 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
     }
   };
 
-  const balanceColor = (currentPocket?.balance ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500';
-  const BalanceIcon = (currentPocket?.balance ?? 0) >= 0 ? TrendingUp : TrendingDown;
-
-  if (!currentPocket || !userProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="card-floating animate-scale-in p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-center">Loading your budget...</p>
-        </div>
-      </div>
-    );
+  if (!user || !userProfile || !currentPocket) {
+    return null;
   }
 
+  const balance = currentPocket.balance || 0;
+  const totalFunded = transactions
+    .filter(t => t.type === 'fund')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const totalSpent = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      {/* Navigation Header */}
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-nav fixed top-3 md:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl mx-3 md:mx-0"
-      >
-        <div className="flex items-center justify-between px-3 md:px-4">
-          <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
-            <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
-              <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                <Wallet className="w-3 h-3 md:w-5 md:h-5 text-white" />
-              </div>
-              <span className="font-semibold text-gray-800 text-sm md:text-base hidden sm:block">PairBudget</span>
-        </div>
-            
-            {/* Pocket Selector */}
-            <div className="flex-1 min-w-0">
-              <PocketSelector onCreateNew={onCreateNewPocket || (() => {
-                // Fallback behavior
-                window.location.reload();
-              })} />
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden">
+      {/* Grid Pattern Background */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '20px 20px'
+        }}></div>
       </div>
 
-          <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
-            <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600">
-              <span className="truncate max-w-32">Welcome, {userProfile?.name || user?.email?.split('@')[0]}</span>
-              <span className="text-gray-400">•</span>
-              <span className="capitalize text-blue-600 font-medium">{userRole}</span>
-            </div>
-            
-            <div className="flex items-center space-x-1 md:space-x-2">
-              {showRecoveryButton && (
-                <button
-                  onClick={handleFirebaseRecovery}
-                  disabled={isRecovering}
-                  className="p-1.5 md:p-2 text-blue-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
-                  title="Manual Firebase Recovery"
-                >
-                  <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isRecovering ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-              
-              <button
-                onClick={() => setShowInviteCode(true)}
-                className="p-1.5 md:p-2 text-gray-500 hover:text-blue-500 transition-colors rounded-lg hover:bg-blue-50"
-                title="Share Invite Code"
-              >
-                <Share2 className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
-              
-              <button
-                onClick={signOut}
-                className="p-1.5 md:p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.header>
-
-      <div className="max-w-6xl mx-auto pt-20 md:pt-24 space-y-6 md:space-y-8">
-        {/* Pocket Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6 md:mb-8 px-4"
-        >
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 truncate">{currentPocket.name}</h1>
-          <div className="flex items-center justify-center space-x-2 md:space-x-3 text-sm md:text-base text-gray-600 flex-wrap">
-            <div className="flex items-center space-x-1">
-              <Users className="w-4 h-4 md:w-5 md:h-5" />
-              <span>{currentPocket.participants.length} members</span>
-            </div>
-            <span className="text-gray-400 hidden sm:inline">•</span>
-            <span className="capitalize">You are the {userRole}</span>
-          </div>
-        </motion.div>
-
-        {/* Stats Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8 px-4"
-        >
-          {/* Current Balance */}
-          <div className="stat-card-balance card-floating col-span-1 sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center justify-between mb-3 md:mb-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-                <BalanceIcon className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </div>
-              <span className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide text-right">Current Balance</span>
-            </div>
-            <div className={`text-2xl md:text-3xl font-bold ${balanceColor} mb-1 md:mb-2`}>
-              {formatCurrency(currentPocket.balance)}
-            </div>
-            <p className="text-xs md:text-sm text-gray-600">
-              {currentPocket.balance >= 0 ? 'Available to spend' : 'Over budget'}
-            </p>
-          </div>
-
-          {/* Total Funded */}
-          <div className="stat-card-funded card-floating">
-            <div className="flex items-center justify-between mb-3 md:mb-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </div>
-              <span className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide text-right">Total Funded</span>
-            </div>
-            <div className="text-2xl md:text-3xl font-bold text-blue-600 mb-1 md:mb-2">
-              {formatCurrency(currentPocket.totalFunded)}
-            </div>
-            <p className="text-xs md:text-sm text-gray-600">Money added to pocket</p>
-          </div>
-
-          {/* Total Spent */}
-          <div className="stat-card-spent card-floating">
-            <div className="flex items-center justify-between mb-3 md:mb-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </div>
-              <span className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide text-right">Total Spent</span>
-            </div>
-            <div className="text-2xl md:text-3xl font-bold text-orange-600 mb-1 md:mb-2">
-              {formatCurrency(currentPocket.totalSpent)}
-            </div>
-            <p className="text-xs md:text-sm text-gray-600">Money spent from pocket</p>
-          </div>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 px-4">
-          {/* Actions */}
+      {/* Animated Background Shapes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(8)].map((_, i) => (
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-1"
-          >
-            <div className="card-floating">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6">Quick Actions</h2>
-              
-              <div className="space-y-3 md:space-y-4">
-                {canAddFunds && (
-                  <button
-                    onClick={() => {
-                      setFormData({ ...formData, type: 'fund' });
-                      setShowTransactionForm(true);
-                    }}
-                    className="w-full p-3 md:p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 flex items-center space-x-3 group"
-                  >
-                    <div className="quick-action-icon group-hover:scale-110">
-                      <i className="fas fa-money-bill-wave"></i>
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm md:text-base">Add Funds</div>
-                      <div className="text-xs md:text-sm opacity-90">Add money to pocket</div>
-                    </div>
-                  </button>
-                )}
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: `${Math.random() * 60 + 40}px`,
+              height: `${Math.random() * 60 + 40}px`,
+              background: i % 3 === 0 
+                ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)'
+                : i % 3 === 1 
+                ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)',
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              filter: 'blur(1px)',
+            }}
+            animate={{
+              x: [0, Math.random() * 100, 0],
+              y: [0, Math.random() * 100, 0],
+              scale: [1, 1.3, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: Math.random() * 15 + 10,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
+      </div>
 
-                {canAddExpenses && (
-                  <button
-                    onClick={() => {
-                      setFormData({ ...formData, type: 'expense' });
-                      setShowTransactionForm(true);
-                    }}
-                    className="w-full p-3 md:p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 flex items-center space-x-3 group"
-                  >
-                    <div className="quick-action-icon group-hover:scale-110">
-                      <i className="fas fa-shopping-cart"></i>
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm md:text-base">Add Expense</div>
-                      <div className="text-xs md:text-sm opacity-90">Record a purchase</div>
-                    </div>
-                  </button>
-                )}
+      {/* Accent Glows */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-indigo-400/4 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-purple-400/3 rounded-full blur-3xl" />
 
-                <button
-                  onClick={() => setShowInviteCode(true)}
-                  className="w-full p-3 md:p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center space-x-3 group"
-                >
-                  <div className="quick-action-icon group-hover:scale-110">
-                    <i className="fas fa-user-plus"></i>
+      {/* Content */}
+      <div className="relative z-10 min-h-screen">
+      {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/10 backdrop-blur-lg border-b border-white/20 sticky top-0 z-50"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 md:h-20">
+              <div className="flex items-center space-x-3 md:space-x-6 rtl:space-x-reverse">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <Wallet className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
-                  <div className="text-left">
-                    <div className="font-medium text-sm md:text-base">Invite Partner</div>
-                    <div className="text-xs md:text-sm opacity-90">Share invite code</div>
+                  <div>
+                    <h1 className="text-lg md:text-xl font-bold text-white">PairBudget</h1>
+                    <div className="flex items-center space-x-2 text-sm text-gray-300">
+                      <span className="capitalize text-blue-400 font-medium">{t(`role.${userRole}`)}</span>
+                    </div>
                   </div>
-                </button>
+                </div>
+                
+                {/* Pocket Selector */}
+                <div className="flex-1 max-w-xs">
+                  <PocketSelector onCreateNew={() => setShowPocketSetup(true)} />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+                <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-300">
+                  <span className="truncate max-w-32">{t('welcome')}, {userProfile?.name || user?.email?.split('@')[0]}</span>
+                  <span className="text-gray-400">•</span>
+                  <span className="capitalize text-blue-400 font-medium">{t('youAreThe')} {t(`role.${userRole}`)}</span>
+                </div>
+                
+                <div className="flex items-center space-x-1 md:space-x-2">
+                  {showRecoveryButton && (
+                    <button
+                      onClick={handleFirebaseRecovery}
+                      disabled={isRecovering}
+                      className="p-1.5 md:p-2 text-blue-400 hover:text-blue-300 transition-colors rounded-lg hover:bg-white/10"
+                      title="Manual Firebase Recovery"
+                    >
+                      <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isRecovering ? 'animate-spin' : ''}`} />
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => setShowInviteCode(true)}
+                    className="p-1.5 md:p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
+                    title={t('quickActions.invitePartnerDesc')}
+                  >
+                    <Share2 className="w-4 h-4 md:w-5 md:h-5" />
+                  </button>
+                  
+                  <button
+                    onClick={signOut}
+                    className="p-1.5 md:p-2 text-gray-300 hover:text-red-400 transition-colors rounded-lg hover:bg-white/10"
+                    title={tCommon('signOut')}
+                  >
+                    <LogOut className="w-4 h-4 md:w-5 md:h-5" />
+                  </button>
+                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
+        </motion.header>
 
-          {/* Recent Transactions */}
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+          {/* Stats Cards */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="lg:col-span-2"
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8"
           >
-            <div className="card-floating">
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <h2 className="text-lg md:text-xl font-semibold text-gray-800">Recent Transactions</h2>
-                <div className="flex items-center space-x-2 md:space-x-3">
+            {/* Current Balance */}
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.currentBalance')}</span>
+              </div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                {formatCurrency(balance)}
+              </div>
+              <p className="text-sm text-gray-300">
+                {balance >= 0 ? t('stats.availableToSpend') : t('stats.overBudget')}
+              </p>
+            </div>
+
+            {/* Total Funded */}
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                  <ArrowUpRight className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.totalFunded')}</span>
+              </div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                {formatCurrency(totalFunded)}
+              </div>
+              <p className="text-sm text-gray-300">{t('stats.moneyAdded')}</p>
+            </div>
+
+            {/* Total Spent */}
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                  <ArrowDownRight className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.totalSpent')}</span>
+              </div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                {formatCurrency(totalSpent)}
+              </div>
+              <p className="text-sm text-gray-300">{t('stats.moneySpent')}</p>
+            </div>
+          </motion.div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-4 shadow-xl">
+                <h2 className="text-lg font-semibold text-white mb-4">{t('quickActions.title')}</h2>
+                
+                <div className="space-y-2">
+                  {canAddFunds && (
+                    <button
+                      onClick={() => {
+                        setFormData({ ...formData, type: 'fund' });
+                        setShowTransactionForm(true);
+                      }}
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-3 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center space-x-2 group"
+                    >
+                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <Plus className="w-4 h-4" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-sm">{t('quickActions.addFunds')}</div>
+                      </div>
+                    </button>
+                  )}
+
+                  {canAddExpenses && (
+                    <button
+                      onClick={() => {
+                        setFormData({ ...formData, type: 'expense' });
+                        setShowTransactionForm(true);
+                      }}
+                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg p-3 hover:from-orange-600 hover:to-red-600 transition-all shadow-lg shadow-orange-500/25 flex items-center space-x-2 group"
+                    >
+                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <Receipt className="w-4 h-4" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-sm">{t('quickActions.addExpense')}</div>
+                      </div>
+                    </button>
+                  )}
+
                   <button
-                    onClick={() => router.push('/all-transactions')}
-                    className="text-xs md:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    onClick={() => setShowInviteCode(true)}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-3 hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/25 flex items-center space-x-2 group"
                   >
-                    View All
+                    <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                      <Share2 className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-sm">{t('quickActions.invitePartner')}</div>
+                    </div>
                   </button>
-                  <Calendar className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                 </div>
               </div>
+            </motion.div>
 
-              {recentTransactions.length > 0 ? (
-                <div className="space-y-3 md:space-y-4">
-                  {recentTransactions.map((transaction) => (
-                    <motion.div
-                      key={transaction.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+            {/* Recent Transactions */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg md:text-xl font-semibold text-white">{t('recentTransactions.title')}</h2>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => router.push(`/${locale}/all-transactions`)}
+                      className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
                     >
-                      <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
-                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          transaction.type === 'fund' 
-                            ? 'bg-blue-100 text-blue-600' 
-                            : 'bg-orange-100 text-orange-600'
-                        }`}>
-                          {transaction.type === 'fund' ? (
-                            <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5" />
-                          ) : (
-                            <ArrowDownRight className="w-4 h-4 md:w-5 md:h-5" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-gray-900 text-sm md:text-base truncate">{transaction.description}</div>
-                          <div className="flex items-center space-x-2 md:space-x-3 text-xs md:text-sm text-gray-500 flex-wrap">
-                            <span className="flex items-center space-x-1">
-                              <User className="w-3 h-3" />
-                              <span className="truncate max-w-20 md:max-w-none">{userNames[transaction.userId] || 'Loading...'}</span>
-                            </span>
-                            <span className="hidden sm:inline">{transaction.category}</span>
-                            <span className="hidden md:inline">{formatDate(transaction.date)}</span>
+                      {t('recentTransactions.viewAll')}
+                    </button>
+                    <Calendar className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+
+                {recentTransactions.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentTransactions.map((transaction) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center justify-between p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+                      >
+                        <div className="flex items-center space-x-4 flex-1 min-w-0">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            transaction.type === 'fund' 
+                              ? 'bg-blue-500/20 text-blue-400' 
+                              : 'bg-orange-500/20 text-orange-400'
+                          }`}>
+                            {transaction.type === 'fund' ? (
+                              <ArrowUpRight className="w-5 h-5" />
+                            ) : (
+                              <ArrowDownRight className="w-5 h-5" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-white text-base truncate">{transaction.description}</div>
+                            <div className="flex items-center space-x-3 text-sm text-gray-300 flex-wrap">
+                              <span className="flex items-center space-x-1">
+                                <User className="w-3 h-3" />
+                                <span className="truncate max-w-20 md:max-w-none">{userNames[transaction.userId] || 'Loading...'}</span>
+                              </span>
+                              <span className="hidden sm:inline">{transaction.category}</span>
+                              <span className="hidden md:inline">{formatDate(transaction.date)}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className={`text-sm md:text-lg font-semibold flex-shrink-0 ${
-                        transaction.type === 'fund' ? 'text-blue-600' : 'text-orange-600'
-                      }`}>
-                        {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Receipt className="w-8 h-8 text-gray-400" />
+                        <div className={`text-lg font-semibold flex-shrink-0 ${
+                          transaction.type === 'fund' ? 'text-blue-400' : 'text-orange-400'
+                        }`}>
+                          {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions yet</h3>
-                  <p className="text-gray-600 mb-6">Start by adding funds or recording an expense</p>
-                  <div className="flex space-x-3 justify-center">
-                    {(canAddFunds || canAddExpenses) && (
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Receipt className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-white mb-2">{t('recentTransactions.noTransactions')}</h3>
+                    <p className="text-gray-300 mb-6">{t('recentTransactions.noTransactionsDesc')}</p>
+                    <div className="flex space-x-3 justify-center">
+                      {(canAddFunds || canAddExpenses) && (
+                        <button
+                          onClick={() => setShowTransactionForm(true)}
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-6 py-3 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center space-x-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>{t('recentTransactions.addTransaction')}</span>
+                        </button>
+                      )}
                       <button
-                        onClick={() => setShowTransactionForm(true)}
-                        className="btn-primary"
+                        onClick={() => router.push(`/${locale}/all-transactions`)}
+                        className="bg-white/10 backdrop-blur-sm text-white rounded-xl px-6 py-3 hover:bg-white/20 transition-all border border-white/20"
                       >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Transaction
+                        {t('recentTransactions.viewAll')}
                       </button>
-                    )}
-                    <button
-                      onClick={() => router.push('/all-transactions')}
-                      className="btn-secondary"
-                    >
-                      View All Transactions
-                    </button>
+                    </div>
                   </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Leave Pocket Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 pt-8 border-t border-white/20"
+          >
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <UserMinus className="w-6 h-6 text-orange-400" />
                 </div>
-              )}
+                <h3 className="text-lg font-semibold text-white mb-2">{t('pocketManagement.title')}</h3>
+                <p className="text-gray-300 mb-6">{t('pocketManagement.description')}</p>
+                
+                <button
+                  onClick={() => setShowLeavePocketModal(true)}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl px-6 py-3 hover:from-orange-600 hover:to-red-600 transition-all shadow-lg shadow-orange-500/25 flex items-center space-x-2 mx-auto"
+                >
+                  <UserMinus className="w-4 h-4" />
+                  <span>{t('pocketManagement.leavePocket')}</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
-
-        {/* Leave Pocket Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-gray-200 px-4"
-        >
-          <div className="card-floating">
-            <div className="text-center">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <UserMinus className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
-              </div>
-              <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-2">Pocket Management</h3>
-              <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
-                Need to leave this pocket? You can always create a new one or join another.
-              </p>
-              
-              <button
-                onClick={() => setShowLeavePocketModal(true)}
-                className="px-4 md:px-6 py-2 md:py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors flex items-center space-x-2 mx-auto text-sm md:text-base"
-              >
-                <UserMinus className="w-4 h-4" />
-                <span>Leave Pocket</span>
-              </button>
-            </div>
-          </div>
-        </motion.div>
       </div>
 
       {/* Transaction Form Modal */}
@@ -567,23 +598,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={() => setShowTransactionForm(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="card-floating max-w-md w-full"
+              className="bg-white/95 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-800">
-                  {formData.type === 'fund' ? 'Add Funds' : 'Add Expense'}
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {formData.type === 'fund' ? t('quickActions.addFunds') : t('quickActions.addExpense')}
                 </h3>
                 <button
                   onClick={() => setShowTransactionForm(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -599,7 +630,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       required
-                      className="input-glass w-full"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
                       <option value="">Select category</option>
                       {EXPENSE_CATEGORIES.map((category) => (
@@ -619,7 +650,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder={formData.type === 'fund' ? 'e.g., Monthly allowance' : 'e.g., Grocery shopping'}
                     required
-                    className="input-glass w-full"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -635,7 +666,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   placeholder="0.00"
                   required
-                    className="input-glass w-full"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -643,14 +674,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                   <button
                     type="button"
                     onClick={() => setShowTransactionForm(false)}
-                    className="btn-secondary flex-1"
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={transactionLoading}
-                    className="btn-primary flex-1"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 font-medium disabled:opacity-50"
                   >
                     {transactionLoading ? (
                       <div className="flex items-center justify-center space-x-2">
@@ -660,7 +691,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                     ) : (
                       <div className="flex items-center justify-center space-x-2">
                         <Plus className="w-4 h-4" />
-                        <span>{formData.type === 'fund' ? 'Add Funds' : 'Add Expense'}</span>
+                        <span>{formData.type === 'fund' ? t('quickActions.addFunds') : t('quickActions.addExpense')}</span>
                       </div>
                     )}
                   </button>
@@ -678,21 +709,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={() => setShowInviteCode(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="card-floating max-w-md w-full"
+              className="bg-white/95 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
                 <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Share2 className="w-8 h-8 text-white" />
                     </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Invite Your Partner</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('quickActions.invitePartner')}</h3>
                 <p className="text-gray-600 mb-6">Share this code for them to join your pocket</p>
                 
                 <div className="bg-gray-100 rounded-xl p-6 mb-6">
@@ -705,7 +736,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                 <div className="space-y-3">
                   <button
                     onClick={copyInviteLink}
-                    className="btn-primary w-full"
+                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 font-medium"
                   >
                     {copySuccess ? (
                       <div className="flex items-center justify-center space-x-2">
@@ -716,18 +747,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                       <div className="flex items-center justify-center space-x-2">
                         <Copy className="w-4 h-4" />
                         <span>Copy Invite Link</span>
-            </div>
-          )}
+                      </div>
+                    )}
                   </button>
                   
                   <button
                     onClick={() => setShowInviteCode(false)}
-                    className="btn-secondary w-full"
+                    className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
                   >
                     Close
                   </button>
                 </div>
-              </div>
+                  </div>
             </motion.div>
           </motion.div>
         )}
@@ -740,30 +771,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={() => setShowLeavePocketModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="card-floating max-w-md w-full"
+              className="bg-white/95 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
                 <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <AlertTriangle className="w-8 h-8 text-orange-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Leave Pocket</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('pocketManagement.leavePocket')}</h3>
                 <p className="text-gray-600 mb-6">
-                  Are you sure you want to leave &quot;{currentPocket.name}&quot;? You&apos;ll need a new invite code to rejoin.
+                  Are you sure you want to leave this pocket? This action cannot be undone.
                 </p>
                 
                 <div className="space-y-3">
                   <button
                     onClick={handleLeavePocket}
                     disabled={leavePocketLoading}
-                    className="w-full py-3 px-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg shadow-orange-500/25 font-medium disabled:opacity-50"
                   >
                     {leavePocketLoading ? (
                       <div className="flex items-center justify-center space-x-2">
@@ -771,15 +802,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
                         <span>Leaving...</span>
                       </div>
                     ) : (
-                      'Yes, Leave Pocket'
-                    )}
+                      <div className="flex items-center justify-center space-x-2">
+                        <UserMinus className="w-4 h-4" />
+                        <span>Yes, Leave Pocket</span>
+            </div>
+          )}
                   </button>
                   
                   <button
                     onClick={() => setShowLeavePocketModal(false)}
-                    className="btn-secondary w-full"
+                    className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                 </div>
               </div>
@@ -787,6 +821,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNewPocket }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Pocket Setup Modal */}
+      <AnimatePresence>
+        {showPocketSetup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            onClick={() => setShowPocketSetup(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Pocket Management</h2>
+                <button
+                  onClick={() => setShowPocketSetup(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+                <PocketSetup onSuccess={() => setShowPocketSetup(false)} />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-20px) rotate(5deg); }
+          50% { transform: translateY(-10px) rotate(0deg); }
+          75% { transform: translateY(-30px) rotate(-5deg); }
+        }
+      `}</style>
     </div>
   );
 };

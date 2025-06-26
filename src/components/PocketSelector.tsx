@@ -79,7 +79,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
       <div className="relative">
         <button
           onClick={onCreateNew}
-          className="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-300 text-sm md:text-base"
+          className="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-300 text-sm md:text-base backdrop-blur-sm"
         >
           <Plus className="w-3 h-3 md:w-4 md:h-4" />
           <span className="hidden sm:inline">Create Pocket</span>
@@ -93,22 +93,22 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center space-x-2 md:space-x-3 px-2 md:px-4 py-1.5 md:py-2 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 hover:bg-white/90 transition-all duration-300 min-w-0 w-full max-w-xs"
+        className="flex items-center space-x-2 md:space-x-3 px-2 md:px-4 py-1.5 md:py-2 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 hover:bg-white/20 transition-all duration-300 min-w-0 w-full max-w-xs"
       >
         <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
           <Wallet className="w-3 h-3 md:w-4 md:h-4 text-white" />
         </div>
         <div className="flex-1 text-left min-w-0">
-          <div className="font-medium text-gray-800 truncate text-sm md:text-base">
+          <div className="font-medium text-white truncate text-sm md:text-base">
             {currentPocket?.name || 'Select Pocket'}
           </div>
           {currentPocket && (
-            <div className="text-xs text-gray-500 hidden sm:block">
+            <div className="text-xs text-gray-300 hidden sm:block">
               {formatCurrency(currentPocket.balance)}
             </div>
           )}
         </div>
-        <ChevronDown className={`w-3 h-3 md:w-4 md:h-4 text-gray-400 transition-transform flex-shrink-0 ${showDropdown ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 md:w-4 md:h-4 text-gray-300 transition-transform flex-shrink-0 ${showDropdown ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>

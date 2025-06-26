@@ -11,7 +11,8 @@
     "search": "Rechercher",
     "filter": "Filtrer",
     "export": "Exporter",
-    "language": "Langue"
+    "language": "Langue",
+    "signOut": "Se déconnecter"
   },
   "navigation": {
     "pairbudget": "PairBudget",
@@ -69,6 +70,13 @@
       "title": "Prêt à budgétiser ensemble ?",
       "description": "Rejoignez des milliers de couples qui ont simplifié leurs dépenses partagées avec PairBudget.",
       "createPocket": "Créer votre première poche"
+    },
+    "pocket": {
+      "familyBudget": "Budget familial",
+      "sharedPocket": "Poche partagée",
+      "balance": "Solde",
+      "thisMonth": "Ce mois",
+      "expenses": "Dépenses"
     }
   },
   "dashboard": {

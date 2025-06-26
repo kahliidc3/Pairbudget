@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { getUserProfile } from '@/services/authService';
@@ -15,9 +16,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   User,
-  Wallet,
   Download,
-  Receipt
+  Receipt,
+  Filter,
+  X
 } from 'lucide-react';
 import { Transaction } from '@/types';
 
@@ -27,6 +29,9 @@ interface TransactionWithUser extends Transaction {
 
 export default function AllTransactionsPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('transactions');
+  const tCommon = useTranslations('common');
   const { user } = useAuthStore();
   const { currentPocket, transactions } = usePocketStore();
   const [transactionsWithUsers, setTransactionsWithUsers] = useState<TransactionWithUser[]>([]);
@@ -35,6 +40,7 @@ export default function AllTransactionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'fund' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Load user names for each transaction
   useEffect(() => {
@@ -129,232 +135,348 @@ export default function AllTransactionsPage() {
     window.URL.revokeObjectURL(url);
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterType('all');
+    setFilterCategory('all');
+  };
+
   if (!user || !currentPocket) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="card-floating animate-scale-in p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-center">Loading transactions...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden">
+        {/* Grid Pattern Background */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '20px 20px'
+          }}></div>
+        </div>
+
+        {/* Animated Background Shapes */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${Math.random() * 60 + 40}px`,
+                height: `${Math.random() * 60 + 40}px`,
+                background: i % 3 === 0 
+                  ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)'
+                  : i % 3 === 1 
+                  ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)'
+                  : 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)',
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                filter: 'blur(1px)',
+              }}
+              animate={{
+                x: [0, Math.random() * 100, 0],
+                y: [0, Math.random() * 100, 0],
+                scale: [1, 1.3, 1],
+                rotate: [0, 180, 360],
+              }}
+              transition={{
+                duration: Math.random() * 15 + 10,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-300 text-center">{tCommon('loading')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      {/* Navigation Header */}
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-nav fixed top-3 md:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl mx-3 md:mx-0"
-      >
-        <div className="flex items-center justify-between px-3 md:px-4">
-          <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
-            <button
-              onClick={() => router.back()}
-              className="p-1.5 md:p-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 flex-shrink-0"
-              title="Go Back"
-            >
-              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-            
-            <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
-              <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                <Wallet className="w-3 h-3 md:w-5 md:h-5 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden">
+      {/* Grid Pattern Background */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '20px 20px'
+        }}></div>
+      </div>
+
+      {/* Animated Background Shapes */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: `${Math.random() * 60 + 40}px`,
+              height: `${Math.random() * 60 + 40}px`,
+              background: i % 3 === 0 
+                ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)'
+                : i % 3 === 1 
+                ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)',
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              filter: 'blur(1px)',
+            }}
+            animate={{
+              x: [0, Math.random() * 100, 0],
+              y: [0, Math.random() * 100, 0],
+              scale: [1, 1.3, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: Math.random() * 15 + 10,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Accent Glows */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-indigo-400/4 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-purple-400/3 rounded-full blur-3xl" />
+
+      {/* Content */}
+      <div className="relative z-10 min-h-screen">
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/10 backdrop-blur-lg border-b border-white/20 sticky top-0 z-50"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 md:h-20">
+              <div className="flex items-center space-x-3 md:space-x-4">
+                <button
+                  onClick={() => router.push(`/${locale}/dashboard`)}
+                  className="p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg md:text-xl font-bold text-white">{t('title')}</h1>
+                  <p className="text-sm text-gray-300">{t('description')} {currentPocket.name}</p>
+                </div>
               </div>
-              <span className="font-semibold text-gray-800 text-sm md:text-base truncate">All Transactions</span>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
+                >
+                  <Filter className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="p-2 text-gray-300 hover:text-green-400 transition-colors rounded-lg hover:bg-white/10"
+                  title={tCommon('export')}
+                >
+                  <Download className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
-            <span className="text-xs md:text-sm text-gray-600 hidden lg:block truncate max-w-32">
-              {currentPocket.name}
-            </span>
-            <button
-              onClick={handleExport}
-              className="p-1.5 md:p-2 text-gray-500 hover:text-green-500 transition-colors rounded-lg hover:bg-green-50"
-              title="Export CSV"
-            >
-              <Download className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-          </div>
-        </div>
-      </motion.header>
+        </motion.header>
 
-      <div className="max-w-6xl mx-auto pt-20 md:pt-24 space-y-6 md:space-y-8 px-4">
-        {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">Transaction History</h1>
-          <p className="text-sm md:text-base text-gray-600">
-            Complete history of all transactions in {currentPocket.name}
-          </p>
-        </motion.div>
-
-        {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card-floating"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            {/* Search */}
-            <div className="relative sm:col-span-2 lg:col-span-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+          {/* Search and Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 mb-6 shadow-xl"
+          >
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search transactions..."
+                placeholder={t('searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-glass w-full pl-10 text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
 
-            {/* Type Filter */}
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as 'all' | 'fund' | 'expense')}
-              className="input-glass w-full text-sm"
-            >
-              <option value="all">All Types</option>
-              <option value="fund">Funds Only</option>
-              <option value="expense">Expenses Only</option>
-            </select>
+            {/* Filters */}
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value as 'all' | 'fund' | 'expense')}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  >
+                    <option value="all">{t('allTypes')}</option>
+                    <option value="fund">{t('fundsOnly')}</option>
+                    <option value="expense">{t('expensesOnly')}</option>
+                  </select>
+                </div>
 
-            {/* Category Filter */}
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="input-glass w-full text-sm"
-            >
-              <option value="all">All Categories</option>
-              {EXPENSE_CATEGORIES.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  >
+                    <option value="all">{t('allCategories')}</option>
+                    {EXPENSE_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+              </motion.div>
+            )}
 
-            {/* Results Count */}
-            <div className="flex items-center justify-center px-3 md:px-4 py-2 bg-gray-100 rounded-lg">
-              <span className="text-xs md:text-sm text-gray-600 text-center">
-                {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Transactions List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card-floating"
-        >
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading transaction details...</p>
-            </div>
-          ) : filteredTransactions.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <h2 className="text-lg md:text-xl font-semibold text-gray-800">Transactions</h2>
-                <Calendar className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+            {/* Filter Summary */}
+            {(searchTerm || filterType !== 'all' || filterCategory !== 'all') && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/20">
+                <div className="text-sm text-gray-300">
+                  {filteredTransactions.length} {filteredTransactions.length === 1 ? t('transaction') : t('transactions')}
+                </div>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center space-x-1"
+                >
+                  <X className="w-4 h-4" />
+                  <span>{t('clearFilters')}</span>
+                </button>
               </div>
+            )}
+          </motion.div>
 
-              <div className="space-y-3">
+          {/* Transactions List */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-xl overflow-hidden"
+          >
+            {loading ? (
+              <div className="p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                <p className="text-gray-300">{tCommon('loading')}</p>
+              </div>
+            ) : filteredTransactions.length > 0 ? (
+              <div className="divide-y divide-white/10">
                 {filteredTransactions.map((transaction, index) => (
                   <motion.div
                     key={transaction.id}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                    className="p-6 hover:bg-white/5 transition-colors"
                   >
-                    <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
-                      <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        transaction.type === 'fund' 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-orange-100 text-orange-600'
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1 min-w-0">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          transaction.type === 'fund' 
+                            ? 'bg-blue-500/20 text-blue-400' 
+                            : 'bg-orange-500/20 text-orange-400'
+                        }`}>
+                          {transaction.type === 'fund' ? (
+                            <ArrowUpRight className="w-6 h-6" />
+                          ) : (
+                            <ArrowDownRight className="w-6 h-6" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-white text-lg mb-1">{transaction.description}</div>
+                          <div className="flex items-center space-x-4 text-sm text-gray-300 flex-wrap">
+                            <span className="flex items-center space-x-1">
+                              <User className="w-4 h-4" />
+                              <span>{transaction.userName}</span>
+                            </span>
+                            <span className="flex items-center space-x-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>{formatDate(transaction.date)}</span>
+                            </span>
+                            {transaction.category && (
+                              <span className="px-2 py-1 bg-white/10 rounded-lg text-xs">
+                                {transaction.category}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`text-xl font-bold flex-shrink-0 ${
+                        transaction.type === 'fund' ? 'text-blue-400' : 'text-orange-400'
                       }`}>
-                        {transaction.type === 'fund' ? (
-                          <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6" />
-                        ) : (
-                          <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6" />
-                        )}
+                        {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="font-medium text-gray-900 truncate text-sm md:text-base">
-                            {transaction.description}
-                          </h3>
-                          <span className={`px-2 py-1 text-xs rounded-full hidden sm:inline ${
-                            transaction.type === 'fund'
-                              ? 'bg-blue-100 text-blue-600'
-                              : 'bg-orange-100 text-orange-600'
-                          }`}>
-                            {transaction.type}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2 md:space-x-4 text-xs md:text-sm text-gray-500 flex-wrap">
-                          <span className="flex items-center space-x-1">
-                            <User className="w-3 h-3" />
-                            <span className="truncate max-w-20 md:max-w-none">{transaction.userName}</span>
-                          </span>
-                          <span className="hidden sm:inline">{transaction.category}</span>
-                          <span className="hidden md:inline">{formatDate(transaction.date)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className={`text-sm md:text-xl font-bold flex-shrink-0 ${
-                      transaction.type === 'fund' ? 'text-blue-600' : 'text-orange-600'
-                    }`}>
-                      {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </div>
                   </motion.div>
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Receipt className="w-8 h-8 text-gray-400" />
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Receipt className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-white mb-2">
+                  {searchTerm || filterType !== 'all' || filterCategory !== 'all' 
+                    ? t('noTransactionsFound') 
+                    : t('noTransactionsRecorded')
+                  }
+                </h3>
+                <p className="text-gray-300 mb-6">
+                  {searchTerm || filterType !== 'all' || filterCategory !== 'all' 
+                    ? t('adjustFilters')
+                    : 'Start by adding funds or recording expenses from the dashboard.'
+                  }
+                </p>
+                <div className="flex space-x-3 justify-center">
+                  {(searchTerm || filterType !== 'all' || filterCategory !== 'all') && (
+                    <button
+                      onClick={clearFilters}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-6 py-3 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center space-x-2"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>{t('clearFilters')}</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => router.push(`/${locale}/dashboard`)}
+                    className="bg-white/10 backdrop-blur-sm text-white rounded-xl px-6 py-3 hover:bg-white/20 transition-all border border-white/20"
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions found</h3>
-              <p className="text-gray-600 mb-6">
-                {searchTerm || filterType !== 'all' || filterCategory !== 'all'
-                  ? 'Try adjusting your filters to see more results.'
-                  : 'No transactions have been recorded yet.'}
-              </p>
-              {searchTerm || filterType !== 'all' || filterCategory !== 'all' ? (
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setFilterType('all');
-                    setFilterCategory('all');
-                  }}
-                  className="btn-secondary"
-                >
-                  Clear Filters
-                </button>
-              ) : (
-                <button
-                  onClick={() => router.back()}
-                  className="btn-primary"
-                >
-                  Go Back to Dashboard
-                </button>
-              )}
-            </div>
-          )}
-        </motion.div>
+            )}
+          </motion.div>
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-20px) rotate(5deg); }
+          50% { transform: translateY(-10px) rotate(0deg); }
+          75% { transform: translateY(-30px) rotate(-5deg); }
+        }
+      `}</style>
     </div>
   );
 } 

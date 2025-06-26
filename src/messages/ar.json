@@ -11,7 +11,8 @@
     "search": "بحث",
     "filter": "تصفية",
     "export": "تصدير",
-    "language": "اللغة"
+    "language": "اللغة",
+    "signOut": "تسجيل الخروج"
   },
   "navigation": {
     "pairbudget": "بير بدجت",
@@ -69,6 +70,13 @@
       "title": "مستعد لوضع الميزانية معاً؟",
       "description": "انضم إلى آلاف الأزواج الذين بسطوا مصروفاتهم المشتركة مع بير بدجت.",
       "createPocket": "أنشئ جيبك الأول"
+    },
+    "pocket": {
+      "familyBudget": "ميزانية العائلة",
+      "sharedPocket": "جيب مشترك",
+      "balance": "الرصيد",
+      "thisMonth": "هذا الشهر",
+      "expenses": "المصروفات"
     }
   },
   "dashboard": {

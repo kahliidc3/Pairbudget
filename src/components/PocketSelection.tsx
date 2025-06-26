@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
@@ -24,40 +24,69 @@ const PocketSelection: React.FC = () => {
   const [userPockets, setUserPockets] = useState<Pocket[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateNew, setShowCreateNew] = useState(false);
+  const [loadingPocketId, setLoadingPocketId] = useState<string | null>(null);
 
-  // Load all user's pockets
+  // Memoize pocket IDs to prevent unnecessary re-fetches
+  const pocketIds = useMemo(() => userProfile?.pocketIds || [], [userProfile?.pocketIds]);
+
+  // Load all user's pockets with better caching
   useEffect(() => {
+    let isMounted = true;
+
     const loadUserPockets = async () => {
-      if (!userProfile?.pocketIds || userProfile.pocketIds.length === 0) {
+      if (pocketIds.length === 0) {
         setUserPockets([]);
         setLoading(false);
         return;
       }
 
       try {
-        const pockets = await Promise.all(
-          userProfile.pocketIds.map(async (pocketId) => {
-            const pocket = await getPocket(pocketId);
+        // Load pockets with timeout for better UX
+        const pocketPromises = pocketIds.map(async (pocketId) => {
+          try {
+            const pocket = await Promise.race([
+              getPocket(pocketId),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout')), 5000)
+              )
+            ]) as Pocket | null;
             return pocket;
-          })
-        );
+          } catch (error) {
+            console.warn(`Failed to load pocket ${pocketId}:`, error);
+            return null;
+          }
+        });
+        
+        const pockets = await Promise.all(pocketPromises);
+        
+        if (!isMounted) return;
         
         // Filter out null values (pockets that couldn't be loaded)
         const validPockets = pockets.filter((pocket): pocket is Pocket => pocket !== null);
         setUserPockets(validPockets);
       } catch (error) {
         console.error('Error loading user pockets:', error);
-        setUserPockets([]);
+        if (isMounted) {
+          setUserPockets([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUserPockets();
-  }, [userProfile?.pocketIds]);
 
-  const handlePocketSelect = async (pocket: Pocket) => {
-    if (!user || !userProfile) return;
+    return () => {
+      isMounted = false;
+    };
+  }, [pocketIds]);
+
+  const handlePocketSelect = useCallback(async (pocket: Pocket) => {
+    if (!user || !userProfile || loadingPocketId) return;
+
+    setLoadingPocketId(pocket.id);
 
     try {
       // Update user's current pocket
@@ -68,8 +97,10 @@ const PocketSelection: React.FC = () => {
       setCurrentPocket(pocket);
     } catch (error) {
       console.error('Error selecting pocket:', error);
+    } finally {
+      setLoadingPocketId(null);
     }
-  };
+  }, [user, userProfile, setUserProfile, setCurrentPocket, loadingPocketId]);
 
   if (showCreateNew) {
     return <PocketSetup />;
@@ -148,11 +179,18 @@ const PocketSelection: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 * index }}
                     onClick={() => handlePocketSelect(pocket)}
-                    className="card-floating p-6 text-left hover:scale-105 transition-all duration-300 group"
+                    disabled={loadingPocketId === pocket.id}
+                    className={`card-floating p-6 text-left hover:scale-105 transition-all duration-300 group relative ${
+                      loadingPocketId === pocket.id ? 'opacity-50 pointer-events-none' : ''
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                        <Wallet className="w-6 h-6 text-white" />
+                        {loadingPocketId === pocket.id ? (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                        ) : (
+                          <Wallet className="w-6 h-6 text-white" />
+                        )}
                       </div>
                       <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
                     </div>

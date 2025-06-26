@@ -19,11 +19,15 @@ const LanguageSelector: React.FC = () => {
 
   const handleLanguageChange = (newLocale: string) => {
     // Set the user's locale preference in cookie
-    setUserLocale(newLocale as any);
+    setUserLocale(newLocale as 'en' | 'fr' | 'ar');
     
     // Navigate to the same page with the new locale
-    const currentPath = pathname.replace(`/${locale}`, '');
-    router.push(`/${newLocale}${currentPath}`);
+    // pathname is like "/fr" or "/fr/dashboard", we need to replace the first part
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const currentPath = pathSegments.length > 1 ? '/' + pathSegments.slice(1).join('/') : '';
+    const targetUrl = `/${newLocale}${currentPath}`;
+    
+    router.push(targetUrl);
   };
 
   return (
@@ -31,7 +35,7 @@ const LanguageSelector: React.FC = () => {
       <select
         value={locale}
         onChange={(e) => handleLanguageChange(e.target.value)}
-        className="btn-ghost text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 bg-transparent border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="btn-ghost text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 bg-transparent border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 rtl:text-right"
       >
         {languages.map((language) => (
           <option key={language.code} value={language.code}>

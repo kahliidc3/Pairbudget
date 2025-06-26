@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { joinPocket } from '@/services/pocketService';
 import { updateUserProfile } from '@/services/authService';
@@ -32,14 +33,15 @@ function JoinPageContent() {
   const { setCurrentPocket } = usePocketStore();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
   
   const inviteCode = searchParams.get('code');
 
   useEffect(() => {
     if (!user) {
-      router.push('/');
+      router.push(`/${locale}`);
     }
-  }, [user, router]);
+  }, [user, router, locale]);
 
   const handleJoin = async () => {
     if (!user || !userProfile || !inviteCode) return;
@@ -55,7 +57,7 @@ function JoinPageContent() {
       setUserProfile({ ...userProfile, currentPocketId: pocket.id });
       setCurrentPocket(pocket);
       
-      router.push('/dashboard');
+      router.push(`/${locale}/dashboard`);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to join pocket');
     } finally {
@@ -65,35 +67,82 @@ function JoinPageContent() {
 
   if (!user || !userProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="glass-card animate-scale-in text-center">
-          <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400 relative overflow-hidden">
+        {/* Grid Pattern Background */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '20px 20px'
+          }}></div>
         </div>
+
+        {/* Animated Background Shapes */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 rounded-full" style={{
+            animation: 'float 20s ease-in-out infinite'
+          }}></div>
+          <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-600/20 rounded-full" style={{
+            animation: 'float 25s ease-in-out infinite reverse'
+          }}></div>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl relative z-10">
+          <LoadingSpinner size="lg" className="mb-4" />
+          <p className="text-gray-300">Loading...</p>
+        </div>
+
+        <style jsx>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(-10px) rotate(0deg); }
+            75% { transform: translateY(-30px) rotate(-5deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   if (!inviteCode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="bg-particles">
-          <div className="floating-orb"></div>
-          <div className="floating-orb"></div>
-          <div className="geometric-blob"></div>
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400">
+        {/* Grid Pattern Background */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '20px 20px'
+          }}></div>
+        </div>
+
+        {/* Animated Background Shapes */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 rounded-full" style={{
+            animation: 'float 20s ease-in-out infinite'
+          }}></div>
+          <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-600/20 rounded-full" style={{
+            animation: 'float 25s ease-in-out infinite reverse'
+          }}></div>
+          <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full" style={{
+            animation: 'float 15s ease-in-out infinite'
+          }}></div>
         </div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="card-floating max-w-md w-full text-center relative z-10"
+          className="bg-white/90 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full text-center relative z-10 shadow-xl"
         >
           <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <AlertCircle className="w-10 h-10 text-white" />
-            </div>
+          </div>
           
-          <h2 className="text-title mb-4">Invalid Invite Link</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Invalid Invite Link</h2>
           <p className="text-gray-600 mb-8">
             This invite link is not valid or has expired. Please ask your partner to send you a new invite link.
           </p>
@@ -101,26 +150,89 @@ function JoinPageContent() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => router.push('/dashboard')}
-            className="btn-primary w-full flex items-center justify-center space-x-2"
+            onClick={() => router.push(`/${locale}/dashboard`)}
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-6 py-3 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Go to Dashboard</span>
           </motion.button>
         </motion.div>
+
+        <style jsx>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(-10px) rotate(0deg); }
+            75% { transform: translateY(-30px) rotate(-5deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Floating Elements */}
-      <div className="bg-particles">
-        <div className="floating-orb"></div>
-        <div className="floating-orb"></div>
-        <div className="floating-orb"></div>
-        <div className="geometric-blob"></div>
-        <div className="geometric-blob"></div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400">
+      {/* Grid Pattern Background */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '20px 20px'
+        }}></div>
+      </div>
+
+      {/* Animated Background Shapes */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-indigo-600/20 rounded-full" style={{
+          animation: 'float 20s ease-in-out infinite'
+        }}></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-600/20 rounded-full" style={{
+          animation: 'float 25s ease-in-out infinite reverse'
+        }}></div>
+        <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full" style={{
+          animation: 'float 15s ease-in-out infinite'
+        }}></div>
+        <div className="absolute bottom-20 right-1/3 w-28 h-28 bg-gradient-to-br from-blue-600/20 to-cyan-500/20 rounded-full" style={{
+          animation: 'float 18s ease-in-out infinite reverse'
+        }}></div>
+        <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-gradient-to-br from-purple-600/20 to-pink-500/20 rounded-full" style={{
+          animation: 'float 22s ease-in-out infinite'
+        }}></div>
+        <div className="absolute top-1/3 right-1/4 w-36 h-36 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-full" style={{
+          animation: 'float 30s ease-in-out infinite reverse'
+        }}></div>
+        <div className="absolute bottom-1/3 left-1/3 w-12 h-12 bg-gradient-to-br from-indigo-600/20 to-purple-500/20 rounded-full" style={{
+          animation: 'float 12s ease-in-out infinite'
+        }}></div>
+        <div className="absolute top-10 right-1/2 w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-full" style={{
+          animation: 'float 16s ease-in-out infinite reverse'
+        }}></div>
+
+        {/* Geometric Shapes */}
+        <div className="absolute top-1/4 left-20 w-16 h-16 bg-gradient-to-br from-blue-500/15 to-purple-600/15 transform rotate-45" style={{
+          animation: 'float 20s ease-in-out infinite, spin 40s linear infinite'
+        }}></div>
+        <div className="absolute bottom-1/4 right-16 w-12 h-12 bg-gradient-to-br from-purple-500/15 to-indigo-600/15 rounded-lg transform rotate-12" style={{
+          animation: 'float 25s ease-in-out infinite reverse, spin 35s linear infinite reverse'
+        }}></div>
+        <div className="absolute top-2/3 left-1/4 w-14 h-14 bg-gradient-to-br from-indigo-500/15 to-blue-600/15 rounded-full transform" style={{
+          animation: 'float 18s ease-in-out infinite'
+        }}></div>
+        <div className="absolute bottom-40 right-1/4 w-18 h-18 bg-gradient-to-br from-cyan-500/15 to-purple-600/15 rounded-xl transform rotate-45" style={{
+          animation: 'float 22s ease-in-out infinite reverse'
+        }}></div>
+        <div className="absolute top-1/2 right-20 w-10 h-10 bg-gradient-to-br from-purple-600/15 to-pink-500/15 rounded-lg transform rotate-12" style={{
+          animation: 'float 15s ease-in-out infinite'
+        }}></div>
+        <div className="absolute bottom-1/2 left-16 w-20 h-8 bg-gradient-to-br from-blue-600/15 to-indigo-500/15 rounded-full transform rotate-45" style={{
+          animation: 'float 28s ease-in-out infinite reverse'
+        }}></div>
+
+        {/* Accent Glows */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-600/5 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-purple-600/5 to-transparent rounded-full blur-3xl"></div>
       </div>
 
       <motion.div
@@ -130,7 +242,7 @@ function JoinPageContent() {
         className="w-full max-w-2xl relative z-10"
       >
         {/* Main Card */}
-        <div className="card-floating">
+        <div className="bg-white/90 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-xl">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -145,7 +257,7 @@ function JoinPageContent() {
               </div>
             </div>
             
-            <h1 className="text-hero mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
               Join the Pocket
             </h1>
             <p className="text-lg text-gray-600 mb-2">
@@ -165,7 +277,7 @@ function JoinPageContent() {
             className="mb-10"
           >
             <div className="text-center mb-8">
-              <h3 className="text-title mb-2">Choose Your Role</h3>
+              <h3 className="text-xl md:text-2xl font-semibold mb-2">Choose Your Role</h3>
               <p className="text-gray-600">Select how you&apos;ll participate in this shared pocket</p>
             </div>
             
@@ -305,8 +417,8 @@ function JoinPageContent() {
             className="flex flex-col sm:flex-row gap-4"
           >
             <button
-              onClick={() => router.push('/dashboard')}
-              className="btn-ghost flex items-center justify-center space-x-2 flex-1"
+              onClick={() => router.push(`/${locale}/dashboard`)}
+              className="flex items-center justify-center space-x-2 flex-1 bg-white/10 backdrop-blur-sm text-gray-700 rounded-xl px-6 py-3 hover:bg-white/20 transition-all border border-gray-200"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Back to Dashboard</span>
@@ -315,7 +427,7 @@ function JoinPageContent() {
             <button
                 onClick={handleJoin}
               disabled={loading}
-              className="btn-primary flex items-center justify-center space-x-2 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center space-x-2 flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl px-6 py-3 hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -349,6 +461,19 @@ function JoinPageContent() {
           </motion.div>
           </div>
       </motion.div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-20px) rotate(5deg); }
+          50% { transform: translateY(-10px) rotate(0deg); }
+          75% { transform: translateY(-30px) rotate(-5deg); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -357,10 +482,10 @@ export default function JoinPage() {
   return (
     <Suspense 
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="glass-card animate-scale-in text-center">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-600 to-gray-400">
+          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl">
             <LoadingSpinner size="lg" className="mb-4" />
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-gray-300">Loading...</p>
           </div>
       </div>
       }

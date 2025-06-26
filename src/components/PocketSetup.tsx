@@ -25,7 +25,11 @@ import {
   TrendingUp
 } from 'lucide-react';
 
-const PocketSetup: React.FC = () => {
+interface PocketSetupProps {
+  onSuccess?: () => void;
+}
+
+const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -56,6 +60,11 @@ const PocketSetup: React.FC = () => {
         pocketIds: updatedPocketIds
       });
       setCurrentPocket(pocket);
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to create pocket');
     } finally {
@@ -82,6 +91,11 @@ const PocketSetup: React.FC = () => {
         pocketIds: updatedPocketIds
       });
       setCurrentPocket(pocket);
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to join pocket');
     } finally {

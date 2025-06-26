@@ -11,7 +11,8 @@
     "search": "Search",
     "filter": "Filter",
     "export": "Export",
-    "language": "Language"
+    "language": "Language",
+    "signOut": "Sign Out"
   },
   "navigation": {
     "pairbudget": "PairBudget",
@@ -69,6 +70,13 @@
       "title": "Ready to Budget Together?",
       "description": "Join thousands of couples who've simplified their shared expenses with PairBudget.",
       "createPocket": "Create Your First Pocket"
+    },
+    "pocket": {
+      "familyBudget": "Family Budget",
+      "sharedPocket": "Shared Pocket",
+      "balance": "Balance",
+      "thisMonth": "This Month",
+      "expenses": "Expenses"
     }
   },
   "dashboard": {
