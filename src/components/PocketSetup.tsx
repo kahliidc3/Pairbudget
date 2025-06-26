@@ -136,24 +136,24 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen p-4 md:p-6 lg:p-8">
-        <div className="w-full max-w-3xl mx-auto">
+      <div className="relative z-10 min-h-screen p-6 md:p-6 lg:p-8">
+        <div className="w-full max-w-2xl mx-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 rounded-2xl mb-4 relative">
-              <Wallet className="w-8 h-8 text-white" />
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
-                <Sparkles className="w-3 h-3 text-white" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 rounded-2xl mb-6 relative">
+              <Wallet className="w-10 h-10 text-white" />
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-3 text-white">
+            <h1 className="text-3xl md:text-3xl font-bold mb-4 text-white">
               Welcome to PairBudget
             </h1>
-            <p className="text-gray-300 max-w-xl mx-auto">
+            <p className="text-lg text-gray-300 max-w-xl mx-auto leading-relaxed">
               Create a new shared pocket or join an existing one to start tracking expenses together.
             </p>
           </motion.div>
@@ -163,29 +163,29 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-3 mb-6"
+            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-4 mb-8"
           >
-            <div className="flex p-1 bg-white/10 rounded-xl">
+            <div className="flex p-2 bg-white/10 rounded-xl">
               <button
                 onClick={() => setMode('create')}
-                className={`flex-1 py-3 px-4 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
+                className={`flex-1 py-4 px-4 text-base font-medium rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
                   mode === 'create'
                     ? 'bg-white/20 text-white shadow-lg backdrop-blur-lg border border-white/30'
                     : 'text-gray-300 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 <span>Create New Pocket</span>
               </button>
               <button
                 onClick={() => setMode('join')}
-                className={`flex-1 py-3 px-4 text-sm font-medium rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
+                className={`flex-1 py-4 px-4 text-base font-medium rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
                   mode === 'join'
                     ? 'bg-white/20 text-white shadow-lg backdrop-blur-lg border border-white/30'
                     : 'text-gray-300 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <UserPlus className="w-4 h-4" />
+                <UserPlus className="w-5 h-5" />
                 <span>Join Existing Pocket</span>
               </button>
             </div>
@@ -200,21 +200,21 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6"
+                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8"
               >
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center mr-4">
-                    <Plus className="w-6 h-6 text-white" />
+                <div className="flex items-center mb-8">
+                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center mr-4">
+                    <Plus className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-white">Create Your Pocket</h2>
-                    <p className="text-gray-300 text-sm">Set up a new shared expense pocket</p>
+                    <h2 className="text-2xl font-semibold text-white">Create Your Pocket</h2>
+                    <p className="text-gray-300 text-base">Set up a new shared expense pocket</p>
                   </div>
                 </div>
 
-                <form onSubmit={handleCreatePocket} className="space-y-4">
+                <form onSubmit={handleCreatePocket} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">
+                    <label className="block text-base font-medium text-white mb-3">
                       Pocket Name
                     </label>
                     <input
@@ -223,12 +223,12 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g., Family Budget, Weekend Getaway"
                       required
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-lg"
+                      className="w-full px-4 py-4 text-lg bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-lg"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white mb-3">
+                    <label className="block text-base font-medium text-white mb-4">
                       Your Role
                     </label>
                     <div className="space-y-2">
@@ -302,7 +302,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                   <button
                     type="submit"
                     disabled={loading || !formData.name.trim()}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    className="w-full py-4 px-4 text-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                   >
                     {loading ? (
                       <>
@@ -325,21 +325,21 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6"
+                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8"
               >
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4">
-                    <UserPlus className="w-6 h-6 text-white" />
+                <div className="flex items-center mb-8">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4">
+                    <UserPlus className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-white">Join a Pocket</h2>
-                    <p className="text-gray-300 text-sm">Enter the invite code to join your partner&apos;s budget</p>
+                    <h2 className="text-2xl font-semibold text-white">Join a Pocket</h2>
+                    <p className="text-gray-300 text-base">Enter the invite code to join your partner&apos;s budget</p>
                   </div>
                 </div>
 
-                <form onSubmit={handleJoinPocket} className="space-y-4">
+                <form onSubmit={handleJoinPocket} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">
+                    <label className="block text-base font-medium text-white mb-3">
                       Invite Code
                     </label>
                     <input
@@ -349,13 +349,13 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                       placeholder="ABC123"
                       maxLength={6}
                       required
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-lg text-center text-xl font-mono tracking-wider"
+                      className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-lg text-center text-2xl font-mono tracking-wider"
                     />
-                    <p className="text-sm text-gray-400 mt-2">Ask your partner to share their 6-character invite code</p>
+                    <p className="text-base text-gray-400 mt-3">Ask your partner to share their 6-character invite code</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white mb-3">
+                    <label className="block text-base font-medium text-white mb-4">
                       Your Role
                     </label>
                     <div className="space-y-2">
@@ -429,7 +429,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess }) => {
                   <button
                     type="submit"
                     disabled={loading || !formData.inviteCode.trim()}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-lg shadow-green-500/25 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    className="w-full py-4 px-4 text-lg bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-lg shadow-green-500/25 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                   >
                     {loading ? (
                       <>
