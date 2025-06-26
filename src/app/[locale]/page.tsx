@@ -9,6 +9,7 @@ import AuthForm from '@/components/AuthForm';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import FirebaseStatus from '@/components/FirebaseStatus';
 import LanguageSelector from '@/components/LanguageSelector';
+import DebugAuthFix from '@/components/DebugAuthFix';
 import { isFirebaseConfigured } from '@/lib/firebase-init';
 import { clearAuthCache } from '@/lib/utils';
 import { signOut as firebaseSignOut } from 'firebase/auth';
@@ -133,7 +134,9 @@ export default function HomePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      <>
+        <DebugAuthFix />
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
         {/* Modern Grid Pattern Background */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -492,6 +495,7 @@ export default function HomePage() {
           </div>
         </motion.section>
       </div>
+      </>
     );
   }
 

@@ -10,11 +10,14 @@ import { User } from '@/types';
 
 export const signUp = async (email: string, password: string, name: string, preferredLanguage?: string) => {
   try {
+    console.log('Starting user registration process...');
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    console.log('Firebase Auth user created successfully:', user.uid);
     
     // Update display name
     await updateProfile(user, { displayName: name });
+    console.log('User display name updated successfully');
     
     // Create user profile in Firestore
     const userProfile: User = {
@@ -26,10 +29,36 @@ export const signUp = async (email: string, password: string, name: string, pref
       createdAt: new Date(),
     };
     
-    await setDoc(doc(db, 'users', user.uid), userProfile);
+    console.log('Attempting to create user profile in Firestore:', userProfile);
     
-    return { user, userProfile };
+    try {
+      await setDoc(doc(db, 'users', user.uid), userProfile);
+      console.log('User profile created successfully in Firestore');
+      
+      // Verify the document was actually created
+      const verificationDoc = await getDoc(doc(db, 'users', user.uid));
+      if (verificationDoc.exists()) {
+        console.log('User profile verification successful');
+        return { user, userProfile };
+      } else {
+        console.error('User profile verification failed - document does not exist after creation');
+        throw new Error('Failed to verify user profile creation in Firestore');
+      }
+    } catch (firestoreError) {
+      console.error('Firestore error during user profile creation:', firestoreError);
+      
+      // If Firestore fails, we should delete the Firebase Auth user to prevent orphaned accounts
+      try {
+        await user.delete();
+        console.log('Cleaned up Firebase Auth user due to Firestore failure');
+      } catch (cleanupError) {
+        console.error('Failed to cleanup Firebase Auth user:', cleanupError);
+      }
+      
+      throw new Error(`Failed to create user profile in database: ${(firestoreError as Error).message}`);
+    }
   } catch (error) {
+    console.error('Sign up error:', error);
     throw error;
   }
 };
@@ -138,6 +167,36 @@ export const removePocketFromUser = async (uid: string, pocketId: string) => {
     
     await updateUserProfile(uid, updates);
   } catch (error) {
+    throw error;
+  }
+};
+
+export const createMissingUserProfile = async (uid: string, email: string, name: string, preferredLanguage = 'en') => {
+  try {
+    console.log('Creating missing user profile for UID:', uid);
+    
+    const userProfile: User = {
+      uid,
+      name,
+      email,
+      pocketIds: [],
+      preferredLanguage,
+      createdAt: new Date(),
+    };
+    
+    await setDoc(doc(db, 'users', uid), userProfile);
+    console.log('Missing user profile created successfully');
+    
+    // Verify creation
+    const verificationDoc = await getDoc(doc(db, 'users', uid));
+    if (verificationDoc.exists()) {
+      console.log('User profile verification successful');
+      return userProfile;
+    } else {
+      throw new Error('Failed to verify user profile creation');
+    }
+  } catch (error) {
+    console.error('Error creating missing user profile:', error);
     throw error;
   }
 }; 
