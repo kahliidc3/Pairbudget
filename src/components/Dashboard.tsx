@@ -297,14 +297,14 @@ const Dashboard: React.FC = () => {
           className="bg-white/10 backdrop-blur-lg border-b border-white/20 sticky top-0 z-50"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16 md:h-20">
-              <div className="flex items-center space-x-3 md:space-x-6 rtl:space-x-reverse">
+            <div className="flex items-center justify-between h-20">
+              <div className="flex items-center space-x-4 rtl:space-x-reverse flex-1 min-w-0">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                    <Wallet className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <Wallet className="w-5 h-5 text-white" />
                   </div>
-                  <div>
-                    <h1 className="text-lg md:text-xl font-bold text-white">PairBudget</h1>
+                  <div className="hidden sm:block">
+                    <h1 className="text-xl font-bold text-white">PairBudget</h1>
                     <div className="flex items-center space-x-2 text-sm text-gray-300">
                       <span className="capitalize text-blue-400 font-medium">{t(`role.${userRole}`)}</span>
                     </div>
@@ -317,39 +317,39 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+              <div className="flex items-center space-x-3 flex-shrink-0">
                 <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-300">
                   <span className="truncate max-w-32">{t('welcome')}, {userProfile?.name || user?.email?.split('@')[0]}</span>
                   <span className="text-gray-400">•</span>
                   <span className="capitalize text-blue-400 font-medium">{t('youAreThe')} {t(`role.${userRole}`)}</span>
                 </div>
                 
-                <div className="flex items-center space-x-1 md:space-x-2">
+                <div className="flex items-center space-x-2">
                   {showRecoveryButton && (
                     <button
                       onClick={handleFirebaseRecovery}
                       disabled={isRecovering}
-                      className="p-1.5 md:p-2 text-blue-400 hover:text-blue-300 transition-colors rounded-lg hover:bg-white/10"
+                      className="p-2 text-blue-400 hover:text-blue-300 transition-colors rounded-lg hover:bg-white/10"
                       title="Manual Firebase Recovery"
                     >
-                      <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isRecovering ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`w-5 h-5 ${isRecovering ? 'animate-spin' : ''}`} />
                     </button>
                   )}
                   
                   <button
                     onClick={() => setShowInviteCode(true)}
-                    className="p-1.5 md:p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
+                    className="p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
                     title={t('quickActions.invitePartnerDesc')}
                   >
-                    <Share2 className="w-4 h-4 md:w-5 md:h-5" />
+                    <Share2 className="w-5 h-5" />
                   </button>
                   
                   <button
                     onClick={signOut}
-                    className="p-1.5 md:p-2 text-gray-300 hover:text-red-400 transition-colors rounded-lg hover:bg-white/10"
+                    className="p-2 text-gray-300 hover:text-red-400 transition-colors rounded-lg hover:bg-white/10"
                     title={tCommon('signOut')}
                   >
-                    <LogOut className="w-4 h-4 md:w-5 md:h-5" />
+                    <LogOut className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -364,7 +364,7 @@ const Dashboard: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
           >
             {/* Current Balance */}
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl">
@@ -374,7 +374,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.currentBalance')}</span>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+              <div className="text-3xl font-bold text-white mb-2">
                 {formatCurrency(balance)}
               </div>
               <p className="text-sm text-gray-300">
@@ -390,7 +390,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.totalFunded')}</span>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+              <div className="text-3xl font-bold text-white mb-2">
                 {formatCurrency(totalFunded)}
               </div>
               <p className="text-sm text-gray-300">{t('stats.moneyAdded')}</p>
@@ -404,7 +404,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <span className="text-xs text-gray-300 uppercase tracking-wider">{t('stats.totalSpent')}</span>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+              <div className="text-3xl font-bold text-white mb-2">
                 {formatCurrency(totalSpent)}
               </div>
               <p className="text-sm text-gray-300">{t('stats.moneySpent')}</p>
@@ -412,7 +412,7 @@ const Dashboard: React.FC = () => {
           </motion.div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}

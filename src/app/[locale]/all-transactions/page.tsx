@@ -256,24 +256,24 @@ export default function AllTransactionsPage() {
           className="bg-white/10 backdrop-blur-lg border-b border-white/20 sticky top-0 z-50"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16 md:h-20">
-              <div className="flex items-center space-x-3 md:space-x-4">
+            <div className="flex items-center justify-between h-20">
+              <div className="flex items-center space-x-4 flex-1 min-w-0">
                 <button
                   onClick={() => router.push(`/${locale}/dashboard`)}
                   className="p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                  <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <Receipt className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-lg md:text-xl font-bold text-white">{t('title')}</h1>
-                  <p className="text-sm text-gray-300">{t('description')} {currentPocket.name}</p>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl font-bold text-white">{t('title')}</h1>
+                  <p className="text-sm text-gray-300 truncate">{t('description')} {currentPocket.name}</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="p-2 text-gray-300 hover:text-blue-400 transition-colors rounded-lg hover:bg-white/10"
@@ -388,42 +388,44 @@ export default function AllTransactionsPage() {
                     transition={{ delay: index * 0.05 }}
                     className="p-6 hover:bg-white/5 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 flex-1 min-w-0">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          transaction.type === 'fund' 
-                            ? 'bg-blue-500/20 text-blue-400' 
-                            : 'bg-orange-500/20 text-orange-400'
-                        }`}>
-                          {transaction.type === 'fund' ? (
-                            <ArrowUpRight className="w-6 h-6" />
-                          ) : (
-                            <ArrowDownRight className="w-6 h-6" />
-                          )}
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        transaction.type === 'fund' 
+                          ? 'bg-blue-500/20 text-blue-400' 
+                          : 'bg-orange-500/20 text-orange-400'
+                      }`}>
+                        {transaction.type === 'fund' ? (
+                          <ArrowUpRight className="w-6 h-6" />
+                        ) : (
+                          <ArrowDownRight className="w-6 h-6" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="font-semibold text-white text-lg">{transaction.description}</div>
+                          <div className={`text-xl font-bold flex-shrink-0 ${
+                            transaction.type === 'fund' ? 'text-blue-400' : 'text-orange-400'
+                          }`}>
+                            {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-white text-lg mb-1">{transaction.description}</div>
-                          <div className="flex items-center space-x-4 text-sm text-gray-300 flex-wrap">
-                            <span className="flex items-center space-x-1">
-                              <User className="w-4 h-4" />
-                              <span>{transaction.userName}</span>
-                            </span>
-                            <span className="flex items-center space-x-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>{formatDate(transaction.date)}</span>
-                            </span>
-                            {transaction.category && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-300">
+                          <span className="flex items-center space-x-1">
+                            <User className="w-4 h-4" />
+                            <span>{transaction.userName}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>{formatDate(transaction.date)}</span>
+                          </span>
+                          {transaction.category && (
+                            <span className="flex items-center">
                               <span className="px-2 py-1 bg-white/10 rounded-lg text-xs">
                                 {transaction.category}
                               </span>
-                            )}
-                          </div>
+                            </span>
+                          )}
                         </div>
-                      </div>
-                      <div className={`text-xl font-bold flex-shrink-0 ${
-                        transaction.type === 'fund' ? 'text-blue-400' : 'text-orange-400'
-                      }`}>
-                        {transaction.type === 'fund' ? '+' : '-'}{formatCurrency(transaction.amount)}
                       </div>
                     </div>
                   </motion.div>

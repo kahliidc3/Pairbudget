@@ -158,15 +158,15 @@ export default function HomePage() {
         <motion.nav
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed top-3 md:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl mx-3 md:mx-0"
+          className="fixed top-2 md:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl mx-2 md:mx-0"
         >
-          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full px-3 md:px-4 py-3 shadow-lg shadow-black/10">
+          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-full px-4 md:px-4 py-3 md:py-3 shadow-lg shadow-black/10">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 md:space-x-3 rtl:space-x-reverse">
-                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                  <Wallet className="w-3 h-3 md:w-5 md:h-5 text-white" />
+              <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                <div className="w-8 h-8 md:w-8 md:h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-semibold text-white text-sm md:text-base">{tNav('pairbudget')}</span>
+                <span className="font-semibold text-white text-base md:text-base">{tNav('pairbudget')}</span>
               </div>
               
               <div className="flex items-center space-x-2 md:space-x-4 rtl:space-x-reverse">
@@ -176,7 +176,7 @@ export default function HomePage() {
                     setAuthMode('login');
                     setShowAuth(true);
                   }}
-                  className="text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                  className="text-sm px-3 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                 >
                   {tNav('signIn')}
                 </button>
@@ -185,7 +185,7 @@ export default function HomePage() {
                     setAuthMode('signup');
                     setShowAuth(true);
                   }}
-                  className="text-xs md:text-sm px-2 md:px-3 py-1 md:py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25"
+                  className="text-sm px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25"
                 >
                   {tNav('getStarted')}
                 </button>
@@ -195,21 +195,21 @@ export default function HomePage() {
         </motion.nav>
 
         {/* Hero Section - Centered Layout */}
-        <div className="min-h-screen flex items-center justify-center px-4 py-16 md:py-20 relative z-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
+        <div className="min-h-screen flex items-center justify-center px-4 py-20 md:py-20 relative z-10">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-12 items-center">
             {/* Left Content */}
             <motion.div 
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-center lg:text-left rtl:lg:text-right space-y-6 md:space-y-8"
+              className="text-center lg:text-left rtl:lg:text-right space-y-8"
             >
               <div>
                 <motion.h1 
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.8 }}
-                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 md:mb-6 leading-tight"
+                  className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight"
                 >
                   <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
                     {t('heroTitle')}
@@ -222,7 +222,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.8 }}
-                  className="text-base md:text-lg lg:text-xl text-gray-300 mb-6 md:mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 rtl:lg:mr-0"
+                  className="text-lg md:text-xl lg:text-xl text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 rtl:lg:mr-0"
                 >
                   {t('heroDescription')}
                 </motion.p>
@@ -231,17 +231,17 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.8 }}
-                  className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center lg:justify-start rtl:lg:justify-end"
+                  className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start rtl:lg:justify-end"
                 >
                   <button
                     onClick={() => {
                       setAuthMode('signup');
                       setShowAuth(true);
                     }}
-                    className="text-sm md:text-lg px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 rtl:space-x-reverse group"
+                    className="text-lg px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 rtl:space-x-reverse group"
                   >
                     <span>{t('startJourney')}</span>
-                    <ArrowRight className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 rtl:group-hover:translate-x-0" />
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 rtl:group-hover:translate-x-0" />
                   </button>
                   
                   <button
@@ -249,7 +249,7 @@ export default function HomePage() {
                       setAuthMode('login');
                       setShowAuth(true);
                     }}
-                    className="text-sm md:text-lg px-6 md:px-8 py-3 md:py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all border border-white/20"
+                    className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all border border-white/20"
                   >
                     {tNav('signIn')}
                   </button>
@@ -261,19 +261,19 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.8 }}
-                className="grid grid-cols-3 gap-4 md:gap-6 pt-6 md:pt-8 border-t border-white/20 max-w-md mx-auto lg:mx-0 rtl:lg:mr-0"
+                className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20 max-w-md mx-auto lg:mx-0 rtl:lg:mr-0"
               >
                 <div className="text-center lg:text-left rtl:lg:text-right">
-                  <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-1 md:mb-2">2</div>
-                  <div className="text-xs md:text-sm text-gray-300">{t('quickStats.peoplePerPocket')}</div>
+                  <div className="text-3xl font-bold text-blue-400 mb-2">2</div>
+                  <div className="text-sm text-gray-300">{t('quickStats.peoplePerPocket')}</div>
                 </div>
                 <div className="text-center lg:text-left rtl:lg:text-right">
-                  <div className="text-2xl md:text-3xl font-bold text-purple-400 mb-1 md:mb-2">∞</div>
-                  <div className="text-xs md:text-sm text-gray-300">{t('quickStats.transactions')}</div>
+                  <div className="text-3xl font-bold text-purple-400 mb-2">∞</div>
+                  <div className="text-sm text-gray-300">{t('quickStats.transactions')}</div>
                 </div>
                 <div className="text-center lg:text-left rtl:lg:text-right">
-                  <div className="text-2xl md:text-3xl font-bold text-cyan-400 mb-1 md:mb-2">24/7</div>
-                  <div className="text-xs md:text-sm text-gray-300">{t('quickStats.realTimeSync')}</div>
+                  <div className="text-3xl font-bold text-cyan-400 mb-2">24/7</div>
+                  <div className="text-sm text-gray-300">{t('quickStats.realTimeSync')}</div>
                 </div>
               </motion.div>
             </motion.div>
@@ -291,28 +291,28 @@ export default function HomePage() {
                   initial={{ scale: 0.9, rotateY: -15 }}
                   animate={{ scale: 1, rotateY: 0 }}
                   transition={{ delay: 0.5, duration: 0.8, type: "spring" }}
-                  className="max-w-xs md:max-w-sm w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl"
+                  className="max-w-sm md:max-w-sm w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6 shadow-xl"
                 >
-                  <div className="text-center mb-4 md:mb-6">
-                    <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
-                      <Wallet className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Wallet className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-lg md:text-xl font-semibold mb-1 md:mb-2 text-white">{t('pocket.familyBudget')}</h3>
-                    <p className="text-sm md:text-base text-gray-300">{t('pocket.sharedPocket')}</p>
+                    <h3 className="text-xl font-semibold mb-2 text-white">{t('pocket.familyBudget')}</h3>
+                    <p className="text-base text-gray-300">{t('pocket.sharedPocket')}</p>
                   </div>
                   
-                  <div className="space-y-3 md:space-y-4">
-                    <div className="flex justify-between items-center p-2 md:p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                      <span className="text-xs md:text-sm text-gray-300">{t('pocket.balance')}</span>
-                      <span className="font-semibold text-green-400 text-sm md:text-base">$1,247.50</span>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                      <span className="text-sm text-gray-300">{t('pocket.balance')}</span>
+                      <span className="font-semibold text-green-400 text-base">$1,247.50</span>
                     </div>
-                    <div className="flex justify-between items-center p-2 md:p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                      <span className="text-xs md:text-sm text-gray-300">{t('pocket.thisMonth')}</span>
-                      <span className="font-semibold text-blue-400 text-sm md:text-base">$892.30</span>
+                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                      <span className="text-sm text-gray-300">{t('pocket.thisMonth')}</span>
+                      <span className="font-semibold text-blue-400 text-base">$892.30</span>
                     </div>
-                    <div className="flex justify-between items-center p-2 md:p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                      <span className="text-xs md:text-sm text-gray-300">{t('pocket.expenses')}</span>
-                      <span className="font-semibold text-orange-400 text-sm md:text-base">$654.80</span>
+                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                      <span className="text-sm text-gray-300">{t('pocket.expenses')}</span>
+                      <span className="font-semibold text-orange-400 text-base">$654.80</span>
                     </div>
                   </div>
                 </motion.div>
