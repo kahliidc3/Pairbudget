@@ -132,6 +132,40 @@ export const getUserProfile = async (uid: string): Promise<User | null> => {
   }
 };
 
+export const getUserProfilesBatch = async (uids: string[]): Promise<Record<string, User>> => {
+  const uniqueUids = Array.from(new Set(uids.filter(Boolean)));
+  if (uniqueUids.length === 0) {
+    return {};
+  }
+
+  const results: Record<string, User> = {};
+  const chunkSize = 10; // Firestore "in" queries support up to 10 elements
+
+  for (let i = 0; i < uniqueUids.length; i += chunkSize) {
+    const chunk = uniqueUids.slice(i, i + chunkSize);
+    const usersQuery = query(
+      collection(db, 'users'),
+      where('uid', 'in', chunk)
+    );
+
+    try {
+      const snapshot = await getDocs(usersQuery);
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        results[docSnap.id] = {
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+        } as User;
+      });
+    } catch (error) {
+      logger.error('Error fetching user profiles batch', { error, context: { chunkSize: chunk.length } });
+      // Continue to next chunk; missing users will fall back to Unknown User
+    }
+  }
+
+  return results;
+};
+
 export const updateUserProfile = async (uid: string, updates: Partial<User>) => {
   try {
     // Filter out undefined values and handle special cases

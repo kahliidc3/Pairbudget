@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { addTransaction, leavePocket } from '@/services/pocketService';
-import { removePocketFromUser, getUserProfile, signOut, deleteUserAccountAndData } from '@/services/authService';
+import { removePocketFromUser, signOut, deleteUserAccountAndData } from '@/services/authService';
 import { formatCurrency, generateInviteLink } from '@/lib/utils';
 import { EXPENSE_CATEGORIES } from '@/types';
 import MobileHeader from '@/components/ui/MobileHeader';
@@ -16,6 +16,7 @@ import TransactionCard from '@/components/ui/TransactionCard';
 import QuickActionCard from '@/components/ui/QuickActionCard';
 import MobileModal from '@/components/ui/MobileModal';
 import { logger } from '@/lib/logger';
+import { useLoadUserNames } from '@/hooks/useLoadUserNames';
 
 import { 
   Share2, 
@@ -57,7 +58,6 @@ const Dashboard: React.FC = () => {
   const [leavePocketLoading, setLeavePocketLoading] = useState(false);
   const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [userNames, setUserNames] = useState<{[userId: string]: string}>({});
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
   const [deleteAccountConfirm, setDeleteAccountConfirm] = useState('');
   
@@ -80,32 +80,7 @@ const Dashboard: React.FC = () => {
 
   const currentBalance = totalFunds - totalExpenses;
   const recentTransactions = transactions.slice(0, 3);
-
-  // Load user names for recent transactions
-  useEffect(() => {
-    const loadUserNames = async () => {
-      if (!recentTransactions.length) return;
-
-      const userIds = [...new Set(recentTransactions.map(t => t.userId))];
-      const userNameMap: {[userId: string]: string} = {};
-
-      await Promise.all(
-        userIds.map(async (userId) => {
-          try {
-            const profile = await getUserProfile(userId);
-            userNameMap[userId] = profile?.name || 'Unknown User';
-          } catch (error) {
-            logger.error('Error loading user name', { error, context: { userId } });
-            userNameMap[userId] = 'Unknown User';
-          }
-        })
-      );
-
-      setUserNames(userNameMap);
-    };
-
-    loadUserNames();
-  }, [recentTransactions]);
+  const { userNames } = useLoadUserNames(recentTransactions.map(t => t.userId));
 
 
 
@@ -521,7 +496,7 @@ const Dashboard: React.FC = () => {
                     <TransactionCard
                       key={transaction.id}
                       transaction={transaction}
-                      userName={userNames[transaction.userId]}
+                      userName={userNames[transaction.userId] || 'Unknown User'}
                       delay={index * 0.1}
                     />
                   ))}

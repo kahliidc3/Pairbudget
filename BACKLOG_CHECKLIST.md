@@ -12,8 +12,8 @@
 | Metric | Value | Status |
 |--------|-------|--------|
 | **Total Tasks** | 130 tasks | In Progress |
-| **Completed** | 15 tasks (12%) | ✅ Complete |
-| **Remaining** | 115 tasks (88%) | 🔄 In Progress |
+| **Completed** | 17 tasks (13%) | ✅ Complete |
+| **Remaining** | 113 tasks (87%) | 🔄 In Progress |
 | **Critical Issues** | 1 | 🚨 New (user profile access gap) |
 | **High Priority** | 47 tasks | 📋 Planned |
 | **Medium Priority** | 55 tasks | 📋 Planned |
@@ -52,7 +52,7 @@
 #### Sprint 1.1 - Performance Critical Path (20 hours)
 
 **Day 1: Monday - Database Performance (8h)**
-- [ ] **Task #1** [CRITICAL] Fix N+1 Query Problem (4h)
+- [x] **Task #1** [CRITICAL] Fix N+1 Query Problem (4h)
   - `src/components/Dashboard.tsx:79-102`, `src/app/[locale]/all-transactions/page.tsx:54-70`
   - Create `useLoadUserNames` hook with caching
   - Implement batch user profile loading
@@ -60,7 +60,7 @@
   - Test with 100+ transactions
   - **Impact**: 70-90% reduction in Firestore reads
 
-- [ ] **Task #2** [HIGH] Implement Transaction Pagination (4h)
+- [x] **Task #2** [HIGH] Implement Transaction Pagination (4h)
   - `src/app/[locale]/all-transactions/page.tsx`
   - Add Firestore `.limit(20)` and cursor pagination
   - Create pagination UI component

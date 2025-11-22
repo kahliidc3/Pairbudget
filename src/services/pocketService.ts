@@ -10,6 +10,10 @@ import {
   increment,
   getDocs,
   runTransaction,
+  orderBy,
+  limit as firestoreLimit,
+  startAfter,
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db, handleFirebaseInternalError, getSubscriptionHealthState, resetRecoveryTracking } from '@/lib/firebase';
 import { Pocket, Transaction, UserRole } from '@/types';
@@ -231,6 +235,62 @@ export const addTransaction = async (
       ],
       'Unable to add this transaction right now. Please try again later.',
       'Error adding transaction'
+    );
+  }
+};
+
+export interface PaginatedTransactionsResult {
+  transactions: Transaction[];
+  cursor: QueryDocumentSnapshot | null;
+  hasMore: boolean;
+}
+
+export const fetchTransactionsPage = async (
+  pocketId: string,
+  pageSize = 20,
+  cursor?: QueryDocumentSnapshot
+): Promise<PaginatedTransactionsResult> => {
+  try {
+    const constraints = [
+      where('pocketId', '==', pocketId),
+      orderBy('date', 'desc'),
+      firestoreLimit(pageSize),
+    ];
+
+    if (cursor) {
+      constraints.push(startAfter(cursor));
+    }
+
+    const paginatedQuery = query(
+      collection(db, 'transactions'),
+      ...constraints
+    );
+
+    const snapshot = await getDocs(paginatedQuery);
+
+    const transactions = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        ...data,
+        id: docSnap.id,
+        date: data.date?.toDate() || new Date(),
+        createdAt: data.createdAt?.toDate() || new Date(),
+      } as Transaction;
+    });
+
+    const lastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+
+    return {
+      transactions,
+      cursor: lastDoc,
+      hasMore: snapshot.size === pageSize,
+    };
+  } catch (error) {
+    sanitizePocketServiceError(
+      error,
+      [],
+      'Unable to load transactions right now. Please try again later.',
+      'Error fetching paginated transactions'
     );
   }
 };

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
+import { QueryDocumentSnapshot } from 'firebase/firestore';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
-import { getUserProfile } from '@/services/authService';
+import { fetchTransactionsPage } from '@/services/pocketService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { EXPENSE_CATEGORIES } from '@/types';
@@ -23,6 +24,7 @@ import {
   Activity
 } from 'lucide-react';
 import { Transaction } from '@/types';
+import { useLoadUserNames } from '@/hooks/useLoadUserNames';
 
 interface TransactionWithUser extends Transaction {
   userName?: string;
@@ -32,55 +34,80 @@ export default function AllTransactionsPage() {
   const router = useRouter();
   const locale = useLocale();
   const { user } = useAuthStore();
-  const { currentPocket, transactions } = usePocketStore();
-  const [transactionsWithUsers, setTransactionsWithUsers] = useState<TransactionWithUser[]>([]);
+  const currentPocket = usePocketStore((state) => state.currentPocket);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionWithUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [pageCursor, setPageCursor] = useState<QueryDocumentSnapshot | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'fund' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Load user names for each transaction
-  useEffect(() => {
-    const loadTransactionUsers = async () => {
-      if (!transactions || transactions.length === 0) {
-        setTransactionsWithUsers([]);
-        setLoading(false);
-        return;
-      }
+  const { userNames } = useLoadUserNames(transactions.map((t) => t.userId));
 
+  const transactionsWithUsers = useMemo(
+    () =>
+      transactions.map((transaction) => ({
+        ...transaction,
+        userName: userNames[transaction.userId] || 'Unknown User',
+      })),
+    [transactions, userNames]
+  );
+
+  const loadTransactions = async (reset = false) => {
+    if (!currentPocket) return;
+
+    if (reset) {
       setLoading(true);
-      try {
-        const transactionsWithUserData = await Promise.all(
-          transactions.map(async (transaction) => {
-            try {
-              const userProfile = await getUserProfile(transaction.userId);
-              return {
-                ...transaction,
-                userName: userProfile?.name || 'Unknown User'
-              };
-            } catch (error) {
-              logger.error('Error loading user for transaction', { error });
-              return {
-                ...transaction,
-                userName: 'Unknown User'
-              };
-            }
-          })
-        );
+    } else {
+      setIsLoadingMore(true);
+    }
 
-        setTransactionsWithUsers(transactionsWithUserData);
-      } catch (error) {
-        logger.error('Error loading transaction users', { error });
-        setTransactionsWithUsers(transactions.map(t => ({ ...t, userName: 'Unknown User' })));
-      } finally {
+    try {
+      const result = await fetchTransactionsPage(
+        currentPocket.id,
+        20,
+        reset ? undefined : pageCursor ?? undefined
+      );
+
+      setTransactions((prev) => {
+        const base = reset ? [] : prev;
+        const existingIds = new Set(base.map((t) => t.id));
+        const merged = [...base];
+
+        result.transactions.forEach((tx) => {
+          if (!existingIds.has(tx.id)) {
+            merged.push(tx);
+          }
+        });
+
+        return merged;
+      });
+
+      setPageCursor(result.cursor);
+      setHasMore(result.hasMore);
+    } catch (error) {
+      logger.error('Error loading transactions', { error, context: { pocketId: currentPocket?.id } });
+    } finally {
+      if (reset) {
         setLoading(false);
+      } else {
+        setIsLoadingMore(false);
       }
-    };
+    }
+  };
 
-    loadTransactionUsers();
-  }, [transactions]);
+  useEffect(() => {
+    if (!currentPocket) return;
+    setTransactions([]);
+    setPageCursor(null);
+    setHasMore(true);
+    loadTransactions(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPocket?.id]);
 
   // Filter transactions based on search and filters
   useEffect(() => {
@@ -353,6 +380,18 @@ export default function AllTransactionsPage() {
             </div>
           )}
         </div>
+
+        {!loading && hasMore && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => loadTransactions(false)}
+              disabled={isLoadingMore}
+              className="px-5 py-3 bg-white border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isLoadingMore ? 'Loading more...' : 'Load more'}
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );
