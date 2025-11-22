@@ -4,62 +4,86 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, deleteField } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  getDoc,
+  deleteField,
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  writeBatch,
+  deleteDoc,
+  DocumentReference
+} from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { User } from '@/types';
+import { Pocket, User } from '@/types';
+import { enforceRateLimit } from '@/lib/rateLimiter';
+import { logger } from '@/lib/logger';
+
+const SIGN_UP_RATE_LIMIT_ERROR = 'Too many sign up attempts. Please wait and try again.';
+const SIGN_UP_GENERIC_ERROR = 'Unable to complete signup. Please try again later.';
 
 export const signUp = async (email: string, password: string, name: string, preferredLanguage?: string) => {
   try {
-    console.log('Starting user registration process...');
+    enforceRateLimit({
+      key: `sign-up:${email.trim().toLowerCase()}`,
+      windowMs: 60_000,
+      maxRequests: 3,
+      errorMessage: SIGN_UP_RATE_LIMIT_ERROR,
+    });
+
+    logger.debug('Starting user registration process', { context: { email } });
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    console.log('Firebase Auth user created successfully:', user.uid);
+    logger.debug('Firebase Auth user created successfully');
     
-    // Update display name
     await updateProfile(user, { displayName: name });
-    console.log('User display name updated successfully');
+    logger.debug('User display name updated successfully');
     
-    // Create user profile in Firestore
     const userProfile: User = {
       uid: user.uid,
       name,
       email,
-      pocketIds: [], // Initialize empty array for multiple pockets
+      pocketIds: [],
       preferredLanguage: preferredLanguage || 'en',
       createdAt: new Date(),
     };
     
-    console.log('Attempting to create user profile in Firestore:', userProfile);
+    logger.debug('Attempting to persist user profile');
     
     try {
       await setDoc(doc(db, 'users', user.uid), userProfile);
-      console.log('User profile created successfully in Firestore');
       
-      // Verify the document was actually created
       const verificationDoc = await getDoc(doc(db, 'users', user.uid));
       if (verificationDoc.exists()) {
-        console.log('User profile verification successful');
+        logger.debug('User profile verification successful');
         return { user, userProfile };
-      } else {
-        console.error('User profile verification failed - document does not exist after creation');
-        throw new Error('Failed to verify user profile creation in Firestore');
       }
+
+      logger.error('User profile verification failed after creation.');
+      throw new Error(SIGN_UP_GENERIC_ERROR);
     } catch (firestoreError) {
-      console.error('Firestore error during user profile creation:', firestoreError);
+      logger.error('Error during user profile creation', { error: firestoreError });
       
-      // If Firestore fails, we should delete the Firebase Auth user to prevent orphaned accounts
       try {
         await user.delete();
-        console.log('Cleaned up Firebase Auth user due to Firestore failure');
+        logger.debug('Rolled back Firebase Auth user after profile creation failure');
       } catch (cleanupError) {
-        console.error('Failed to cleanup Firebase Auth user:', cleanupError);
+        logger.error('Failed to rollback Firebase Auth user after profile failure', { error: cleanupError });
       }
       
-      throw new Error(`Failed to create user profile in database: ${(firestoreError as Error).message}`);
+      throw new Error(SIGN_UP_GENERIC_ERROR);
     }
   } catch (error) {
-    console.error('Sign up error:', error);
-    throw error;
+    if (error instanceof Error && (error.message === SIGN_UP_GENERIC_ERROR || error.message === SIGN_UP_RATE_LIMIT_ERROR)) {
+      throw error;
+    }
+    
+    logger.error('Sign up error', { error, context: { email } });
+    throw new Error(SIGN_UP_GENERIC_ERROR);
   }
 };
 
@@ -92,15 +116,15 @@ export const getUserProfile = async (uid: string): Promise<User | null> => {
     }
     
     // User document doesn't exist in Firestore
-    console.warn(`User profile not found for UID: ${uid}`);
+    logger.warn('User profile not found for the requested user.', { context: { uid } });
     return null;
   } catch (error: unknown) {
-    console.error('Error fetching user profile:', error);
+    logger.error('Error fetching user profile', { error, context: { uid } });
     
     // Check if it's a network error or permission error
     const firebaseError = error as { code?: string };
     if (firebaseError.code === 'unavailable' || firebaseError.code === 'permission-denied') {
-      console.error('Network or permission error when fetching user profile');
+      logger.error('Network or permission error when fetching user profile', { error, context: { uid } });
       throw error; // Re-throw to trigger sign-out in AuthProvider
     }
     
@@ -173,7 +197,7 @@ export const removePocketFromUser = async (uid: string, pocketId: string) => {
 
 export const createMissingUserProfile = async (uid: string, email: string, name: string, preferredLanguage = 'en') => {
   try {
-    console.log('Creating missing user profile for UID:', uid);
+    logger.debug('Creating missing user profile record', { context: { uid } });
     
     const userProfile: User = {
       uid,
@@ -185,18 +209,132 @@ export const createMissingUserProfile = async (uid: string, email: string, name:
     };
     
     await setDoc(doc(db, 'users', uid), userProfile);
-    console.log('Missing user profile created successfully');
+    logger.debug('Missing user profile created successfully', { context: { uid } });
     
     // Verify creation
     const verificationDoc = await getDoc(doc(db, 'users', uid));
     if (verificationDoc.exists()) {
-      console.log('User profile verification successful');
+      logger.debug('User profile verification successful', { context: { uid } });
       return userProfile;
     } else {
-      throw new Error('Failed to verify user profile creation');
+      throw new Error('Unable to verify user profile creation.');
     }
   } catch (error) {
-    console.error('Error creating missing user profile:', error);
+    logger.error('Error creating missing user profile', { error, context: { uid } });
     throw error;
+  }
+};
+
+const commitDeletesInChunks = async (refs: DocumentReference[]) => {
+  if (refs.length === 0) {
+    return;
+  }
+
+  let batch = writeBatch(db);
+  let operations = 0;
+  const commits: Promise<void>[] = [];
+
+  refs.forEach((ref, index) => {
+    batch.delete(ref);
+    operations++;
+
+    if (operations === 400 || index === refs.length - 1) {
+      commits.push(batch.commit());
+      batch = writeBatch(db);
+      operations = 0;
+    }
+  });
+
+  await Promise.all(commits);
+};
+
+const ensurePocketCleanup = async (pocketId: string, userUid: string) => {
+  const pocketRef = doc(db, 'pockets', pocketId);
+  const pocketSnapshot = await getDoc(pocketRef);
+
+  if (!pocketSnapshot.exists()) {
+    return;
+  }
+
+  const pocketData = pocketSnapshot.data() as Pocket;
+  const participants = (pocketData.participants || []).filter(id => id !== userUid);
+  const updatedRoles = { ...(pocketData.roles || {}) };
+  delete updatedRoles[userUid];
+
+  const updates: Record<string, unknown> = {
+    participants,
+    roles: updatedRoles,
+  };
+
+  if (participants.length === 0) {
+    updates.deleted = true;
+    updates.deletedAt = new Date();
+    updates.deletedBy = userUid;
+  } else if (!Object.values(updatedRoles).includes('provider')) {
+    const reassignedProvider = participants[0];
+    if (reassignedProvider) {
+      updatedRoles[reassignedProvider] = 'provider';
+      updates.roles = updatedRoles;
+    }
+  }
+
+  await updateDoc(pocketRef, updates);
+
+  if (participants.length === 0) {
+    const pocketTransactionsSnapshot = await getDocs(
+      query(collection(db, 'transactions'), where('pocketId', '==', pocketId))
+    );
+
+    if (!pocketTransactionsSnapshot.empty) {
+      const refs = pocketTransactionsSnapshot.docs.map(docSnap => docSnap.ref);
+      await commitDeletesInChunks(refs);
+    }
+  }
+};
+
+export const deleteUserAccountAndData = async (): Promise<void> => {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    throw new Error('You must be signed in to delete your account.');
+  }
+
+  const userUid = currentUser.uid;
+
+  try {
+    const userProfile = await getUserProfile(userUid);
+
+    if (userProfile?.pocketIds?.length) {
+      for (const pocketId of userProfile.pocketIds) {
+        await ensurePocketCleanup(pocketId, userUid);
+      }
+    }
+
+    const userTransactionsSnapshot = await getDocs(
+      query(collection(db, 'transactions'), where('userId', '==', userUid))
+    );
+
+    if (!userTransactionsSnapshot.empty) {
+      const refs = userTransactionsSnapshot.docs.map(docSnap => docSnap.ref);
+      await commitDeletesInChunks(refs);
+    }
+
+    await deleteDoc(doc(db, 'users', userUid));
+  } catch (error) {
+    logger.error('Error deleting user data', { error, context: { userUid } });
+    throw new Error('Unable to delete account data at this time. Please try again later.');
+  }
+
+  try {
+    await currentUser.delete();
+  } catch (error) {
+    logger.error('Error deleting Firebase Auth user', { error, context: { userUid } });
+    const firebaseError = error as { code?: string };
+
+    if (firebaseError.code === 'auth/requires-recent-login') {
+      throw new Error('Please reauthenticate before deleting your account.');
+    }
+
+    throw new Error('Account data removed, but the authentication record could not be deleted. Please contact support.');
   }
 }; 

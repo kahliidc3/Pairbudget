@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
+import { logger } from '@/lib/logger';
 import { createPocket, joinPocket, deletePocket, getPocket } from '@/services/pocketService';
 import { addPocketToUser, removePocketFromUser, getUserProfile, signOut } from '@/services/authService';
 import { UserRole, Pocket } from '@/types';
@@ -55,6 +56,11 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
   const { user, userProfile, setUserProfile } = useAuthStore();
   const { setCurrentPocket } = usePocketStore();
 
+  const hasPockets = userPockets.length > 0;
+  const headerTitle = hasPockets ? t('managePockets') : t('title');
+  const headerSubtitle = hasPockets ? t('manageSubtitle') : t('subtitle');
+  const displayName = userProfile?.name || user?.displayName || user?.email?.split('@')[0];
+
   // Load user's existing pockets
   useEffect(() => {
     const loadUserPockets = async () => {
@@ -84,7 +90,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
           setMode('manage');
         }
       } catch (error) {
-        console.error('Error loading user pockets:', error);
+        logger.error('Error loading user pockets', { error });
         setUserPockets([]);
       } finally {
         setLoadingPockets(false);
@@ -175,7 +181,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
         }
       }
     } catch (error) {
-      console.error('Error selecting pocket:', error);
+      logger.error('Error selecting pocket', { error });
     }
   };
 
@@ -225,7 +231,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
       await signOut();
       router.push(`/${locale}`);
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out', { error });
     }
   };
 

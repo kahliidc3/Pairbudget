@@ -3,21 +3,39 @@ import {
   setDoc,
   getDoc,
   collection,
-  addDoc,
   query,
   where,
   onSnapshot,
   updateDoc,
   increment,
   getDocs,
+  runTransaction,
 } from 'firebase/firestore';
 import { db, handleFirebaseInternalError, getSubscriptionHealthState, resetRecoveryTracking } from '@/lib/firebase';
 import { Pocket, Transaction, UserRole } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { generateSecureRandomString } from '@/lib/secureRandom';
+import { enforceRateLimit } from '@/lib/rateLimiter';
+import { logger } from '@/lib/logger';
 
 const activeSubscriptions = new Map<string, () => void>();
 let subscriptionErrorCount = 0;
 let lastSuccessfulOperation = Date.now();
+const MAX_TRANSACTION_AMOUNT = 1_000_000;
+
+const sanitizePocketServiceError = (
+  error: unknown,
+  allowedMessages: string[],
+  fallbackMessage: string,
+  logContext: string
+): never => {
+  if (error instanceof Error && allowedMessages.includes(error.message)) {
+    throw error;
+  }
+
+  logger.error(logContext, { error });
+  throw new Error(fallbackMessage);
+};
 
 export const createPocket = async (
   name: string,
@@ -26,7 +44,7 @@ export const createPocket = async (
 ): Promise<Pocket> => {
   try {
     const pocketId = uuidv4();
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const inviteCode = generateSecureRandomString(6);
     
     const pocket: Pocket = {
       id: pocketId,
@@ -45,12 +63,23 @@ export const createPocket = async (
     await setDoc(doc(db, 'pockets', pocketId), pocket);
     return pocket;
   } catch (error) {
-    throw error;
+    sanitizePocketServiceError(
+      error,
+      [],
+      'Unable to create pocket right now. Please try again later.',
+      'Error creating pocket'
+    );
   }
 };
 
 export const joinPocket = async (inviteCode: string, userUid: string, role: UserRole) => {
   try {
+    enforceRateLimit({
+      key: `join-pocket:${userUid}`,
+      windowMs: 60_000,
+      maxRequests: 5,
+    });
+
     // Find pocket by invite code
     const pocketsQuery = query(
       collection(db, 'pockets'),
@@ -81,7 +110,17 @@ export const joinPocket = async (inviteCode: string, userUid: string, role: User
 
     return { ...pocketData, participants: [...pocketData.participants, userUid] };
   } catch (error) {
-    throw error;
+    sanitizePocketServiceError(
+      error,
+      [
+        'Invalid invite code',
+        'You are already a member of this pocket',
+        'This pocket is already full',
+        'Too many requests. Please try again soon.',
+      ],
+      'Unable to join pocket right now. Please try again later.',
+      'Error joining pocket'
+    );
   }
 };
 
@@ -105,7 +144,7 @@ export const getPocket = async (pocketId: string): Promise<Pocket | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching pocket:', error);
+    logger.error('Error fetching pocket', { error, context: { pocketId } });
     return null;
   }
 };
@@ -119,31 +158,80 @@ export const addTransaction = async (
   amount: number
 ): Promise<Transaction> => {
   try {
-    const transaction: Omit<Transaction, 'id'> = {
+    enforceRateLimit({
+      key: `add-transaction:${userId}`,
+      windowMs: 30_000,
+      maxRequests: 10,
+    });
+
+    const normalizedAmount = Number(amount);
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0 || normalizedAmount > MAX_TRANSACTION_AMOUNT) {
+      throw new Error('Invalid transaction amount');
+    }
+
+    if (type !== 'fund' && type !== 'expense') {
+      throw new Error('Invalid transaction type');
+    }
+
+    const transactionAmount = Math.round(normalizedAmount * 100) / 100;
+    const balanceChange = type === 'fund' ? transactionAmount : -transactionAmount;
+    const totalField = type === 'fund' ? 'totalFunded' : 'totalSpent';
+
+    const transactionDocRef = doc(collection(db, 'transactions'));
+    const timestamp = new Date();
+
+    const transactionPayload: Omit<Transaction, 'id'> = {
       pocketId,
       userId,
       type,
       category,
       description,
-      amount,
-      date: new Date(),
-      createdAt: new Date(),
+      amount: transactionAmount,
+      date: timestamp,
+      createdAt: timestamp,
     };
 
-    const docRef = await addDoc(collection(db, 'transactions'), transaction);
-    
-    // Update pocket balance
-    const balanceChange = type === 'fund' ? amount : -amount;
-    const totalField = type === 'fund' ? 'totalFunded' : 'totalSpent';
-    
-    await updateDoc(doc(db, 'pockets', pocketId), {
-      balance: increment(balanceChange),
-      [totalField]: increment(amount),
+    await runTransaction(db, async (firestoreTransaction) => {
+      const pocketRef = doc(db, 'pockets', pocketId);
+      const pocketSnapshot = await firestoreTransaction.get(pocketRef);
+
+      if (!pocketSnapshot.exists()) {
+        throw new Error('Pocket not found');
+      }
+
+      const pocketData = pocketSnapshot.data() as Pocket;
+
+      if (pocketData.deleted) {
+        throw new Error('Pocket not available');
+      }
+
+      if (!pocketData.participants || !pocketData.participants.includes(userId)) {
+        throw new Error('You are not authorized to add transactions to this pocket');
+      }
+
+      firestoreTransaction.set(transactionDocRef, transactionPayload);
+      firestoreTransaction.update(pocketRef, {
+        balance: increment(balanceChange),
+        [totalField]: increment(transactionAmount),
+      });
     });
 
-    return { ...transaction, id: docRef.id };
+    return { ...transactionPayload, id: transactionDocRef.id };
   } catch (error) {
-    throw error;
+    sanitizePocketServiceError(
+      error,
+      [
+        'Invalid transaction amount',
+        'Invalid transaction type',
+        'Pocket not found',
+        'Pocket not available',
+        'You are not authorized to add transactions to this pocket',
+        'Too many requests. Please try again soon.',
+      ],
+      'Unable to add this transaction right now. Please try again later.',
+      'Error adding transaction'
+    );
   }
 };
 
@@ -167,7 +255,7 @@ export const subscribeToTransactions = (
       try {
         existingUnsub();
       } catch (error) {
-        console.warn('Error cleaning up existing transaction subscription:', error);
+        logger.warn('Error cleaning up existing transaction subscription', { error, context: { pocketId } });
       }
     }
     activeSubscriptions.delete(existingKey);
@@ -201,9 +289,7 @@ export const subscribeToTransactions = (
     transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
             
             // Debug log for transactions
-            if (process.env.NODE_ENV === 'development') {
-              console.log(`Received ${transactions.length} transactions for pocket ${pocketId}`);
-            }
+            logger.debug(`Received ${transactions.length} transactions for pocket ${pocketId}`);
             
             // Reset error counts on successful data
             retryCount = 0;
@@ -218,12 +304,12 @@ export const subscribeToTransactions = (
     
     callback(transactions);
           } catch (error) {
-            console.error('Error processing transactions data:', error);
+            logger.error('Error processing transactions data', { error, context: { pocketId } });
             consecutiveErrors++;
             
             // Handle data processing errors
             if (consecutiveErrors >= maxConsecutiveErrors) {
-              console.warn('Too many consecutive data processing errors, recreating subscription');
+              logger.warn('Too many consecutive data processing errors, recreating subscription', { context: { pocketId } });
               retrySubscription();
             } else if (isActive) {
               callback([]);
@@ -233,7 +319,7 @@ export const subscribeToTransactions = (
         (error: unknown) => {
           if (!isActive) return;
           
-          console.error('Transaction subscription error:', error);
+          logger.error('Transaction subscription error', { error, context: { pocketId } });
           consecutiveErrors++;
           subscriptionErrorCount++;
           
@@ -246,12 +332,12 @@ export const subscribeToTransactions = (
                                          errorMessage.includes('Unexpected state');
           
           if (isInternalAssertion || isSubscriptionCorruption) {
-            console.warn('Detected Firebase internal assertion failure in subscription');
+            logger.warn('Detected Firebase internal assertion failure in subscription', { context: { pocketId } });
             
             // Immediately attempt Firebase-level recovery
             handleFirebaseInternalError(error).then((recovered) => {
               if (recovered && isActive) {
-                console.log('Firebase recovery successful, recreating subscription');
+                logger.info('Firebase recovery successful, recreating subscription', { context: { pocketId } });
                 // Wait a bit longer before retrying after internal assertion failure
                 setTimeout(() => {
                   if (isActive) {
@@ -259,7 +345,7 @@ export const subscribeToTransactions = (
                   }
                 }, 3000);
               } else if (isActive) {
-                console.warn('Firebase recovery failed, using exponential backoff');
+                logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId } });
                 retrySubscription();
               }
             });
@@ -272,11 +358,11 @@ export const subscribeToTransactions = (
       );
       
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Transaction subscription ${subscriptionId} established for pocket ${pocketId}`);
+        logger.debug(`Transaction subscription ${subscriptionId} established for pocket ${pocketId}`);
       }
       
     } catch (error) {
-      console.error('Error setting up transaction subscription:', error);
+      logger.error('Error setting up transaction subscription', { error, context: { pocketId } });
       
       // Check if this is an internal assertion error during setup
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -294,11 +380,11 @@ export const subscribeToTransactions = (
 
   const retrySubscription = () => {
     if (!isActive || retryCount >= maxRetries) {
-      console.error(`Transaction subscription ${subscriptionId} failed after ${maxRetries} attempts`);
+      logger.error(`Transaction subscription ${subscriptionId} failed after ${maxRetries} attempts`, { context: { pocketId } });
       
       // If we're hitting max retries due to internal assertions, suggest recovery
       if (consecutiveErrors >= maxConsecutiveErrors) {
-        console.warn('Subscription consistently failing, may need manual recovery');
+        logger.warn('Subscription consistently failing, may need manual recovery', { context: { pocketId } });
         
         // Call empty callback to indicate subscription failure
         if (isActive) {
@@ -315,7 +401,7 @@ export const subscribeToTransactions = (
       try {
         unsubscribeFunction();
       } catch (error) {
-        console.warn('Error during subscription cleanup:', error);
+        logger.warn('Error during subscription cleanup', { error, context: { subscriptionId } });
       }
       unsubscribeFunction = null;
     }
@@ -326,7 +412,7 @@ export const subscribeToTransactions = (
     const jitter = Math.random() * 1000;
     const delay = exponentialDelay + jitter;
 
-    console.log(`Retrying transaction subscription ${subscriptionId} in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries})`);
+    logger.debug(`Retrying transaction subscription ${subscriptionId} in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries})`, { context: { pocketId } });
     
     setTimeout(() => {
       if (isActive) {
@@ -344,12 +430,12 @@ export const subscribeToTransactions = (
       try {
         unsubscribeFunction();
       } catch (error) {
-        console.warn('Error during transaction subscription cleanup:', error);
+        logger.warn('Error during transaction subscription cleanup', { error, context: { subscriptionId } });
       }
     }
     activeSubscriptions.delete(subscriptionId);
     if (process.env.NODE_ENV === 'development') {
-      console.log(`Transaction subscription ${subscriptionId} cleaned up`);
+      logger.debug(`Transaction subscription ${subscriptionId} cleaned up`, { context: { pocketId } });
     }
   };
 
@@ -374,7 +460,7 @@ export const leavePocket = async (pocketId: string, userUid: string): Promise<vo
     const hasRole = pocketData.roles && pocketData.roles[userUid];
     
     if (!isParticipant && !hasRole) {
-      console.warn('User appears to not be a member, but proceeding with cleanup anyway');
+      logger.warn('User appears not to be a member, proceeding with cleanup anyway', { context: { pocketId, userUid } });
       // Don't throw error - just proceed with cleanup in case of stale data
     }
     
@@ -395,10 +481,14 @@ export const leavePocket = async (pocketId: string, userUid: string): Promise<vo
       roles: updatedRoles,
     });
     
-    console.log(`User ${userUid} successfully left pocket ${pocketId}`);
+    logger.debug('Pocket departure completed for current user.', { context: { pocketId, userUid } });
   } catch (error) {
-    console.error('Error leaving pocket:', error);
-    throw error;
+    sanitizePocketServiceError(
+      error,
+      ['Pocket not found'],
+      'Unable to leave this pocket right now. Please try again later.',
+      'Error leaving pocket'
+    );
   }
 };
 
@@ -415,10 +505,10 @@ export const deletePocket = async (pocketId: string, userUid: string): Promise<v
     
     // Check if user is a participant
     const isParticipant = pocketData.participants && pocketData.participants.includes(userUid);
-    const hasRole = pocketData.roles && pocketData.roles[userUid];
+    const userRole = pocketData.roles && pocketData.roles[userUid];
     
-    if (!isParticipant && !hasRole) {
-      throw new Error('You are not authorized to delete this pocket');
+    if (!isParticipant || userRole !== 'provider') {
+      throw new Error('Only the provider can delete this pocket');
     }
     
     // Delete all transactions associated with the pocket
@@ -442,10 +532,14 @@ export const deletePocket = async (pocketId: string, userUid: string): Promise<v
       deletedBy: userUid
     });
     
-    console.log(`Pocket ${pocketId} successfully deleted by user ${userUid}`);
+    logger.info('Pocket deletion completed by authorized user.', { context: { pocketId, userUid } });
   } catch (error) {
-    console.error('Error deleting pocket:', error);
-    throw error;
+    sanitizePocketServiceError(
+      error,
+      ['Pocket not found', 'Only the provider can delete this pocket'],
+      'Unable to delete this pocket right now. Please try again later.',
+      'Error deleting pocket'
+    );
   }
 };
 
@@ -469,7 +563,7 @@ export const subscribeToPocket = (
       try {
         existingUnsub();
       } catch (error) {
-        console.warn('Error cleaning up existing pocket subscription:', error);
+        logger.warn('Error cleaning up existing pocket subscription', { error, context: { pocketId } });
       }
     }
     activeSubscriptions.delete(existingKey);
@@ -506,11 +600,11 @@ export const subscribeToPocket = (
       callback(null);
             }
           } catch (error) {
-            console.error('Error processing pocket data:', error);
+            logger.error('Error processing pocket data', { error, context: { pocketId } });
             consecutiveErrors++;
             
             if (consecutiveErrors >= maxConsecutiveErrors) {
-              console.warn('Too many consecutive pocket data processing errors, recreating subscription');
+              logger.warn('Too many consecutive pocket data processing errors, recreating subscription', { context: { pocketId } });
               retrySubscription();
             } else if (isActive) {
               callback(null);
@@ -520,7 +614,7 @@ export const subscribeToPocket = (
         (error: unknown) => {
           if (!isActive) return;
           
-          console.error('Pocket subscription error:', error);
+          logger.error('Pocket subscription error', { error, context: { pocketId } });
           consecutiveErrors++;
           subscriptionErrorCount++;
           
@@ -533,19 +627,19 @@ export const subscribeToPocket = (
                                          errorMessage.includes('Unexpected state');
           
           if (isInternalAssertion || isSubscriptionCorruption) {
-            console.warn('Detected Firebase internal assertion failure in pocket subscription');
+            logger.warn('Detected Firebase internal assertion failure in pocket subscription', { context: { pocketId } });
             
             // Immediately attempt Firebase-level recovery
             handleFirebaseInternalError(error).then((recovered) => {
               if (recovered && isActive) {
-                console.log('Firebase recovery successful, recreating pocket subscription');
+                logger.info('Firebase recovery successful, recreating pocket subscription', { context: { pocketId } });
                 setTimeout(() => {
                   if (isActive) {
                     retrySubscription();
                   }
                 }, 3000);
               } else if (isActive) {
-                console.warn('Firebase recovery failed, using exponential backoff');
+                logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId } });
                 retrySubscription();
               }
             });
@@ -557,11 +651,11 @@ export const subscribeToPocket = (
       );
       
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Pocket subscription ${subscriptionId} established`);
+        logger.debug(`Pocket subscription ${subscriptionId} established`, { context: { pocketId } });
       }
       
     } catch (error) {
-      console.error('Error setting up pocket subscription:', error);
+      logger.error('Error setting up pocket subscription', { error, context: { pocketId } });
       
       // Check if this is an internal assertion error during setup
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -579,10 +673,10 @@ export const subscribeToPocket = (
 
   const retrySubscription = () => {
     if (!isActive || retryCount >= maxRetries) {
-      console.error(`Pocket subscription ${subscriptionId} failed after ${maxRetries} attempts`);
+      logger.error(`Pocket subscription ${subscriptionId} failed after ${maxRetries} attempts`, { context: { pocketId } });
       
       if (consecutiveErrors >= maxConsecutiveErrors) {
-        console.warn('Pocket subscription consistently failing, may need manual recovery');
+        logger.warn('Pocket subscription consistently failing, may need manual recovery', { context: { pocketId } });
         if (isActive) {
           callback(null);
         }
@@ -597,7 +691,7 @@ export const subscribeToPocket = (
       try {
         unsubscribeFunction();
       } catch (error) {
-        console.warn('Error during pocket subscription cleanup:', error);
+        logger.warn('Error during pocket subscription cleanup', { error, context: { subscriptionId } });
       }
       unsubscribeFunction = null;
     }
@@ -608,7 +702,7 @@ export const subscribeToPocket = (
     const jitter = Math.random() * 1000;
     const delay = exponentialDelay + jitter;
 
-    console.log(`Retrying pocket subscription ${subscriptionId} in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries})`);
+    logger.debug(`Retrying pocket subscription ${subscriptionId} in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries})`, { context: { pocketId } });
     
     setTimeout(() => {
       if (isActive) {
@@ -626,12 +720,12 @@ export const subscribeToPocket = (
       try {
         unsubscribeFunction();
       } catch (error) {
-        console.warn('Error during pocket subscription cleanup:', error);
+        logger.warn('Error during pocket subscription cleanup', { error, context: { subscriptionId } });
       }
     }
     activeSubscriptions.delete(subscriptionId);
     if (process.env.NODE_ENV === 'development') {
-      console.log(`Pocket subscription ${subscriptionId} cleaned up`);
+      logger.debug(`Pocket subscription ${subscriptionId} cleaned up`, { context: { pocketId } });
     }
   };
 
@@ -641,14 +735,14 @@ export const subscribeToPocket = (
 
 export const cleanupAllSubscriptions = () => {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`Cleaning up ${activeSubscriptions.size} active subscriptions`);
+  logger.debug(`Cleaning up ${activeSubscriptions.size} active subscriptions`);
   }
   
   activeSubscriptions.forEach((cleanup, id) => {
     try {
       cleanup();
     } catch (error) {
-      console.warn(`Error cleaning up subscription ${id}:`, error);
+      logger.warn(`Error cleaning up subscription ${id}`, { error, context: { subscriptionId: id } });
     }
   });
   
@@ -659,7 +753,7 @@ export const cleanupAllSubscriptions = () => {
   lastSuccessfulOperation = Date.now();
   
   if (process.env.NODE_ENV === 'development') {
-    console.log('All subscriptions cleaned up');
+  logger.debug('All subscriptions cleaned up');
   }
 };
 

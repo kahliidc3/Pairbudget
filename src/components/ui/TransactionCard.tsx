@@ -1,0 +1,100 @@
+'use client';
+
+import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+  ArrowUpRight,
+  ArrowDownRight,
+  Calendar,
+  User,
+  Tag
+} from 'lucide-react';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { Transaction } from '@/types';
+
+interface TransactionCardProps {
+  transaction: Transaction;
+  userName?: string;
+  delay?: number;
+  onClick?: () => void;
+}
+
+const TransactionCard: React.FC<TransactionCardProps> = ({
+  transaction,
+  userName,
+  delay = 0,
+  onClick
+}) => {
+  const isFund = transaction.type === 'fund';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay }}
+      onClick={onClick}
+      className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 ${
+        onClick ? 'cursor-pointer' : ''
+      }`}
+    >
+      <div className="flex items-start space-x-3">
+        {/* Icon */}
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+          isFund 
+            ? 'bg-green-100 text-green-600' 
+            : 'bg-orange-100 text-orange-600'
+        }`}>
+          {isFund ? (
+            <ArrowUpRight className="w-6 h-6" />
+          ) : (
+            <ArrowDownRight className="w-6 h-6" />
+          )}
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-gray-900 text-base truncate">
+                {transaction.description}
+              </h3>
+              
+              {/* Category */}
+              {transaction.category && (
+                <div className="flex items-center mt-1">
+                  <Tag className="w-3 h-3 text-gray-400 mr-1" />
+                  <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    {transaction.category}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* Amount */}
+            <div className={`text-lg font-bold ml-3 ${
+              isFund ? 'text-green-600' : 'text-orange-600'
+            }`}>
+              {isFund ? '+' : '-'}{formatCurrency(transaction.amount)}
+            </div>
+          </div>
+          
+          {/* Metadata */}
+          <div className="flex items-center space-x-4 text-xs text-gray-500">
+            {userName && (
+              <div className="flex items-center space-x-1">
+                <User className="w-3 h-3" />
+                <span className="truncate max-w-[100px]">{userName}</span>
+              </div>
+            )}
+            <div className="flex items-center space-x-1">
+              <Calendar className="w-3 h-3" />
+              <span>{formatDate(transaction.date)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default TransactionCard;

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Pocket, Transaction } from '@/types';
+import { logger } from '@/lib/logger';
 
 interface PocketState {
   currentPocket: Pocket | null;
@@ -21,7 +22,7 @@ export const usePocketStore = create<PocketState>((set, get) => ({
     try {
       set({ currentPocket: pocket });
     } catch (error) {
-      console.error('Error setting current pocket:', error);
+      logger.error('Error setting current pocket', { error });
       set({ currentPocket: null });
     }
   },
@@ -31,7 +32,7 @@ export const usePocketStore = create<PocketState>((set, get) => ({
       const validTransactions = Array.isArray(transactions) ? transactions : [];
       set({ transactions: validTransactions });
     } catch (error) {
-      console.error('Error setting transactions:', error);
+      logger.error('Error setting transactions', { error });
       set({ transactions: [] });
     }
   },
@@ -42,7 +43,7 @@ export const usePocketStore = create<PocketState>((set, get) => ({
         set({ transactions: [transaction, ...transactions] });
       }
     } catch (error) {
-      console.error('Error adding transaction:', error);
+      logger.error('Error adding transaction', { error });
     }
   },
   setLoading: (loading) => set({ loading: Boolean(loading) }),
@@ -50,7 +51,7 @@ export const usePocketStore = create<PocketState>((set, get) => ({
     try {
       set({ currentPocket: null, transactions: [], loading: false });
     } catch (error) {
-      console.error('Error clearing pocket data:', error);
+      logger.error('Error clearing pocket data', { error });
     }
   },
 })); 

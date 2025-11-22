@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
+import { logger } from '@/lib/logger';
 import { joinPocket, getPocket } from '@/services/pocketService';
 import { updateUserProfile } from '@/services/authService';
 import { usePocketStore } from '@/store/pocketStore';
@@ -72,7 +73,7 @@ function JoinPageContent() {
         );
         setUserPockets(validPockets);
       } catch (error) {
-        console.error('Error loading user pockets:', error);
+        logger.error('Error loading user pockets', { error });
         setUserPockets([]);
       } finally {
         setLoadingPockets(false);
@@ -123,7 +124,7 @@ function JoinPageContent() {
       setCurrentPocket(pocket);
       router.push(`/${locale}/dashboard`);
     } catch (error) {
-      console.error('Error selecting pocket:', error);
+      logger.error('Error selecting pocket', { error });
     }
   };
 

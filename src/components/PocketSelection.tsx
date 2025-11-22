@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
+import { logger } from '@/lib/logger';
 import { getPocket } from '@/services/pocketService';
 import { updateUserProfile, signOut } from '@/services/authService';
 import { formatCurrency } from '@/lib/utils';
@@ -56,7 +57,7 @@ const PocketSelection: React.FC = () => {
             ]) as Pocket | null;
             return pocket;
           } catch (error) {
-            console.warn(`Failed to load pocket ${pocketId}:`, error);
+            logger.warn('Failed to load pocket', { error, context: { pocketId } });
             return null;
           }
         });
@@ -69,7 +70,7 @@ const PocketSelection: React.FC = () => {
         const validPockets = pockets.filter((pocket): pocket is Pocket => pocket !== null);
         setUserPockets(validPockets);
       } catch (error) {
-        console.error('Error loading user pockets:', error);
+        logger.error('Error loading user pockets', { error });
         if (isMounted) {
           setUserPockets([]);
         }
@@ -100,7 +101,7 @@ const PocketSelection: React.FC = () => {
       // Update current pocket in store
       setCurrentPocket(pocket);
     } catch (error) {
-      console.error('Error selecting pocket:', error);
+      logger.error('Error selecting pocket', { error });
     } finally {
       setLoadingPocketId(null);
     }
@@ -111,7 +112,7 @@ const PocketSelection: React.FC = () => {
       await signOut();
       router.push(`/${locale}`);
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out', { error });
     }
   };
 

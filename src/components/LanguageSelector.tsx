@@ -31,7 +31,7 @@ const LanguageSelector: React.FC = () => {
         await updateUserProfile(user.uid, { preferredLanguage: newLocale });
         setUserProfile({ ...userProfile, preferredLanguage: newLocale });
       } catch (error) {
-        console.error('Error updating preferred language:', error);
+        logger.error('Error updating preferred language', { error });
       }
     }
     

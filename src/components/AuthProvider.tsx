@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { getUserProfile, updateUserProfile } from '@/services/authService';
 import { setUserLocale } from '@/i18n/locale';
 import { clearAuthCache } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -28,7 +29,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Set a timeout to prevent infinite loading
     authTimeoutRef.current = setTimeout(() => {
-      console.warn('Authentication timeout - setting loading to false');
+      logger.warn('Authentication timeout - setting loading to false');
       setLoading(false);
     }, 10000); // 10 seconds timeout
 
@@ -41,7 +42,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // If we're in the middle of signing out, ignore this auth state change
       if (signOutAttemptRef.current) {
-        console.log('Ignoring auth state change during sign-out process');
+        logger.debug('Ignoring auth state change during sign-out process');
         return;
       }
 
@@ -50,7 +51,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (user) {
         // Check if this user has already been identified as orphaned
         if (orphanedUsersRef.current.has(user.uid)) {
-          console.warn(`Orphaned user ${user.uid} trying to re-authenticate. Force signing out...`);
+          logger.warn('Orphaned user detected during re-authentication. Forcing sign out.');
           signOutAttemptRef.current = true;
           
           try {
@@ -71,7 +72,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                }
              }, 1000);
           } catch (error) {
-            console.error('Error force signing out orphaned user:', error);
+            logger.error('Error force signing out orphaned user', { error });
             // Fallback: redirect to home
             router.replace(`/${currentLocale}`);
           } finally {
@@ -85,7 +86,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           // If user exists in Firebase Auth but not in our database, sign them out
           if (!userProfile) {
-            console.warn(`User ${user.uid} exists in Firebase Auth but not in database. Signing out...`);
+            logger.warn('Authenticated user missing profile record. Signing out.');
             
             // Mark this user as orphaned to prevent re-authentication loops
             orphanedUsersRef.current.add(user.uid);
@@ -102,7 +103,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               
               // Graceful redirect without immediate reload
                              cleanupTimeoutRef.current = setTimeout(() => {
-                 console.log('Redirecting orphaned user to login');
+                 logger.debug('Redirecting orphaned user to login');
                  if (pathname.includes('/dashboard')) {
                    router.replace(`/${currentLocale}?auth=login`);
                  } else {
@@ -110,7 +111,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                  }
                }, 500);
             } catch (signOutError) {
-              console.error('Error signing out orphaned user:', signOutError);
+              logger.error('Error signing out orphaned user', { error: signOutError });
               // Fallback: redirect to login
               router.replace(`/${currentLocale}?auth=login`);
             } finally {
@@ -131,7 +132,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               await updateUserProfile(user.uid, { pocketIds: migratedProfile.pocketIds });
               setUserProfile(migratedProfile);
             } catch (migrationError) {
-              console.error('Error migrating user profile:', migrationError);
+              logger.error('Error migrating user profile', { error: migrationError });
               // If migration fails, still set the profile to prevent loading loop
               setUserProfile(userProfile);
             }
@@ -161,7 +162,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           }
         } catch (error) {
-          console.error('Error fetching user profile:', error);
+          logger.error('Error fetching user profile', { error });
           // If there's an error fetching profile, treat as orphaned user
           orphanedUsersRef.current.add(user.uid);
           signOutAttemptRef.current = true;
@@ -175,8 +176,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                          cleanupTimeoutRef.current = setTimeout(() => {
                router.replace(`/${currentLocale}?auth=login`);
              }, 500);
-                      } catch (signOutError) {
-              console.error('Error signing out after profile fetch error:', signOutError);
+          } catch (signOutError) {
+            logger.error('Error signing out after profile fetch error', { error: signOutError });
               router.replace(`/${currentLocale}?auth=login`);
             } finally {
             signOutAttemptRef.current = false;

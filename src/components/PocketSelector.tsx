@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
+import { logger } from '@/lib/logger';
 import { getPocket } from '@/services/pocketService';
 import { updateUserProfile } from '@/services/authService';
 import { formatCurrency } from '@/lib/utils';
@@ -48,7 +49,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
         const validPockets = pockets.filter((pocket): pocket is Pocket => pocket !== null);
         setUserPockets(validPockets);
       } catch (error) {
-        console.error('Error loading user pockets:', error);
+        logger.error('Error loading user pockets', { error });
         setUserPockets([]);
       } finally {
         setLoading(false);
@@ -70,7 +71,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
       setCurrentPocket(pocket);
       setShowDropdown(false);
     } catch (error) {
-      console.error('Error switching pocket:', error);
+      logger.error('Error switching pocket', { error });
     }
   };
 

@@ -14,6 +14,7 @@ import PocketSetup from '@/components/PocketSetup';
 import PocketSelection from '@/components/PocketSelection';
 import Dashboard from '@/components/Dashboard';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { logger } from '@/lib/logger';
 
 export default function DashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuthStore();
@@ -45,14 +46,14 @@ export default function DashboardPage() {
       try {
         unsubscribeRefs.current.pocket();
       } catch (error) {
-        console.warn('Error cleaning up pocket subscription:', error);
+        logger.warn('Error cleaning up pocket subscription', { error });
       }
     }
     if (unsubscribeRefs.current.transactions) {
       try {
         unsubscribeRefs.current.transactions();
       } catch (error) {
-        console.warn('Error cleaning up transactions subscription:', error);
+        logger.warn('Error cleaning up transactions subscription', { error });
       }
     }
     unsubscribeRefs.current = {};
@@ -140,7 +141,7 @@ export default function DashboardPage() {
         }, 2000); // 2-second timeout for faster loading
 
       } catch (error) {
-        console.error('Error setting up subscriptions:', error);
+        logger.error('Error setting up subscriptions', { error });
         setInitialLoadComplete(true);
         setCurrentPocket(null);
         setTransactions([]);
@@ -159,7 +160,7 @@ export default function DashboardPage() {
       try {
         cleanupAllSubscriptions();
       } catch (error) {
-        console.warn('Error during global subscription cleanup:', error);
+        logger.warn('Error during global subscription cleanup', { error });
       }
     };
   }, []);

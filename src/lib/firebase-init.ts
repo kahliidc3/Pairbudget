@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 // Helper to check if Firebase is properly configured
 export function isFirebaseConfigured(): boolean {
   // Get environment variables directly
@@ -28,7 +30,7 @@ export function isFirebaseConfigured(): boolean {
     
     // Only log once every 30 seconds to avoid spam
     if (now - lastLog > 30000) {
-      console.log('Firebase config check:', {
+      logger.debug('Firebase config check', {
         hasApiKey: !!apiKey,
         hasAuthDomain: !!authDomain,
         hasProjectId: !!projectId,
@@ -68,8 +70,8 @@ export function getFirebaseConfigStatus(): {
 
   // Only log in development to reduce console spam
   if (process.env.NODE_ENV === 'development' && missingVars.length > 0) {
-    console.log('Environment variables status:', envVars);
-    console.log('Missing variables:', missingVars);
+    logger.debug('Environment variables status', { envVars });
+    logger.debug('Missing environment variables', { missingVars });
   }
 
   let message = '';

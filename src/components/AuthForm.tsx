@@ -8,6 +8,9 @@ import { useAuthStore } from '@/store/authStore';
 import { signIn, signUp } from '@/services/authService';
 import { clearAuthCache } from '@/lib/utils';
 import LoadingSpinner from './LoadingSpinner';
+import { logger } from '@/lib/logger';
+
+const PASSWORD_POLICY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/;
 
 interface AuthFormProps {
   mode: 'login' | 'signup';
@@ -94,8 +97,8 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
       setError('Passwords do not match. Please check and try again.');
       return;
     }
-    if (mode === 'signup' && formData.password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (mode === 'signup' && !PASSWORD_POLICY_REGEX.test(formData.password)) {
+      setError('Password must be at least 12 characters and include uppercase, lowercase, number, and symbol.');
       return;
     }
     if (!formData.email.trim()) {
@@ -129,7 +132,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
         setSuccess('Welcome back! Redirecting to your dashboard...');
       }
     } catch (error: unknown) {
-      console.error('Auth error:', error);
+      logger.error('Auth error', { error });
       setError(getErrorMessage(error));
     } finally {
       setIsLoading(false);
@@ -168,7 +171,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-50">
+    <div className="min-h-screen relative overflow-hidden bg-gray-50">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0">
         {/* Grid Pattern */}

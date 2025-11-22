@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { createMissingUserProfile } from '@/services/authService';
+import { logger } from '@/lib/logger';
 
 const DebugAuthFix: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ const DebugAuthFix: React.FC = () => {
       await createMissingUserProfile(uid, email, name, 'en');
       setMessage('Successfully created missing user profile! You can now sign in.');
     } catch (error) {
-      console.error('Failed to fix orphaned user:', error);
+      logger.error('Failed to fix orphaned user', { error });
       setMessage(`Error: ${(error as Error).message}`);
     } finally {
       setLoading(false);

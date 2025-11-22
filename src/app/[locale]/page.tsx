@@ -12,6 +12,7 @@ import LanguageSelector from '@/components/LanguageSelector';
 import DebugAuthFix from '@/components/DebugAuthFix';
 import { isFirebaseConfigured } from '@/lib/firebase-init';
 import { clearAuthCache } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { 
@@ -69,7 +70,7 @@ export default function HomePage() {
 
   const handleEmergencyReset = async () => {
     try {
-      console.log('Emergency reset initiated...');
+      logger.info('Emergency reset initiated');
       clearAuthCache();
       await firebaseSignOut(auth);
       
@@ -84,7 +85,7 @@ export default function HomePage() {
         window.history.replaceState({}, '', url.toString());
       }, 100);
     } catch (error) {
-      console.error('Error during emergency reset:', error);
+      logger.error('Error during emergency reset', { error });
       // Show login form even if sign out fails
       setTimeout(() => {
         setAuthMode('login');
@@ -292,19 +293,19 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.8 }}
-                className="grid grid-cols-3 gap-4 sm:gap-8 pt-6 sm:pt-8 border-t border-white/20 max-w-lg mx-auto lg:mx-0"
+                className="grid grid-cols-3 gap-4 sm:gap-8 pt-6 sm:pt-8 border-t border-gray-200 max-w-lg mx-auto lg:mx-0"
               >
                 <div className="text-center lg:text-left">
-                  <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-1 sm:mb-2">2</div>
-                  <div className="text-xs sm:text-sm text-slate-300 font-medium">{t('quickStats.peoplePerPocket')}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-1 sm:mb-2">2</div>
+                  <div className="text-xs sm:text-sm text-gray-600 font-medium">{t('quickStats.peoplePerPocket')}</div>
                 </div>
                 <div className="text-center lg:text-left">
-                  <div className="text-2xl sm:text-3xl font-bold text-cyan-400 mb-1 sm:mb-2">∞</div>
-                  <div className="text-xs sm:text-sm text-slate-300 font-medium">{t('quickStats.transactions')}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-1 sm:mb-2">∞</div>
+                  <div className="text-xs sm:text-sm text-gray-600 font-medium">{t('quickStats.transactions')}</div>
                 </div>
                 <div className="text-center lg:text-left">
-                  <div className="text-2xl sm:text-3xl font-bold text-purple-400 mb-1 sm:mb-2">24/7</div>
-                  <div className="text-xs sm:text-sm text-slate-300 font-medium">{t('quickStats.realTimeSync')}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 mb-1 sm:mb-2">24/7</div>
+                  <div className="text-xs sm:text-sm text-gray-600 font-medium">{t('quickStats.realTimeSync')}</div>
                 </div>
               </motion.div>
             </motion.div>
@@ -396,10 +397,10 @@ export default function HomePage() {
         >
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-gray-900">
                 {t('features.title')}
               </h2>
-              <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                 {t('features.description')}
               </p>
             </div>
@@ -409,13 +410,13 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.7, duration: 0.6 }}
-                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all duration-300"
+                className="bg-white border border-gray-200 rounded-2xl p-8 text-center hover:shadow-lg transition-all duration-300 shadow-sm"
               >
                 <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Users className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-4 text-white">{t('features.twoPersonFocus.title')}</h3>
-                <p className="text-slate-300 leading-relaxed">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">{t('features.twoPersonFocus.title')}</h3>
+                <p className="text-gray-600 leading-relaxed">
                   {t('features.twoPersonFocus.description')}
                 </p>
               </motion.div>
@@ -424,13 +425,13 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.9, duration: 0.6 }}
-                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all duration-300"
+                className="bg-white border border-gray-200 rounded-2xl p-8 text-center hover:shadow-lg transition-all duration-300 shadow-sm"
               >
                 <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Zap className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-4 text-white">{t('features.realTimeSync.title')}</h3>
-                <p className="text-slate-300 leading-relaxed">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">{t('features.realTimeSync.title')}</h3>
+                <p className="text-gray-600 leading-relaxed">
                   {t('features.realTimeSync.description')}
                 </p>
               </motion.div>
@@ -439,13 +440,13 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 2.1, duration: 0.6 }}
-                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center hover:bg-white/15 transition-all duration-300"
+                className="bg-white border border-gray-200 rounded-2xl p-8 text-center hover:shadow-lg transition-all duration-300 shadow-sm"
               >
                 <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Shield className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-4 text-white">{t('features.securePrivate.title')}</h3>
-                <p className="text-slate-300 leading-relaxed">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">{t('features.securePrivate.title')}</h3>
+                <p className="text-gray-600 leading-relaxed">
                   {t('features.securePrivate.description')}
                 </p>
               </motion.div>
@@ -461,7 +462,7 @@ export default function HomePage() {
           className="py-20 px-4 relative"
         >
           <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-12">
+            <div className="bg-white border border-gray-200 rounded-2xl p-12 shadow-lg">
               <div className="flex items-center justify-center mb-6">
                 <div className="flex -space-x-2">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center border-2 border-white">
@@ -473,11 +474,11 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-gray-900">
                 {t('cta.title')}
               </h2>
               
-              <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
                 {t('cta.description')}
               </p>
               

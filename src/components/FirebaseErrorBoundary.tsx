@@ -83,7 +83,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
   handleUnhandledRejection = (event: PromiseRejectionEvent) => {
     const error = event.reason;
     if (this.isFirebaseInternalError(error)) {
-      console.warn('FirebaseErrorBoundary caught unhandled Firebase error');
+      logger.warn('FirebaseErrorBoundary caught unhandled Firebase error');
       this.handleFirebaseError(error);
       event.preventDefault(); // Prevent the error from being logged
     }
@@ -91,7 +91,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
 
   handleGlobalError = (event: ErrorEvent) => {
     if (this.isFirebaseInternalError(event.error)) {
-      console.warn('FirebaseErrorBoundary caught global Firebase error');
+      logger.warn('FirebaseErrorBoundary caught global Firebase error');
       this.handleFirebaseError(event.error);
     }
   };
@@ -110,11 +110,11 @@ class FirebaseErrorBoundary extends Component<Props, State> {
 
   handleFirebaseError = async (error: unknown) => {
     if (this.state.isRecovering) {
-      console.log('Already recovering from Firebase error, skipping');
+      logger.debug('Already recovering from Firebase error, skipping');
       return;
     }
 
-    console.error('FirebaseErrorBoundary handling error:', error);
+    logger.error('FirebaseErrorBoundary handling error', { error });
     
     this.setState({ 
       isRecovering: true,
@@ -125,7 +125,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       const recovered = await handleFirebaseInternalError(error);
       
       if (recovered) {
-        console.log('Firebase error recovery successful');
+        logger.info('Firebase error recovery successful');
         // Reset error state after successful recovery
         setTimeout(() => {
           if (this.state.hasError) {
@@ -138,10 +138,10 @@ class FirebaseErrorBoundary extends Component<Props, State> {
           }
         }, 2000);
       } else {
-        console.warn('Firebase error recovery failed');
+        logger.warn('Firebase error recovery failed');
       }
     } catch (recoveryError) {
-      console.error('Error during Firebase recovery:', recoveryError);
+      logger.error('Error during Firebase recovery', { error: recoveryError });
     } finally {
       this.setState({ isRecovering: false });
     }
@@ -168,7 +168,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('FirebaseErrorBoundary caught error:', error, errorInfo);
+    logger.error('FirebaseErrorBoundary caught error', { error, context: { errorInfo } });
     
     this.setState({
       error,
@@ -187,24 +187,24 @@ class FirebaseErrorBoundary extends Component<Props, State> {
     try {
       switch (recoveryType) {
         case 'cleanup':
-          console.log('Manual cleanup triggered');
+          logger.info('Manual cleanup triggered');
           cleanupAllSubscriptions();
           break;
           
         case 'reset':
-          console.log('Manual reset triggered');
+          logger.info('Manual reset triggered');
           resetRecoveryTracking();
           cleanupAllSubscriptions();
           break;
           
         case 'emergency':
-          console.log('Emergency reset triggered');
+          logger.info('Emergency reset triggered');
           await emergencyFirebaseReset();
           cleanupAllSubscriptions();
           break;
           
         case 'reload':
-          console.log('Page reload triggered');
+          logger.info('Page reload triggered');
           window.location.reload();
           return;
       }
@@ -218,7 +218,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       });
       
     } catch (error) {
-      console.error('Manual recovery failed:', error);
+      logger.error('Manual recovery failed', { error });
     } finally {
       this.setState({ isRecovering: false });
     }
