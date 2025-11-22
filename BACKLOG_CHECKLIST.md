@@ -789,6 +789,6 @@
 
 **Next Review Date**: End of Week 3 (2025-02-12)
 **Project Manager**: KHALID
-**Tech Lead**: KHALID
+**Tech Lead**: KHALID Chalhi
 
 _This is a living document. Update after each sprint retrospective._
