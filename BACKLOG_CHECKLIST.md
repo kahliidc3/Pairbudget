@@ -12,8 +12,8 @@
 | Metric | Value | Status |
 |--------|-------|--------|
 | **Total Tasks** | 130 tasks | In Progress |
-| **Completed** | 19 tasks (15%) | ✅ Complete |
-| **Remaining** | 111 tasks (85%) | 🔄 In Progress |
+| **Completed** | 21 tasks (16%) | ✅ Complete |
+| **Remaining** | 109 tasks (84%) | 🔄 In Progress |
 | **Critical Issues** | 1 | 🚨 New (user profile access gap) |
 | **High Priority** | 47 tasks | 📋 Planned |
 | **Medium Priority** | 55 tasks | 📋 Planned |
@@ -80,13 +80,13 @@
   - Document index requirements
   - Test query performance
 
-- [ ] **Task #5** [MEDIUM] Implement Server-Side Transaction Ordering (2h)
+- [x] **Task #5** [MEDIUM] Implement Server-Side Transaction Ordering (2h)
   - `src/services/pocketService.ts:178-222`
   - Replace client `.sort()` with Firestore `.orderBy('date', 'desc')`
   - Create required composite index
 
 **Day 3: Wednesday - Code Quality Foundation (8h)**
-- [ ] **Task #6** [HIGH] Extract Duplicate Subscription Logic (4h)
+- [x] **Task #6** [HIGH] Extract Duplicate Subscription Logic (4h)
   - `src/services/pocketService.ts` (280 lines duplicated)
   - Create `createSubscription()` factory function
   - Refactor `subscribeToTransactions()` and `subscribeToPocket()`

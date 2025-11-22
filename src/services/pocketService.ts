@@ -72,6 +72,187 @@ const cleanupExistingByPrefix = (prefix: string) => {
   }
 };
 
+type SubscriptionErrorHandler = (error: unknown) => Promise<boolean> | boolean;
+
+interface SubscriptionFactoryOptions<T> {
+  type: SubscriptionEntry['type'];
+  pocketId: string;
+  keyPrefix: string;
+  subscribe: (
+    onData: (snapshot: unknown) => void,
+    onError: (error: unknown) => void
+  ) => () => void;
+  processSnapshot: (snapshot: unknown) => T;
+  onDataErrorFallback: (error: unknown) => T;
+  callback: (data: T) => void;
+  onFatalError?: SubscriptionErrorHandler;
+}
+
+const createSubscription = <T>({
+  type,
+  pocketId,
+  keyPrefix,
+  subscribe,
+  processSnapshot,
+  onDataErrorFallback,
+  callback,
+  onFatalError,
+}: SubscriptionFactoryOptions<T>) => {
+  const subscriptionId = `${keyPrefix}_${pocketId}_${Date.now()}`;
+  let isActive = true;
+  let unsubscribeFunction: (() => void) | null = null;
+  let retryCount = 0;
+  let consecutiveErrors = 0;
+  const maxRetries = 5;
+  const maxConsecutiveErrors = 3;
+
+  cleanupExistingByPrefix(`${keyPrefix}_${pocketId}`);
+
+  const retrySubscription = () => {
+    if (!isActive || retryCount >= maxRetries) {
+      logger.error(`${type} subscription ${subscriptionId} failed after ${maxRetries} attempts`, { context: { pocketId } });
+
+      if (consecutiveErrors >= maxConsecutiveErrors && isActive) {
+        logger.warn('Subscription consistently failing, may need manual recovery', { context: { pocketId, type } });
+      }
+      return;
+    }
+
+    retryCount++;
+
+    if (unsubscribeFunction) {
+      try {
+        unsubscribeFunction();
+      } catch (error) {
+        logger.warn('Error during subscription cleanup', { error, context: { subscriptionId } });
+      }
+      unsubscribeFunction = null;
+    }
+
+    const baseDelay = consecutiveErrors > 0 && subscriptionErrorCount > 5 ? 5000 : 1000;
+    const exponentialDelay = Math.min(baseDelay * Math.pow(2, retryCount - 1), 30000);
+    const jitter = Math.random() * 1000;
+    const delay = exponentialDelay + jitter;
+
+    logger.debug(`Retrying ${type} subscription ${subscriptionId} in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries})`, { context: { pocketId } });
+
+    setTimeout(() => {
+      if (isActive) {
+        setupSubscription();
+      }
+    }, delay);
+  };
+
+  const setupSubscription = () => {
+    try {
+      unsubscribeFunction = subscribe(
+        (snapshot) => {
+          if (!isActive) return;
+
+          try {
+            const data = processSnapshot(snapshot);
+            retryCount = 0;
+            consecutiveErrors = 0;
+            subscriptionErrorCount = Math.max(0, subscriptionErrorCount - 1);
+            lastSuccessfulOperation = Date.now();
+
+            if (getSubscriptionHealthState() === 'recovering') {
+              resetRecoveryTracking();
+            }
+
+            callback(data);
+          } catch (error) {
+            logger.error('Error processing subscription data', { error, context: { pocketId, type } });
+            consecutiveErrors++;
+
+            if (consecutiveErrors >= maxConsecutiveErrors) {
+              logger.warn('Too many consecutive data processing errors, recreating subscription', { context: { pocketId, type } });
+              retrySubscription();
+            } else {
+              callback(onDataErrorFallback(error));
+            }
+          }
+        },
+        async (error: unknown) => {
+          if (!isActive) return;
+
+          logger.error(`${type} subscription error`, { error, context: { pocketId } });
+          consecutiveErrors++;
+          subscriptionErrorCount++;
+
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const isInternalAssertion = errorMessage.includes('INTERNAL ASSERTION FAILED');
+          const isSubscriptionCorruption = errorMessage.includes('ID: ca9') ||
+                                         errorMessage.includes('ID: b815') ||
+                                         errorMessage.includes('Fe:-1') ||
+                                         errorMessage.includes('Unexpected state');
+
+          if (isInternalAssertion || isSubscriptionCorruption) {
+            logger.warn('Detected Firebase internal assertion failure in subscription', { context: { pocketId, type } });
+
+            const recovered = await handleFirebaseInternalError(error);
+            if (recovered && isActive) {
+              logger.info('Firebase recovery successful, recreating subscription', { context: { pocketId, type } });
+              setTimeout(() => {
+                if (isActive) {
+                  retrySubscription();
+                }
+              }, 3000);
+            } else if (isActive) {
+              logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId, type } });
+              retrySubscription();
+            }
+          } else if (onFatalError) {
+            const shouldRetry = await onFatalError(error);
+            if (shouldRetry && isActive) {
+              retrySubscription();
+            }
+          } else {
+            retrySubscription();
+          }
+        }
+      );
+
+      if (process.env.NODE_ENV === 'development') {
+        logger.debug(`${type} subscription ${subscriptionId} established`, { context: { pocketId } });
+      }
+    } catch (error) {
+      logger.error('Error setting up subscription', { error, context: { pocketId, type } });
+
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('INTERNAL ASSERTION FAILED')) {
+        handleFirebaseInternalError(error).then((recovered) => {
+          if (recovered && isActive) {
+            setTimeout(() => retrySubscription(), 2000);
+          }
+        });
+      } else {
+        retrySubscription();
+      }
+    }
+  };
+
+  const cleanupFunction = () => {
+    isActive = false;
+    if (unsubscribeFunction) {
+      try {
+        unsubscribeFunction();
+      } catch (error) {
+        logger.warn('Error during subscription cleanup', { error, context: { subscriptionId } });
+      }
+    }
+    cleanupSubscription(subscriptionId, false);
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug(`${type} subscription ${subscriptionId} cleaned up`, { context: { pocketId } });
+    }
+  };
+
+  registerSubscription(subscriptionId, pocketId, type, cleanupFunction);
+  setupSubscription();
+
+  return cleanupFunction;
+};
+
 const sanitizePocketServiceError = (
   error: unknown,
   allowedMessages: string[],
@@ -344,201 +525,34 @@ export const subscribeToTransactions = (
   pocketId: string,
   callback: (transactions: Transaction[]) => void
 ) => {
-  const subscriptionId = `transactions_${pocketId}_${Date.now()}`;
-  let isActive = true;
-  let unsubscribeFunction: (() => void) | null = null;
-  let retryCount = 0;
-  let consecutiveErrors = 0;
-  const maxRetries = 5;
-  const maxConsecutiveErrors = 3;
-  
-  // Clean up any existing subscription for this pocket
-  cleanupExistingByPrefix(`transactions_${pocketId}`);
-  
-  const setupSubscription = () => {
-    try {
-  const q = query(
+  const transactionsQuery = query(
     collection(db, 'transactions'),
-    where('pocketId', '==', pocketId)
-      );
+    where('pocketId', '==', pocketId),
+    orderBy('date', 'desc')
+  );
 
-      unsubscribeFunction = onSnapshot(
-        q, 
-        (querySnapshot) => {
-          if (!isActive) return;
-          
-          try {
-    const transactions: Transaction[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      transactions.push({
-        ...data,
-        id: doc.id,
-        date: data.date?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate() || new Date(),
-      } as Transaction);
-    });
-    
-            // Client-side sorting by date (most recent first)
-    transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
-            
-            // Debug log for transactions
-            logger.debug(`Received ${transactions.length} transactions for pocket ${pocketId}`);
-            
-            // Reset error counts on successful data
-            retryCount = 0;
-            consecutiveErrors = 0;
-            subscriptionErrorCount = Math.max(0, subscriptionErrorCount - 1);
-            lastSuccessfulOperation = Date.now();
-            
-            // Reset recovery tracking if we've been healthy for a while
-            if (getSubscriptionHealthState() === 'recovering') {
-              resetRecoveryTracking();
-            }
-    
-    callback(transactions);
-          } catch (error) {
-            logger.error('Error processing transactions data', { error, context: { pocketId } });
-            consecutiveErrors++;
-            
-            // Handle data processing errors
-            if (consecutiveErrors >= maxConsecutiveErrors) {
-              logger.warn('Too many consecutive data processing errors, recreating subscription', { context: { pocketId } });
-              retrySubscription();
-            } else if (isActive) {
-              callback([]);
-            }
-          }
-        },
-        (error: unknown) => {
-          if (!isActive) return;
-          
-          logger.error('Transaction subscription error', { error, context: { pocketId } });
-          consecutiveErrors++;
-          subscriptionErrorCount++;
-          
-          // Check for specific Firebase internal assertion failures
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          const isInternalAssertion = errorMessage.includes('INTERNAL ASSERTION FAILED');
-          const isSubscriptionCorruption = errorMessage.includes('ID: ca9') || 
-                                         errorMessage.includes('ID: b815') || 
-                                         errorMessage.includes('Fe:-1') ||
-                                         errorMessage.includes('Unexpected state');
-          
-          if (isInternalAssertion || isSubscriptionCorruption) {
-            logger.warn('Detected Firebase internal assertion failure in subscription', { context: { pocketId } });
-            
-            // Immediately attempt Firebase-level recovery
-            handleFirebaseInternalError(error).then((recovered) => {
-              if (recovered && isActive) {
-                logger.info('Firebase recovery successful, recreating subscription', { context: { pocketId } });
-                // Wait a bit longer before retrying after internal assertion failure
-                setTimeout(() => {
-                  if (isActive) {
-                    retrySubscription();
-                  }
-                }, 3000);
-              } else if (isActive) {
-                logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId } });
-                retrySubscription();
-              }
-            });
-            
-          } else {
-            // Handle other types of errors with exponential backoff
-            retrySubscription();
-          }
-        }
-      );
-      
-      if (process.env.NODE_ENV === 'development') {
-        logger.debug(`Transaction subscription ${subscriptionId} established for pocket ${pocketId}`);
-      }
-      
-    } catch (error) {
-      logger.error('Error setting up transaction subscription', { error, context: { pocketId } });
-      
-      // Check if this is an internal assertion error during setup
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('INTERNAL ASSERTION FAILED')) {
-        handleFirebaseInternalError(error).then((recovered) => {
-          if (recovered && isActive) {
-            setTimeout(() => retrySubscription(), 2000);
-          }
-        });
-      } else {
-        retrySubscription();
-      }
-    }
-  };
-
-  const retrySubscription = () => {
-    if (!isActive || retryCount >= maxRetries) {
-      logger.error(`Transaction subscription ${subscriptionId} failed after ${maxRetries} attempts`, { context: { pocketId } });
-      
-      // If we're hitting max retries due to internal assertions, suggest recovery
-      if (consecutiveErrors >= maxConsecutiveErrors) {
-        logger.warn('Subscription consistently failing, may need manual recovery', { context: { pocketId } });
-        
-        // Call empty callback to indicate subscription failure
-        if (isActive) {
-          callback([]);
-        }
-      }
-      return;
-    }
-
-    retryCount++;
-    
-    // Clean up current subscription if it exists
-    if (unsubscribeFunction) {
-      try {
-        unsubscribeFunction();
-      } catch (error) {
-        logger.warn('Error during subscription cleanup', { error, context: { subscriptionId } });
-      }
-      unsubscribeFunction = null;
-    }
-
-    // Exponential backoff with jitter, longer delays for internal assertion failures
-    const baseDelay = consecutiveErrors > 0 && subscriptionErrorCount > 5 ? 5000 : 1000;
-    const exponentialDelay = Math.min(baseDelay * Math.pow(2, retryCount - 1), 30000);
-    const jitter = Math.random() * 1000;
-    const delay = exponentialDelay + jitter;
-
-    logger.debug(`Retrying transaction subscription ${subscriptionId} in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries})`, { context: { pocketId } });
-    
-    setTimeout(() => {
-      if (isActive) {
-        setupSubscription();
-      }
-    }, delay);
-  };
-
-  // Initial setup
-  setupSubscription();
-
-  const cleanupFunction = () => {
-    isActive = false;
-    if (unsubscribeFunction) {
-      try {
-        unsubscribeFunction();
-      } catch (error) {
-        logger.warn('Error during transaction subscription cleanup', { error, context: { subscriptionId } });
-      }
-    }
-    const entry = activeSubscriptions.get(subscriptionId);
-    if (entry?.timerId) {
-      clearTimeout(entry.timerId);
-    }
-    activeSubscriptions.delete(subscriptionId);
-    if (process.env.NODE_ENV === 'development') {
-      logger.debug(`Transaction subscription ${subscriptionId} cleaned up`, { context: { pocketId } });
-    }
-  };
-
-  registerSubscription(subscriptionId, pocketId, 'transactions', cleanupFunction);
-  return cleanupFunction;
+  return createSubscription<Transaction[]>({
+    type: 'transactions',
+    pocketId,
+    keyPrefix: 'transactions',
+    subscribe: (onData, onError) => onSnapshot(transactionsQuery, onData, onError),
+    processSnapshot: (snapshot) => {
+      const querySnapshot = snapshot as { forEach: (fn: (doc: any) => void) => void };
+      const transactions: Transaction[] = [];
+      (querySnapshot as any).forEach((doc: any) => {
+        const data = doc.data();
+        transactions.push({
+          ...data,
+          id: doc.id,
+          date: data.date?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+        } as Transaction);
+      });
+      return transactions;
+    },
+    onDataErrorFallback: () => [],
+    callback,
+  });
 };
 
 export const leavePocket = async (pocketId: string, userUid: string): Promise<void> => {
@@ -645,183 +659,25 @@ export const subscribeToPocket = (
   pocketId: string,
   callback: (pocket: Pocket | null) => void
 ) => {
-  const subscriptionId = `pocket_${pocketId}_${Date.now()}`;
-  let isActive = true;
-  let unsubscribeFunction: (() => void) | null = null;
-  let retryCount = 0;
-  let consecutiveErrors = 0;
-  const maxRetries = 5;
-  const maxConsecutiveErrors = 3;
-  
-  // Clean up any existing subscription for this pocket
-  cleanupExistingByPrefix(`pocket_${pocketId}`);
+  const pocketDocRef = doc(db, 'pockets', pocketId);
 
-  const setupSubscription = () => {
-    try {
-      unsubscribeFunction = onSnapshot(
-        doc(db, 'pockets', pocketId),
-        (doc) => {
-          if (!isActive) return;
-          
-          try {
-    if (doc.exists()) {
-      const data = doc.data();
-              const pocket: Pocket = {
+  return createSubscription<Pocket | null>({
+    type: 'pocket',
+    pocketId,
+    keyPrefix: 'pocket',
+    subscribe: (onData, onError) => onSnapshot(pocketDocRef, onData, onError),
+    processSnapshot: (snapshot) => {
+      const snap = snapshot as { exists: () => boolean; data: () => any };
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      return {
         ...data,
         createdAt: data.createdAt?.toDate() || new Date(),
       } as Pocket;
-              
-              // Reset error counts on successful data
-              retryCount = 0;
-              consecutiveErrors = 0;
-              subscriptionErrorCount = Math.max(0, subscriptionErrorCount - 1);
-              lastSuccessfulOperation = Date.now();
-              
-              // Reset recovery tracking if we've been healthy for a while
-              if (getSubscriptionHealthState() === 'recovering') {
-                resetRecoveryTracking();
-              }
-              
-      callback(pocket);
-    } else {
-      callback(null);
-            }
-          } catch (error) {
-            logger.error('Error processing pocket data', { error, context: { pocketId } });
-            consecutiveErrors++;
-            
-            if (consecutiveErrors >= maxConsecutiveErrors) {
-              logger.warn('Too many consecutive pocket data processing errors, recreating subscription', { context: { pocketId } });
-              retrySubscription();
-            } else if (isActive) {
-              callback(null);
-            }
-          }
-        },
-        (error: unknown) => {
-          if (!isActive) return;
-          
-          logger.error('Pocket subscription error', { error, context: { pocketId } });
-          consecutiveErrors++;
-          subscriptionErrorCount++;
-          
-          // Check for specific Firebase internal assertion failures
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          const isInternalAssertion = errorMessage.includes('INTERNAL ASSERTION FAILED');
-          const isSubscriptionCorruption = errorMessage.includes('ID: ca9') || 
-                                         errorMessage.includes('ID: b815') || 
-                                         errorMessage.includes('Fe:-1') ||
-                                         errorMessage.includes('Unexpected state');
-          
-          if (isInternalAssertion || isSubscriptionCorruption) {
-            logger.warn('Detected Firebase internal assertion failure in pocket subscription', { context: { pocketId } });
-            
-            // Immediately attempt Firebase-level recovery
-            handleFirebaseInternalError(error).then((recovered) => {
-              if (recovered && isActive) {
-                logger.info('Firebase recovery successful, recreating pocket subscription', { context: { pocketId } });
-                setTimeout(() => {
-                  if (isActive) {
-                    retrySubscription();
-                  }
-                }, 3000);
-              } else if (isActive) {
-                logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId } });
-                retrySubscription();
-              }
-            });
-            
-          } else {
-            retrySubscription();
-          }
-        }
-      );
-      
-      if (process.env.NODE_ENV === 'development') {
-        logger.debug(`Pocket subscription ${subscriptionId} established`, { context: { pocketId } });
-      }
-      
-    } catch (error) {
-      logger.error('Error setting up pocket subscription', { error, context: { pocketId } });
-      
-      // Check if this is an internal assertion error during setup
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('INTERNAL ASSERTION FAILED')) {
-        handleFirebaseInternalError(error).then((recovered) => {
-          if (recovered && isActive) {
-            setTimeout(() => retrySubscription(), 2000);
-          }
-        });
-      } else {
-        retrySubscription();
-      }
-    }
-  };
-
-  const retrySubscription = () => {
-    if (!isActive || retryCount >= maxRetries) {
-      logger.error(`Pocket subscription ${subscriptionId} failed after ${maxRetries} attempts`, { context: { pocketId } });
-      
-      if (consecutiveErrors >= maxConsecutiveErrors) {
-        logger.warn('Pocket subscription consistently failing, may need manual recovery', { context: { pocketId } });
-        if (isActive) {
-          callback(null);
-        }
-      }
-      return;
-    }
-
-    retryCount++;
-    
-    // Clean up current subscription if it exists
-    if (unsubscribeFunction) {
-      try {
-        unsubscribeFunction();
-      } catch (error) {
-        logger.warn('Error during pocket subscription cleanup', { error, context: { subscriptionId } });
-      }
-      unsubscribeFunction = null;
-    }
-
-    // Exponential backoff with jitter
-    const baseDelay = consecutiveErrors > 0 && subscriptionErrorCount > 5 ? 5000 : 1000;
-    const exponentialDelay = Math.min(baseDelay * Math.pow(2, retryCount - 1), 30000);
-    const jitter = Math.random() * 1000;
-    const delay = exponentialDelay + jitter;
-
-    logger.debug(`Retrying pocket subscription ${subscriptionId} in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries})`, { context: { pocketId } });
-    
-    setTimeout(() => {
-      if (isActive) {
-        setupSubscription();
-      }
-    }, delay);
-  };
-
-  // Initial setup
-  setupSubscription();
-
-  const cleanupFunction = () => {
-    isActive = false;
-    if (unsubscribeFunction) {
-      try {
-        unsubscribeFunction();
-      } catch (error) {
-        logger.warn('Error during pocket subscription cleanup', { error, context: { subscriptionId } });
-      }
-    }
-    const entry = activeSubscriptions.get(subscriptionId);
-    if (entry?.timerId) {
-      clearTimeout(entry.timerId);
-    }
-    activeSubscriptions.delete(subscriptionId);
-    if (process.env.NODE_ENV === 'development') {
-      logger.debug(`Pocket subscription ${subscriptionId} cleaned up`, { context: { pocketId } });
-    }
-  };
-
-  registerSubscription(subscriptionId, pocketId, 'pocket', cleanupFunction);
-  return cleanupFunction;
+    },
+    onDataErrorFallback: () => null,
+    callback,
+  });
 };
 
 export const cleanupAllSubscriptions = () => {
