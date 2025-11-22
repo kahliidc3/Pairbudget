@@ -22,10 +22,55 @@ import { generateSecureRandomString } from '@/lib/secureRandom';
 import { enforceRateLimit } from '@/lib/rateLimiter';
 import { logger } from '@/lib/logger';
 
-const activeSubscriptions = new Map<string, () => void>();
+type SubscriptionEntry = {
+  cleanup: () => void;
+  createdAt: number;
+  timerId?: ReturnType<typeof setTimeout>;
+  pocketId: string;
+  type: 'transactions' | 'pocket';
+};
+
+const activeSubscriptions = new Map<string, SubscriptionEntry>();
 let subscriptionErrorCount = 0;
 let lastSuccessfulOperation = Date.now();
+const MAX_SUBSCRIPTION_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
 const MAX_TRANSACTION_AMOUNT = 1_000_000;
+
+const cleanupSubscription = (id: string, invokeCleanup = true) => {
+  const entry = activeSubscriptions.get(id);
+  if (!entry) return;
+
+  if (entry.timerId) {
+    clearTimeout(entry.timerId);
+  }
+
+  if (invokeCleanup) {
+    try {
+      entry.cleanup();
+    } catch (error) {
+      logger.warn('Error during subscription cleanup', { error, context: { subscriptionId: id } });
+    }
+  }
+
+  activeSubscriptions.delete(id);
+};
+
+const registerSubscription = (id: string, pocketId: string, type: SubscriptionEntry['type'], cleanup: () => void) => {
+  const timerId = setTimeout(() => {
+    logger.info('Subscription exceeded max age, cleaning up', { context: { id, pocketId, type } });
+    cleanupSubscription(id);
+  }, MAX_SUBSCRIPTION_AGE_MS);
+
+  activeSubscriptions.set(id, { cleanup, createdAt: Date.now(), timerId, pocketId, type });
+};
+
+const cleanupExistingByPrefix = (prefix: string) => {
+  const existingKey = Array.from(activeSubscriptions.keys()).find(key => key.startsWith(prefix));
+  if (existingKey) {
+    cleanupSubscription(existingKey);
+  }
+};
 
 const sanitizePocketServiceError = (
   error: unknown,
@@ -308,18 +353,7 @@ export const subscribeToTransactions = (
   const maxConsecutiveErrors = 3;
   
   // Clean up any existing subscription for this pocket
-  const existingKey = Array.from(activeSubscriptions.keys()).find(key => key.startsWith(`transactions_${pocketId}`));
-  if (existingKey) {
-    const existingUnsub = activeSubscriptions.get(existingKey);
-    if (existingUnsub) {
-      try {
-        existingUnsub();
-      } catch (error) {
-        logger.warn('Error cleaning up existing transaction subscription', { error, context: { pocketId } });
-      }
-    }
-    activeSubscriptions.delete(existingKey);
-  }
+  cleanupExistingByPrefix(`transactions_${pocketId}`);
   
   const setupSubscription = () => {
     try {
@@ -493,13 +527,17 @@ export const subscribeToTransactions = (
         logger.warn('Error during transaction subscription cleanup', { error, context: { subscriptionId } });
       }
     }
+    const entry = activeSubscriptions.get(subscriptionId);
+    if (entry?.timerId) {
+      clearTimeout(entry.timerId);
+    }
     activeSubscriptions.delete(subscriptionId);
     if (process.env.NODE_ENV === 'development') {
       logger.debug(`Transaction subscription ${subscriptionId} cleaned up`, { context: { pocketId } });
     }
   };
 
-  activeSubscriptions.set(subscriptionId, cleanupFunction);
+  registerSubscription(subscriptionId, pocketId, 'transactions', cleanupFunction);
   return cleanupFunction;
 };
 
@@ -616,18 +654,7 @@ export const subscribeToPocket = (
   const maxConsecutiveErrors = 3;
   
   // Clean up any existing subscription for this pocket
-  const existingKey = Array.from(activeSubscriptions.keys()).find(key => key.startsWith(`pocket_${pocketId}`));
-  if (existingKey) {
-    const existingUnsub = activeSubscriptions.get(existingKey);
-    if (existingUnsub) {
-      try {
-        existingUnsub();
-      } catch (error) {
-        logger.warn('Error cleaning up existing pocket subscription', { error, context: { pocketId } });
-      }
-    }
-    activeSubscriptions.delete(existingKey);
-  }
+  cleanupExistingByPrefix(`pocket_${pocketId}`);
 
   const setupSubscription = () => {
     try {
@@ -783,13 +810,17 @@ export const subscribeToPocket = (
         logger.warn('Error during pocket subscription cleanup', { error, context: { subscriptionId } });
       }
     }
+    const entry = activeSubscriptions.get(subscriptionId);
+    if (entry?.timerId) {
+      clearTimeout(entry.timerId);
+    }
     activeSubscriptions.delete(subscriptionId);
     if (process.env.NODE_ENV === 'development') {
       logger.debug(`Pocket subscription ${subscriptionId} cleaned up`, { context: { pocketId } });
     }
   };
 
-  activeSubscriptions.set(subscriptionId, cleanupFunction);
+  registerSubscription(subscriptionId, pocketId, 'pocket', cleanupFunction);
   return cleanupFunction;
 };
 
@@ -798,9 +829,9 @@ export const cleanupAllSubscriptions = () => {
   logger.debug(`Cleaning up ${activeSubscriptions.size} active subscriptions`);
   }
   
-  activeSubscriptions.forEach((cleanup, id) => {
+  activeSubscriptions.forEach((entry, id) => {
     try {
-      cleanup();
+      cleanupSubscription(id);
     } catch (error) {
       logger.warn(`Error cleaning up subscription ${id}`, { error, context: { subscriptionId: id } });
     }
@@ -822,5 +853,19 @@ export const getSubscriptionStats = () => ({
   activeSubscriptions: activeSubscriptions.size,
   errorCount: subscriptionErrorCount,
   lastSuccessfulOperation,
-  timeSinceLastSuccess: Date.now() - lastSuccessfulOperation
-}); 
+  timeSinceLastSuccess: Date.now() - lastSuccessfulOperation,
+  oldestSubscriptionAge: activeSubscriptions.size
+    ? Date.now() - Math.min(...Array.from(activeSubscriptions.values()).map(entry => entry.createdAt))
+    : 0,
+});
+
+export const getSubscriptionHealthDashboard = () => {
+  const now = Date.now();
+  return Array.from(activeSubscriptions.entries()).map(([id, entry]) => ({
+    id,
+    type: entry.type,
+    pocketId: entry.pocketId,
+    ageMs: now - entry.createdAt,
+    expiresInMs: Math.max(0, MAX_SUBSCRIPTION_AGE_MS - (now - entry.createdAt)),
+  }));
+};

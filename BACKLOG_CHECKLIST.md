@@ -12,8 +12,8 @@
 | Metric | Value | Status |
 |--------|-------|--------|
 | **Total Tasks** | 130 tasks | In Progress |
-| **Completed** | 17 tasks (13%) | ✅ Complete |
-| **Remaining** | 113 tasks (87%) | 🔄 In Progress |
+| **Completed** | 19 tasks (15%) | ✅ Complete |
+| **Remaining** | 111 tasks (85%) | 🔄 In Progress |
 | **Critical Issues** | 1 | 🚨 New (user profile access gap) |
 | **High Priority** | 47 tasks | 📋 Planned |
 | **Medium Priority** | 55 tasks | 📋 Planned |
@@ -68,14 +68,14 @@
   - **Impact**: 95% reduction in initial load time
 
 **Day 2: Tuesday - Memory & Subscription Management (8h)**
-- [ ] **Task #3** [HIGH] Fix Subscription Memory Leaks (4h)
+- [x] **Task #3** [HIGH] Fix Subscription Memory Leaks (4h)
   - `src/services/pocketService.ts:150-358`
   - Implement subscription cleanup timers
   - Add max subscription age (5 min)
   - Create subscription health dashboard
   - Test with multiple pocket switches
 
-- [ ] **Task #4** [MEDIUM] Add Firestore Query Indexes (2h)
+- [x] **Task #4** [MEDIUM] Add Firestore Query Indexes (2h)
   - Create composite indexes for common queries
   - Document index requirements
   - Test query performance

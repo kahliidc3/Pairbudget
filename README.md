@@ -104,6 +104,13 @@ PairBudget v2.0 is a fully responsive, mobile-first web application designed for
 
 5. **Open [http://localhost:3000](http://localhost:3000)**
 
+## 🔧 Firestore Indexes
+
+Create the required composite index for transactions pagination:
+- Collection `transactions`: `pocketId` (asc), `date` (desc)
+
+See `FIRESTORE_INDEXES.md` for details.
+
 ## 📱 How It Works
 
 ### Getting Started
