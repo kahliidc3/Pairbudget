@@ -6,12 +6,14 @@ import { useLocale, useTranslations } from 'next-intl';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
-import { fetchTransactionsPage } from '@/services/pocketService';
+import { deleteTransaction, fetchTransactionsPage, updateTransaction } from '@/services/pocketService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { EXPENSE_CATEGORIES } from '@/types';
 import StatCard from '@/components/ui/StatCard';
 import TransactionCard from '@/components/ui/TransactionCard';
+import MobileModal from '@/components/ui/MobileModal';
+import { toast } from 'sonner';
 import { 
   Activity,
   ArrowLeft,
@@ -48,6 +50,17 @@ export default function AllTransactionsPage() {
   const [filterType, setFilterType] = useState<'all' | 'fund' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionWithUser | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [editForm, setEditForm] = useState({
+    type: 'expense' as 'fund' | 'expense',
+    category: '',
+    description: '',
+    amount: '',
+  });
 
   const { userNames } = useLoadUserNames(transactions.map((t) => t.userId));
 
@@ -179,6 +192,75 @@ export default function AllTransactionsPage() {
     setSearchTerm('');
     setFilterType('all');
     setFilterCategory('all');
+  };
+
+  const canManageTransaction = (transaction: Transaction) => {
+    if (!user || !currentPocket) return false;
+    const role = currentPocket.roles[user.uid];
+    return transaction.userId === user.uid || role === 'provider';
+  };
+
+  const openEditModal = (transaction: TransactionWithUser) => {
+    setSelectedTransaction(transaction);
+    setEditForm({
+      type: transaction.type,
+      category: transaction.category || '',
+      description: transaction.description,
+      amount: String(transaction.amount),
+    });
+    setShowEditModal(true);
+  };
+
+  const openDeleteModal = (transaction: TransactionWithUser) => {
+    setSelectedTransaction(transaction);
+    setShowDeleteModal(true);
+  };
+
+  const handleUpdateTransaction = async () => {
+    if (!user || !selectedTransaction) return;
+
+    const amount = Number(editForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error(t('updateError'));
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      await updateTransaction(selectedTransaction.id, user.uid, {
+        type: editForm.type,
+        category: editForm.type === 'fund' ? '' : editForm.category,
+        description: editForm.description.trim(),
+        amount,
+      });
+      toast.success(t('updateSuccess'));
+      setShowEditModal(false);
+      setSelectedTransaction(null);
+      await loadTransactions(true);
+    } catch (error) {
+      logger.error('Error updating transaction', { error, context: { transactionId: selectedTransaction.id } });
+      toast.error(t('updateError'));
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteTransaction = async () => {
+    if (!user || !selectedTransaction) return;
+
+    setDeleteLoading(true);
+    try {
+      await deleteTransaction(selectedTransaction.id, user.uid);
+      toast.success(t('deleteSuccess'));
+      setShowDeleteModal(false);
+      setSelectedTransaction(null);
+      await loadTransactions(true);
+    } catch (error) {
+      logger.error('Error deleting transaction', { error, context: { transactionId: selectedTransaction.id } });
+      toast.error(t('deleteError'));
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -365,6 +447,9 @@ export default function AllTransactionsPage() {
                 userName={transaction.userName}
                 currency={preferredCurrency}
                 delay={index * 0.05}
+                showActions={canManageTransaction(transaction)}
+                onEdit={canManageTransaction(transaction) ? () => openEditModal(transaction) : undefined}
+                onDelete={canManageTransaction(transaction) ? () => openDeleteModal(transaction) : undefined}
               />
             ))
           ) : (
@@ -417,6 +502,128 @@ export default function AllTransactionsPage() {
           </div>
         )}
       </main>
+
+      <MobileModal
+        isOpen={showEditModal}
+        onClose={() => {
+          if (editLoading) return;
+          setShowEditModal(false);
+          setSelectedTransaction(null);
+        }}
+        title={t('editTitle')}
+      >
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterType')}</label>
+            <select
+              value={editForm.type}
+              onChange={(event) =>
+                setEditForm((prev) => ({
+                  ...prev,
+                  type: event.target.value as 'fund' | 'expense',
+                  category: event.target.value === 'fund' ? '' : prev.category,
+                }))
+              }
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="fund">{t('fund')}</option>
+              <option value="expense">{t('expense')}</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('csv.description')}</label>
+            <input
+              type="text"
+              value={editForm.description}
+              onChange={(event) => setEditForm((prev) => ({ ...prev, description: event.target.value }))}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('csv.amount')}</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={editForm.amount}
+              onChange={(event) => setEditForm((prev) => ({ ...prev, amount: event.target.value }))}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {editForm.type === 'expense' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterCategory')}</label>
+              <select
+                value={editForm.category}
+                onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">{t('allCategories')}</option>
+                {EXPENSE_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setShowEditModal(false)}
+              disabled={editLoading}
+              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              onClick={handleUpdateTransaction}
+              disabled={editLoading}
+              className="flex-1 py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-all duration-200 font-medium"
+            >
+              {editLoading ? t('updating') : t('saveChanges')}
+            </button>
+          </div>
+        </div>
+      </MobileModal>
+
+      <MobileModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          if (deleteLoading) return;
+          setShowDeleteModal(false);
+          setSelectedTransaction(null);
+        }}
+        title={t('deleteTitle')}
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-gray-700">{t('deleteConfirm')}</p>
+          {selectedTransaction ? (
+            <div className="bg-gray-50 border border-gray-200 p-3 text-sm text-gray-700">
+              {selectedTransaction.description}
+            </div>
+          ) : null}
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deleteLoading}
+              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              onClick={handleDeleteTransaction}
+              disabled={deleteLoading}
+              className="flex-1 py-3 px-4 bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 transition-all duration-200 font-medium"
+            >
+              {deleteLoading ? t('deleting') : tCommon('delete')}
+            </button>
+          </div>
+        </div>
+      </MobileModal>
     </div>
   );
-} 
+}

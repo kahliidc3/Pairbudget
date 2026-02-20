@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import { FiEye, FiEyeOff, FiGlobe, FiLock, FiMail, FiUser } from 'react-icons/fi';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { signIn, signUp } from '@/services/authService';
 import { clearAuthCache } from '@/lib/utils';
 import LoadingSpinner from './LoadingSpinner';
+import WaitingOverlay from './ui/WaitingOverlay';
 import { logger } from '@/lib/logger';
 
 const PASSWORD_POLICY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/;
@@ -176,7 +177,8 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gray-50">
+    <MotionConfig reducedMotion="always">
+      <div className="min-h-screen relative overflow-hidden bg-gray-50">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0">
         {/* Grid Pattern */}
@@ -529,6 +531,11 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
           </motion.div>
         </div>
       </div>
-    </div>
+      </div>
+      <WaitingOverlay
+        isVisible={isLoading}
+        label={mode === 'login' ? t('loading.signingIn') : t('loading.creatingAccount')}
+      />
+    </MotionConfig>
   );
-} 
+}

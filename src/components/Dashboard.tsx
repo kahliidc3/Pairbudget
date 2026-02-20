@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
-import { addTransaction, leavePocket } from '@/services/pocketService';
+import { addTransaction, deleteTransaction, leavePocket, updateTransaction } from '@/services/pocketService';
 import { deleteUserAccountAndData, removePocketFromUser, signOut } from '@/services/authService';
 import { exportUserData } from '@/services/exportService';
 import { formatCurrency, generateInviteLink } from '@/lib/utils';
-import { EXPENSE_CATEGORIES } from '@/types';
+import { EXPENSE_CATEGORIES, Transaction } from '@/types';
 import MobileHeader from '@/components/ui/MobileHeader';
 import BottomNavigation from '@/components/ui/BottomNavigation';
 import StatCard from '@/components/ui/StatCard';
 import TransactionCard from '@/components/ui/TransactionCard';
 import QuickActionCard from '@/components/ui/QuickActionCard';
 import MobileModal from '@/components/ui/MobileModal';
+import WaitingOverlay from '@/components/ui/WaitingOverlay';
 import { logger } from '@/lib/logger';
 import { useLoadUserNames } from '@/hooks/useLoadUserNames';
 import { toast } from 'sonner';
@@ -47,6 +48,7 @@ const Dashboard: React.FC = () => {
   const router = useRouter();
   const locale = useLocale();
   const tDashboard = useTranslations('dashboard');
+  const tTransactions = useTranslations('transactions');
   const tCommon = useTranslations('common');
   const { user, userProfile, setUserProfile, reset } = useAuthStore();
   const { currentPocket, transactions, clearPocketData } = usePocketStore();
@@ -56,20 +58,31 @@ const Dashboard: React.FC = () => {
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [showLeavePocketModal, setShowLeavePocketModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [showEditTransactionModal, setShowEditTransactionModal] = useState(false);
+  const [showDeleteTransactionModal, setShowDeleteTransactionModal] = useState(false);
   
   // UI states
   const [activeTab, setActiveTab] = useState('home');
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [leavePocketLoading, setLeavePocketLoading] = useState(false);
   const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
+  const [editTransactionLoading, setEditTransactionLoading] = useState(false);
+  const [deleteTransactionLoading, setDeleteTransactionLoading] = useState(false);
   const [exportDataLoading, setExportDataLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
   const [deleteAccountConfirm, setDeleteAccountConfirm] = useState('');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
     type: 'fund' as 'fund' | 'expense',
+    category: '',
+    description: '',
+    amount: ''
+  });
+  const [editFormData, setEditFormData] = useState({
+    type: 'expense' as 'fund' | 'expense',
     category: '',
     description: '',
     amount: ''
@@ -95,6 +108,18 @@ const Dashboard: React.FC = () => {
   const preferredCurrency = userProfile?.preferredCurrency;
   const canAddFunds = userRole === 'provider' || userRole === 'spender'; // Both roles can add funds
   const canAddExpenses = userRole === 'spender';
+  const isWaiting =
+    transactionLoading ||
+    leavePocketLoading ||
+    deleteAccountLoading ||
+    exportDataLoading ||
+    editTransactionLoading ||
+    deleteTransactionLoading;
+  const canManageTransaction = useCallback((transaction: Transaction) => {
+    if (!user || !currentPocket) return false;
+    const role = currentPocket.roles[user.uid];
+    return transaction.userId === user.uid || role === 'provider';
+  }, [currentPocket, user]);
 
   const handleTransactionSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,6 +246,72 @@ const Dashboard: React.FC = () => {
       setExportDataLoading(false);
     }
   }, [tDashboard, user]);
+
+  const openEditTransactionModal = useCallback((transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setEditFormData({
+      type: transaction.type,
+      category: transaction.category || '',
+      description: transaction.description,
+      amount: String(transaction.amount),
+    });
+    setShowEditTransactionModal(true);
+  }, []);
+
+  const openDeleteTransactionModal = useCallback((transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowDeleteTransactionModal(true);
+  }, []);
+
+  const handleEditTransactionSubmit = useCallback(async () => {
+    if (!user || !selectedTransaction) return;
+
+    const amount = Number(editFormData.amount);
+    const description = editFormData.description.trim();
+    if (!Number.isFinite(amount) || amount <= 0 || description.length === 0) {
+      toast.error(tTransactions('updateError'));
+      return;
+    }
+    if (description.length > descriptionMaxLength) {
+      toast.error('Description must be 500 characters or less.');
+      return;
+    }
+
+    setEditTransactionLoading(true);
+    try {
+      await updateTransaction(selectedTransaction.id, user.uid, {
+        type: editFormData.type,
+        category: editFormData.type === 'fund' ? '' : editFormData.category,
+        description,
+        amount,
+      });
+      toast.success(tTransactions('updateSuccess'));
+      setShowEditTransactionModal(false);
+      setSelectedTransaction(null);
+    } catch (error) {
+      logger.error('Error updating transaction', { error, context: { transactionId: selectedTransaction.id } });
+      toast.error(tTransactions('updateError'));
+    } finally {
+      setEditTransactionLoading(false);
+    }
+  }, [descriptionMaxLength, editFormData, selectedTransaction, tTransactions, user]);
+
+  const handleDeleteTransaction = useCallback(async () => {
+    if (!user || !selectedTransaction) return;
+
+    setDeleteTransactionLoading(true);
+    try {
+      await deleteTransaction(selectedTransaction.id, user.uid);
+      toast.success(tTransactions('deleteSuccess'));
+      setShowDeleteTransactionModal(false);
+      setSelectedTransaction(null);
+    } catch (error) {
+      logger.error('Error deleting transaction', { error, context: { transactionId: selectedTransaction.id } });
+      toast.error(tTransactions('deleteError'));
+    } finally {
+      setDeleteTransactionLoading(false);
+    }
+  }, [selectedTransaction, tTransactions, user]);
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
@@ -528,6 +619,9 @@ const Dashboard: React.FC = () => {
                       userName={userNames[transaction.userId] || tDashboard('recentTransactions.unknownUser')}
                       currency={preferredCurrency}
                       delay={index * 0.1}
+                      showActions={canManageTransaction(transaction)}
+                      onEdit={canManageTransaction(transaction) ? () => openEditTransactionModal(transaction) : undefined}
+                      onDelete={canManageTransaction(transaction) ? () => openDeleteTransactionModal(transaction) : undefined}
                     />
                   ))}
                 </div>
@@ -787,6 +881,132 @@ const Dashboard: React.FC = () => {
         </div>
       </MobileModal>
 
+      <MobileModal
+        isOpen={showEditTransactionModal}
+        onClose={() => {
+          if (editTransactionLoading) return;
+          setShowEditTransactionModal(false);
+          setSelectedTransaction(null);
+        }}
+        title={tTransactions('editTitle')}
+      >
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{tTransactions('filterType')}</label>
+            <select
+              value={editFormData.type}
+              onChange={(event) =>
+                setEditFormData((prev) => ({
+                  ...prev,
+                  type: event.target.value as 'fund' | 'expense',
+                  category: event.target.value === 'fund' ? '' : prev.category,
+                }))
+              }
+              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            >
+              <option value="fund">{tTransactions('fund')}</option>
+              <option value="expense">{tTransactions('expense')}</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <input
+              type="text"
+              value={editFormData.description}
+              onChange={(event) => setEditFormData((prev) => ({ ...prev, description: event.target.value }))}
+              maxLength={descriptionMaxLength}
+              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            />
+            <p className="mt-2 text-xs text-gray-500 text-right">
+              {editFormData.description.length}/{descriptionMaxLength}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={editFormData.amount}
+              onChange={(event) => setEditFormData((prev) => ({ ...prev, amount: event.target.value }))}
+              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            />
+          </div>
+
+          {editFormData.type === 'expense' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select
+                value={editFormData.category}
+                onChange={(event) => setEditFormData((prev) => ({ ...prev, category: event.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              >
+                <option value="">{tTransactions('allCategories')}</option>
+                {EXPENSE_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          <div className="flex space-x-3 pt-2">
+            <button
+              onClick={() => setShowEditTransactionModal(false)}
+              disabled={editTransactionLoading}
+              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              onClick={handleEditTransactionSubmit}
+              disabled={editTransactionLoading}
+              className="flex-1 py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-all duration-200 font-medium"
+            >
+              {editTransactionLoading ? tTransactions('updating') : tTransactions('saveChanges')}
+            </button>
+          </div>
+        </div>
+      </MobileModal>
+
+      <MobileModal
+        isOpen={showDeleteTransactionModal}
+        onClose={() => {
+          if (deleteTransactionLoading) return;
+          setShowDeleteTransactionModal(false);
+          setSelectedTransaction(null);
+        }}
+        title={tTransactions('deleteTitle')}
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-gray-700">{tTransactions('deleteConfirm')}</p>
+          {selectedTransaction ? (
+            <div className="bg-gray-50 border border-gray-200 p-3 text-sm text-gray-700">
+              {selectedTransaction.description}
+            </div>
+          ) : null}
+          <div className="flex space-x-3 pt-2">
+            <button
+              onClick={() => setShowDeleteTransactionModal(false)}
+              disabled={deleteTransactionLoading}
+              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              onClick={handleDeleteTransaction}
+              disabled={deleteTransactionLoading}
+              className="flex-1 py-3 px-4 bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 transition-all duration-200 font-medium"
+            >
+              {deleteTransactionLoading ? tTransactions('deleting') : tCommon('delete')}
+            </button>
+          </div>
+        </div>
+      </MobileModal>
+
       {/* Leave Pocket Modal */}
       <MobileModal
         isOpen={showLeavePocketModal}
@@ -906,6 +1126,11 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </MobileModal>
+
+      <WaitingOverlay
+        isVisible={isWaiting}
+        label={tCommon('loading')}
+      />
     </div>
   );
 };

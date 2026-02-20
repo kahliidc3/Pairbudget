@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,10 +51,8 @@ const StatCardComponent: React.FC<StatCardProps> = ({
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
+    <div
+      data-delay={delay}
       className={cn(
         "bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200",
         className
@@ -93,7 +90,7 @@ const StatCardComponent: React.FC<StatCardProps> = ({
           <Icon className="w-6 h-6" />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,10 +44,8 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
   };
 
   return (
-    <motion.button
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
+    <button
+      data-delay={delay}
       onClick={onClick}
       disabled={disabled}
       className={cn(
@@ -90,7 +87,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
           </p>
         </div>
       </div>
-    </motion.button>
+    </button>
   );
 };
 

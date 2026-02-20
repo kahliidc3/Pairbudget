@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { 
   ArrowDownRight, 
@@ -52,17 +51,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     <>
       {/* Add Menu Overlay */}
       {showAddMenu && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setShowAddMenu(false)}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          <div
             className="absolute bottom-32 left-1/2 transform -translate-x-1/2"
             onClick={(e) => e.stopPropagation()}
           >
@@ -105,8 +98,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 )}
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
 
       {/* Bottom Navigation */}

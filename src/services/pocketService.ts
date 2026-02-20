@@ -594,6 +594,191 @@ export const addTransaction = async (
   }
 };
 
+export interface UpdateTransactionInput {
+  type: 'fund' | 'expense';
+  category: string;
+  description: string;
+  amount: number;
+}
+
+const getTransactionContribution = (type: 'fund' | 'expense', amount: number) =>
+  type === 'fund' ? amount : -amount;
+
+const validateTransactionPermission = (
+  pocket: Pocket,
+  actorUid: string,
+  transactionOwnerUid: string
+) => {
+  const isParticipant = pocket.participants.includes(actorUid);
+  const actorRole = pocket.roles[actorUid];
+  const canManage = actorUid === transactionOwnerUid || actorRole === 'provider';
+
+  if (!isParticipant || !canManage) {
+    throw new Error('You are not authorized to modify this transaction');
+  }
+};
+
+/**
+ * Updates an existing transaction and keeps pocket aggregates consistent.
+ */
+export const updateTransaction = async (
+  transactionId: string,
+  actorUid: string,
+  updates: UpdateTransactionInput
+): Promise<void> => {
+  try {
+    const normalizedAmount = Number(updates.amount);
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0 || normalizedAmount > APP_LIMITS.maxTransactionAmount) {
+      throw new Error('Invalid transaction amount');
+    }
+    if (updates.type !== 'fund' && updates.type !== 'expense') {
+      throw new Error('Invalid transaction type');
+    }
+
+    await runTransaction(db, async (firestoreTransaction) => {
+      const transactionRef = doc(db, 'transactions', transactionId);
+      const transactionSnap = await firestoreTransaction.get(transactionRef);
+      if (!transactionSnap.exists()) {
+        throw new Error('Transaction not found');
+      }
+
+      const transactionData = transactionSnap.data();
+      if (transactionData?.deleted === true) {
+        throw new Error('Transaction not found');
+      }
+
+      const pocketId = String(transactionData.pocketId ?? '');
+      const transactionOwnerUid = String(transactionData.userId ?? '');
+      const previousType: 'fund' | 'expense' = transactionData.type === 'fund' ? 'fund' : 'expense';
+      const previousAmount = Number(transactionData.amount ?? 0);
+
+      const pocketRef = doc(db, 'pockets', pocketId);
+      const pocketSnap = await firestoreTransaction.get(pocketRef);
+      if (!pocketSnap.exists()) {
+        throw new Error('Pocket not found');
+      }
+
+      const pocket = parsePocketDocument(pocketSnap, pocketId);
+      if (!pocket || pocket.deleted) {
+        throw new Error('Pocket not available');
+      }
+
+      validateTransactionPermission(pocket, actorUid, transactionOwnerUid);
+
+      const nextAmount = Math.round(normalizedAmount * 100) / 100;
+      const previousContribution = getTransactionContribution(previousType, previousAmount);
+      const nextContribution = getTransactionContribution(updates.type, nextAmount);
+      const balanceDelta = nextContribution - previousContribution;
+
+      firestoreTransaction.update(transactionRef, {
+        type: updates.type,
+        category: updates.category,
+        description: updates.description,
+        amount: nextAmount,
+        date: new Date(),
+      });
+
+      if (previousType === updates.type) {
+        const field = updates.type === 'fund' ? 'totalFunded' : 'totalSpent';
+        firestoreTransaction.update(pocketRef, {
+          balance: increment(balanceDelta),
+          [field]: increment(nextAmount - previousAmount),
+        });
+      } else {
+        const previousField = previousType === 'fund' ? 'totalFunded' : 'totalSpent';
+        const nextField = updates.type === 'fund' ? 'totalFunded' : 'totalSpent';
+        firestoreTransaction.update(pocketRef, {
+          balance: increment(balanceDelta),
+          [previousField]: increment(-previousAmount),
+          [nextField]: increment(nextAmount),
+        });
+      }
+    });
+  } catch (error) {
+    return sanitizePocketServiceError(
+      error,
+      [
+        'Invalid transaction amount',
+        'Invalid transaction type',
+        'Transaction not found',
+        'Pocket not found',
+        'Pocket not available',
+        'You are not authorized to modify this transaction',
+      ],
+      'Unable to update this transaction right now. Please try again later.',
+      'Error updating transaction',
+      { transactionId, actorUid }
+    );
+  }
+};
+
+/**
+ * Soft-deletes a transaction and adjusts pocket aggregates.
+ */
+export const deleteTransaction = async (
+  transactionId: string,
+  actorUid: string
+): Promise<void> => {
+  try {
+    await runTransaction(db, async (firestoreTransaction) => {
+      const transactionRef = doc(db, 'transactions', transactionId);
+      const transactionSnap = await firestoreTransaction.get(transactionRef);
+      if (!transactionSnap.exists()) {
+        throw new Error('Transaction not found');
+      }
+
+      const transactionData = transactionSnap.data();
+      if (transactionData?.deleted === true) {
+        throw new Error('Transaction not found');
+      }
+
+      const pocketId = String(transactionData.pocketId ?? '');
+      const transactionOwnerUid = String(transactionData.userId ?? '');
+      const transactionType: 'fund' | 'expense' = transactionData.type === 'fund' ? 'fund' : 'expense';
+      const transactionAmount = Number(transactionData.amount ?? 0);
+
+      const pocketRef = doc(db, 'pockets', pocketId);
+      const pocketSnap = await firestoreTransaction.get(pocketRef);
+      if (!pocketSnap.exists()) {
+        throw new Error('Pocket not found');
+      }
+
+      const pocket = parsePocketDocument(pocketSnap, pocketId);
+      if (!pocket || pocket.deleted) {
+        throw new Error('Pocket not available');
+      }
+
+      validateTransactionPermission(pocket, actorUid, transactionOwnerUid);
+
+      const contribution = getTransactionContribution(transactionType, transactionAmount);
+      const totalField = transactionType === 'fund' ? 'totalFunded' : 'totalSpent';
+
+      firestoreTransaction.update(transactionRef, {
+        deleted: true,
+        deletedAt: new Date(),
+        deletedBy: actorUid,
+      });
+      firestoreTransaction.update(pocketRef, {
+        balance: increment(-contribution),
+        [totalField]: increment(-transactionAmount),
+      });
+    });
+  } catch (error) {
+    return sanitizePocketServiceError(
+      error,
+      [
+        'Transaction not found',
+        'Pocket not found',
+        'Pocket not available',
+        'You are not authorized to modify this transaction',
+      ],
+      'Unable to delete this transaction right now. Please try again later.',
+      'Error deleting transaction',
+      { transactionId, actorUid }
+    );
+  }
+};
+
 export interface PaginatedTransactionsResult {
   transactions: Transaction[];
   cursor: QueryDocumentSnapshot | null;

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { useLocale } from 'next-intl';
 import { 
   ArrowDownRight,
   ArrowUpRight,
   Calendar,
+  Pencil,
   Tag,
+  Trash2,
   User
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -19,6 +20,9 @@ interface TransactionCardProps {
   currency?: string;
   delay?: number;
   onClick?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  showActions?: boolean;
 }
 
 const TransactionCardComponent: React.FC<TransactionCardProps> = ({
@@ -26,7 +30,10 @@ const TransactionCardComponent: React.FC<TransactionCardProps> = ({
   userName,
   currency,
   delay = 0,
-  onClick
+  onClick,
+  onEdit,
+  onDelete,
+  showActions = false,
 }) => {
   const locale = useLocale();
   const isFund = transaction.type === 'fund';
@@ -39,10 +46,8 @@ const TransactionCardComponent: React.FC<TransactionCardProps> = ({
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay }}
+    <div
+      data-delay={delay}
       onClick={onClick}
       className={cardClassName}
     >
@@ -80,10 +85,42 @@ const TransactionCardComponent: React.FC<TransactionCardProps> = ({
             </div>
             
             {/* Amount */}
-            <div className={`text-lg font-bold ml-3 ${
-              isFund ? 'text-green-600' : 'text-orange-600'
-            }`}>
-              {isFund ? '+' : '-'}{formatCurrency(transaction.amount, { locale, currency })}
+            <div className="ml-3 flex flex-col items-end gap-2">
+              <div className={`text-lg font-bold ${
+                isFund ? 'text-green-600' : 'text-orange-600'
+              }`}>
+                {isFund ? '+' : '-'}{formatCurrency(transaction.amount, { locale, currency })}
+              </div>
+              {showActions && (onEdit || onDelete) ? (
+                <div className="flex items-center gap-1">
+                  {onEdit ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onEdit();
+                      }}
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      aria-label="Edit transaction"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  ) : null}
+                  {onDelete ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDelete();
+                      }}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      aria-label="Delete transaction"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
           
@@ -102,7 +139,7 @@ const TransactionCardComponent: React.FC<TransactionCardProps> = ({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -116,7 +153,10 @@ const propsAreEqual = (prev: TransactionCardProps, next: TransactionCardProps) =
   prev.userName === next.userName &&
   prev.currency === next.currency &&
   prev.delay === next.delay &&
-  prev.onClick === next.onClick;
+  prev.onClick === next.onClick &&
+  prev.onEdit === next.onEdit &&
+  prev.onDelete === next.onDelete &&
+  prev.showActions === next.showActions;
 
 const TransactionCard = React.memo(TransactionCardComponent, propsAreEqual);
 
