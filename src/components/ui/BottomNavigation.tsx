@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { 
-  Home, 
-  Plus, 
+  ArrowDownRight, 
+  ArrowUpRight, 
   History, 
-  Settings,
-  ArrowUpRight,
-  ArrowDownRight
+  Home,
+  Plus,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,13 +28,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   canAddFunds,
   canAddExpenses
 }) => {
+  const tNav = useTranslations('mobileNav');
   const [showAddMenu, setShowAddMenu] = React.useState(false);
 
   const tabs = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'add', label: 'Add', icon: Plus, isAction: true },
-    { id: 'history', label: 'History', icon: History },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'home', label: tNav('home'), icon: Home },
+    { id: 'add', label: tNav('add'), icon: Plus, isAction: true },
+    { id: 'history', label: tNav('history'), icon: History },
+    { id: 'settings', label: tNav('settings'), icon: Settings }
   ];
 
   const handleAddClick = () => {
@@ -78,8 +80,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <ArrowUpRight className="w-6 h-6 text-green-600" />
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-gray-900">Add Funds</p>
-                      <p className="text-sm text-gray-600">Add money to pocket</p>
+                      <p className="font-semibold text-gray-900">{tNav('addFunds')}</p>
+                      <p className="text-sm text-gray-600">{tNav('addFundsDesc')}</p>
                     </div>
                   </button>
                 )}
@@ -96,8 +98,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <ArrowDownRight className="w-6 h-6 text-orange-600" />
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-gray-900">Add Expense</p>
-                      <p className="text-sm text-gray-600">Record a purchase</p>
+                      <p className="font-semibold text-gray-900">{tNav('addExpense')}</p>
+                      <p className="text-sm text-gray-600">{tNav('addExpenseDesc')}</p>
                     </div>
                   </button>
                 )}
@@ -129,6 +131,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     ? "bg-blue-50 text-blue-600"
                     : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 )}
+                aria-label={tab.label}
               >
                 <tab.icon className={cn(
                   "w-6 h-6 mb-1",

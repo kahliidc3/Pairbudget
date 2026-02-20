@@ -2,6 +2,9 @@
 
 **Modern, responsive expense tracking for two people - completely redesigned.**
 
+[![CI](https://github.com/kahliidc3/Pairbudget/actions/workflows/ci.yml/badge.svg)](https://github.com/kahliidc3/Pairbudget/actions/workflows/ci.yml)
+[![Lighthouse CI](https://github.com/kahliidc3/Pairbudget/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/kahliidc3/Pairbudget/actions/workflows/lighthouse.yml)
+
 PairBudget v2.0 is a fully responsive, mobile-first web application designed for two people to collaborate on managing shared expenses with a beautiful, modern interface. Perfect for families, partners, caregivers, and any situation where financial transparency and shared responsibility matter.
 
 ## ✨ What's New in v2.0
@@ -103,6 +106,22 @@ PairBudget v2.0 is a fully responsive, mobile-first web application designed for
    ```
 
 5. **Open [http://localhost:3000](http://localhost:3000)**
+
+## 🔧 Firestore Indexes
+
+Create the required composite index for transactions pagination:
+- Collection `transactions`: `pocketId` (asc), `date` (desc)
+
+See `docs/FIRESTORE_INDEXES.md` for details.
+
+## 📚 Documentation
+
+- `docs/FIREBASE_SETUP.md`
+- `CONTRIBUTING.md`
+- `docs/ARCHITECTURE.md`
+- `docs/I18N_WORKFLOW.md`
+- `docs/DEPLOYMENT_CHECKLIST.md`
+- `docs/PRODUCTION_TESTING.md`
 
 ## 📱 How It Works
 

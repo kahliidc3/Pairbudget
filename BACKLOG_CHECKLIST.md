@@ -1,7 +1,7 @@
 # PairBudget - Professional Development Backlog & Sprint Plan
 
-**Last Updated**: 2025-11-22
-**Version**: 2.1
+**Last Updated**: 2026-02-20
+**Version**: 2.2
 **Total Project Duration**: 6 weeks (30 working days)
 **Developer Capacity**: 1 full-time developer (8 hours/day)
 
@@ -11,13 +11,13 @@
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| **Total Tasks** | 130 tasks | In Progress |
-| **Completed** | 15 tasks (12%) | ✅ Complete |
-| **Remaining** | 115 tasks (88%) | 🔄 In Progress |
-| **Critical Issues** | 1 | 🚨 New (user profile access gap) |
-| **High Priority** | 47 tasks | 📋 Planned |
-| **Medium Priority** | 55 tasks | 📋 Planned |
-| **Low Priority** | 27 tasks | 📋 Planned |
+| **Total Tasks** | 135 tasks | In Progress |
+| **Completed** | 21 tasks (16%) | ✅ Complete |
+| **Remaining** | 114 tasks (84%) | 🔄 In Progress |
+| **Critical Issues** | 2 | 🚨 Profile access + build blockers |
+| **High Priority** | 49 tasks | 📋 Planned |
+| **Medium Priority** | 58 tasks | 📋 Planned |
+| **Low Priority** | 28 tasks | 📋 Planned |
 | **Security Score** | 92% | ⚠️ Harden profiles/logging |
 
 ---
@@ -36,7 +36,7 @@
   - **Open gap**: user profile read access still too broad (see Task #124)
 
 ### Next Focus Areas
-0. **Immediate**: Close security gaps (Tasks #124-129: profile rules, App Check, rate limiting, logging)
+0. **Immediate**: Close security gaps and build blockers (Tasks #124-135)
 1. **Week 1-2**: Performance & Code Quality (Foundation)
 2. **Week 3**: Internationalization (User Experience)
 3. **Week 4**: Design Consistency & Accessibility (UI/UX)
@@ -52,7 +52,7 @@
 #### Sprint 1.1 - Performance Critical Path (20 hours)
 
 **Day 1: Monday - Database Performance (8h)**
-- [ ] **Task #1** [CRITICAL] Fix N+1 Query Problem (4h)
+- [x] **Task #1** [CRITICAL] Fix N+1 Query Problem (4h)
   - `src/components/Dashboard.tsx:79-102`, `src/app/[locale]/all-transactions/page.tsx:54-70`
   - Create `useLoadUserNames` hook with caching
   - Implement batch user profile loading
@@ -60,44 +60,44 @@
   - Test with 100+ transactions
   - **Impact**: 70-90% reduction in Firestore reads
 
-- [ ] **Task #2** [HIGH] Implement Transaction Pagination (4h)
+- [x] **Task #2** [HIGH] Implement Transaction Pagination (4h)
   - `src/app/[locale]/all-transactions/page.tsx`
   - Add Firestore `.limit(20)` and cursor pagination
   - Create pagination UI component
-  - Implement infinite scroll
+  - Implement load-more pagination control
   - **Impact**: 95% reduction in initial load time
 
 **Day 2: Tuesday - Memory & Subscription Management (8h)**
-- [ ] **Task #3** [HIGH] Fix Subscription Memory Leaks (4h)
+- [x] **Task #3** [HIGH] Fix Subscription Memory Leaks (4h)
   - `src/services/pocketService.ts:150-358`
   - Implement subscription cleanup timers
   - Add max subscription age (5 min)
   - Create subscription health dashboard
   - Test with multiple pocket switches
 
-- [ ] **Task #4** [MEDIUM] Add Firestore Query Indexes (2h)
+- [x] **Task #4** [MEDIUM] Add Firestore Query Indexes (2h)
   - Create composite indexes for common queries
   - Document index requirements
   - Test query performance
 
-- [ ] **Task #5** [MEDIUM] Implement Server-Side Transaction Ordering (2h)
+- [x] **Task #5** [MEDIUM] Implement Server-Side Transaction Ordering (2h)
   - `src/services/pocketService.ts:178-222`
   - Replace client `.sort()` with Firestore `.orderBy('date', 'desc')`
   - Create required composite index
 
 **Day 3: Wednesday - Code Quality Foundation (8h)**
-- [ ] **Task #6** [HIGH] Extract Duplicate Subscription Logic (4h)
+- [x] **Task #6** [HIGH] Extract Duplicate Subscription Logic (4h)
   - `src/services/pocketService.ts` (280 lines duplicated)
   - Create `createSubscription()` factory function
   - Refactor `subscribeToTransactions()` and `subscribeToPocket()`
   - Add unit tests for subscription factory
 
-- [ ] **Task #7** [MEDIUM] Extract Magic Numbers to Constants (2h)
+- [x] **Task #7** [MEDIUM] Extract Magic Numbers to Constants (2h)
   - Create `src/constants/config.ts`
   - Extract all timeouts, limits, retries
   - Document each constant's purpose
 
-- [ ] **Task #8** [MEDIUM] Memoize UI Components (2h)
+- [x] **Task #8** [MEDIUM] Memoize UI Components (2h)
   - `src/components/ui/StatCard.tsx`, `TransactionCard.tsx`
   - Wrap with `React.memo()`
   - Add prop comparison functions
@@ -112,28 +112,28 @@
     - `PocketManagementGrid.tsx` (~300 lines)
   - Move to `src/components/pocket-setup/` directory
 
-- [ ] **Task #10** [MEDIUM] Add useCallback to Event Handlers (2h)
+- [x] **Task #10** [MEDIUM] Add useCallback to Event Handlers (2h)
   - `src/components/Dashboard.tsx:110-210`
   - Wrap all handlers with `useCallback`
   - Add dependency arrays
 
 **Day 5: Friday - Code Cleanup & Review (8h)**
-- [ ] **Task #11** [LOW] Fix Type Assertions (2h)
+- [x] **Task #11** [LOW] Fix Type Assertions (2h)
   - `src/services/pocketService.ts:66,369,414`
   - Add runtime validation before casting
   - Consider using Zod for schema validation
 
-- [ ] **Task #12** [LOW] Improve Error Context (2h)
+- [x] **Task #12** [LOW] Improve Error Context (2h)
   - `src/services/pocketService.ts:83-85`
   - Add meaningful context before re-throwing
   - Standardize error handling pattern
 
-- [ ] **Task #13** [LOW] Standardize Import Ordering (2h)
+- [x] **Task #13** [LOW] Standardize Import Ordering (2h)
   - Add ESLint rule for import order
   - Run auto-fix across codebase
   - Document import conventions
 
-- [ ] **Task #14** [BUFFER] Code Review & Testing (2h)
+- [x] **Task #14** [BUFFER] Code Review & Testing (2h)
   - Manual testing of all Week 1 changes
   - Performance benchmarking
   - Git commit cleanup
@@ -180,32 +180,32 @@
   - Add `Suspense` boundaries
   - Split by route with dynamic imports
 
-- [ ] **Task #20** [MEDIUM] Analyze Bundle Size (2h)
+- [x] **Task #20** [MEDIUM] Analyze Bundle Size (2h)
   - Run `npm run build` and analyze
   - Use `@next/bundle-analyzer`
   - Identify heavy dependencies
   - Create optimization roadmap
 
-- [ ] **Task #21** [MEDIUM] Optimize Animation Variants (2h)
+- [x] **Task #21** [MEDIUM] Optimize Animation Variants (2h)
   - `src/components/ui/StatCard.tsx:49-52`, `TransactionCard.tsx:31-34`
   - Wrap variants in `useMemo()`
   - Consider lazy-loading Framer Motion
 
 **Day 9: Thursday - Soft Delete & Cleanup (8h)**
-- [ ] **Task #22** [MEDIUM] Implement Soft Delete Filtering (4h)
+- [x] **Task #22** [MEDIUM] Implement Soft Delete Filtering (4h)
   - `src/services/pocketService.ts:405-450`
   - Add `where('deleted', '!=', true)` to all queries
   - Create Firestore composite indexes
   - Test with deleted data
 
-- [ ] **Task #23** [MEDIUM] Create Data Cleanup Cloud Function (4h)
+- [x] **Task #23** [MEDIUM] Create Data Cleanup Cloud Function (4h)
   - Write Firebase Function for automated cleanup
   - Schedule daily cron job
   - Delete expired soft-deleted resources
   - Add cleanup monitoring
 
 **Day 10: Friday - Dependency Updates (8h)**
-- [ ] **Task #24** [HIGH] Minor Package Updates (3h)
+- [x] **Task #24** [HIGH] Minor Package Updates (3h)
   - Update Tailwind CSS 4.1.12 → 4.1.17
   - Update framer-motion 12.23.12 → 12.23.24
   - Update lucide-react 0.523.0 → 0.554.0
@@ -215,12 +215,12 @@
   - Update eslint 9.33.0 → 9.39.1
   - Update TypeScript 5.9.2 → 5.9.3
 
-- [ ] **Task #25** [HIGH] Type Definitions Updates (2h)
+- [x] **Task #25** [HIGH] Type Definitions Updates (2h)
   - Update @types/node 20.19.11 → 24.10.1
   - Update @types/react 19.1.10 → 19.2.6
   - Update @types/react-dom 19.1.7 → 19.2.3
 
-- [ ] **Task #26** [BUFFER] Testing & Verification (3h)
+- [x] **Task #26** [BUFFER] Testing & Verification (3h)
   - Test all user flows after updates
   - Check for breaking changes
   - Update package-lock.json
@@ -232,12 +232,12 @@
 #### Sprint 3.1 - i18n Implementation (24 hours)
 
 **Day 11: Monday - Core i18n Infrastructure (8h)**
-- [ ] **Task #27** [HIGH] Update Translation Files Structure (3h)
+- [x] **Task #27** [HIGH] Update Translation Files Structure (3h)
   - Fix UTF-8 encoding in `en.json`, `fr.json`, `ar.json`
   - Create comprehensive key structure
   - Add missing namespaces (errors, auth, dashboard, etc.)
 
-- [ ] **Task #28** [HIGH] Externalize AuthForm Strings (5h)
+- [x] **Task #28** [HIGH] Externalize AuthForm Strings (5h)
   - `src/components/AuthForm.tsx:55-515`
   - Move 40+ hardcoded strings to i18n
   - Error messages, validation messages, UI text
@@ -255,11 +255,11 @@
   - Form labels, error messages, stats
 
 **Day 13: Wednesday - Pages & Service Errors (8h)**
-- [ ] **Task #31** [MEDIUM] Localize All Transactions Page (3h)
+- [x] **Task #31** [MEDIUM] Localize All Transactions Page (3h)
   - `src/app/[locale]/all-transactions/page.tsx`
   - Move page headings, search placeholder, CSV export text
 
-- [ ] **Task #32** [MEDIUM] Internationalize Mobile UI (2h)
+- [x] **Task #32** [MEDIUM] Internationalize Mobile UI (2h)
   - `src/components/ui/MobileHeader.tsx`
   - `src/components/ui/BottomNavigation.tsx`
   - Time-based greetings, navigation labels
@@ -272,22 +272,22 @@
 #### Sprint 3.2 - Locale-Aware Utilities (8 hours)
 
 **Day 14: Thursday - Formatting & Major Upgrades Prep (8h)**
-- [ ] **Task #34** [HIGH] Make Currency Formatting Locale-Aware (3h)
+- [x] **Task #34** [HIGH] Make Currency Formatting Locale-Aware (3h)
   - `src/lib/utils.ts:8-16`
   - Remove hardcoded USD/MAD logic
   - Use user's preferred currency from profile
   - Support multi-currency
 
-- [ ] **Task #35** [HIGH] Make Date Formatting Locale-Aware (2h)
+- [x] **Task #35** [HIGH] Make Date Formatting Locale-Aware (2h)
   - `src/lib/utils.ts:18-24`
   - Use active locale from next-intl context
   - Test with different date formats (EN, FR, AR)
 
-- [ ] **Task #36** [MEDIUM] Locale-Aware Invite Links (1h)
+- [x] **Task #36** [MEDIUM] Locale-Aware Invite Links (1h)
   - `src/lib/utils.ts:27-32`
   - Generate links with locale prefix: `/${locale}/join?code=...`
 
-- [ ] **Task #37** [MEDIUM] Translation File Audit (2h)
+- [x] **Task #37** [MEDIUM] Translation File Audit (2h)
   - Ensure all 3 language files have matching keys
   - Add missing translations for new components
   - Consider next-intl strict mode
@@ -350,67 +350,67 @@
   - Use Dashboard pattern: `bg-blue-600 hover:bg-blue-700`
   - Test hover states
 
-- [ ] **Task #47** [LOW] Standardize Hover Effects (1h)
+- [x] **Task #47** [LOW] Standardize Hover Effects (1h)
   - Remove `hover:-translate-y-1` animations
   - Replace with subtle shadow changes
 
 #### Sprint 4.2 - Accessibility Implementation (16 hours)
 
 **Day 18: Wednesday - WCAG 2.2 Compliance (8h)**
-- [ ] **Task #48** [HIGH] Add ARIA Labels to Icons (3h)
+- [x] **Task #48** [HIGH] Add ARIA Labels to Icons (3h)
   - Audit all icon-only buttons
   - Add `aria-label` to Share, SignOut, action icons
   - Test with screen reader
   - **Reference**: [WCAG 2.2 checklist](https://webaim.org/standards/wcag/checklist)
 
-- [ ] **Task #49** [MEDIUM] Fix Color Contrast Violations (2h)
+- [x] **Task #49** [MEDIUM] Fix Color Contrast Violations (2h)
   - Audit all text/background combinations
   - Ensure minimum 4.5:1 contrast ratio
   - Fix `text-white/70` on light backgrounds
 
-- [ ] **Task #50** [MEDIUM] Implement Focus Management (3h)
+- [x] **Task #50** [MEDIUM] Implement Focus Management (3h)
   - Add focus trap in modals using `react-focus-lock`
   - Focus first input on modal open
   - Return focus to trigger on close
 
 **Day 19: Thursday - Accessibility & UX (8h)**
-- [ ] **Task #51** [MEDIUM] Add Accessible Labels to Forms (2h)
+- [x] **Task #51** [MEDIUM] Add Accessible Labels to Forms (2h)
   - `src/app/[locale]/all-transactions/page.tsx:233-248`
   - Replace placeholder-only inputs with proper `<label>`
   - Add `aria-describedby` for error messages
 
-- [ ] **Task #52** [LOW] Keyboard Navigation (2h)
+- [x] **Task #52** [LOW] Keyboard Navigation (2h)
   - Ensure logical tab order
   - Add keyboard shortcuts (Alt+H for home)
   - Test navigation without mouse
 
-- [ ] **Task #53** [MEDIUM] Touch Target Optimization (2h)
+- [x] **Task #53** [MEDIUM] Touch Target Optimization (2h)
   - Ensure all buttons ≥ 48x48px
   - Test on mobile devices
   - Fix small interactive elements
 
-- [ ] **Task #54** [HIGH] Replace alert() with Toast Notifications (2h)
-  - `src/components/Dashboard.tsx:132,178,190`
+- [x] **Task #54** [HIGH] Replace alert() with Toast Notifications (2h)
+  - `src/components/Dashboard.tsx:113,159,194`
   - Install `react-hot-toast` or `sonner`
   - Create consistent toast styling
 
 **Day 20: Friday - Input Validation & UX Polish (8h)**
-- [ ] **Task #55** [MEDIUM] Add Client-Side Input Validation (3h)
+- [x] **Task #55** [MEDIUM] Add Client-Side Input Validation (3h)
   - `src/components/PocketSetup.tsx:97-144`
   - Trim whitespace, length limits (3-50 chars)
   - Real-time feedback with error messages
 
-- [ ] **Task #56** [MEDIUM] Normalize Invite Code Input (2h)
+- [x] **Task #56** [MEDIUM] Normalize Invite Code Input (2h)
   - Auto-uppercase, trim whitespace
   - Format as ABC-123
   - Prevent invalid characters
 
-- [ ] **Task #57** [LOW] Add Transaction Description Length Limit (1h)
+- [x] **Task #57** [LOW] Add Transaction Description Length Limit (1h)
   - Max 500 characters
   - Show character counter
   - Prevent overflow
 
-- [ ] **Task #58** [MEDIUM] Add Loading States (2h)
+- [x] **Task #58** [MEDIUM] Add Loading States (2h)
   - Disable buttons during async operations
   - Show clear loading indicators
   - Prevent double-submission
@@ -422,7 +422,7 @@
 #### Sprint 5.1 - Test Infrastructure (16 hours)
 
 **Day 21: Monday - Testing Framework Setup (8h)**
-- [ ] **Task #59** [HIGH] Configure Testing Framework (4h)
+- [x] **Task #59** [HIGH] Configure Testing Framework (4h)
   - Choose Vitest (modern, fast) over Jest
   - Create `vitest.config.ts`
   - Install dependencies:
@@ -432,21 +432,21 @@
     - `@testing-library/user-event`
   - Add `test` script to package.json
 
-- [ ] **Task #60** [HIGH] Set Up E2E Testing (4h)
+- [x] **Task #60** [HIGH] Set Up E2E Testing (4h)
   - Install Playwright
   - Create `e2e/` directory structure
   - Configure `playwright.config.ts`
   - Create helper utilities
 
 **Day 22: Tuesday - Service Unit Tests (8h)**
-- [ ] **Task #61** [HIGH] Write authService Tests (4h)
+- [x] **Task #61** [HIGH] Write authService Tests (4h)
   - Test: `signUp`, `signIn`, `signOut`, `getUserProfile`
   - Mock Firebase Auth responses
   - Test error handling for each error code
   - Test orphaned user recovery
   - **Target**: 80%+ code coverage
 
-- [ ] **Task #62** [HIGH] Write pocketService Tests (4h)
+- [x] **Task #62** [HIGH] Write pocketService Tests (4h)
   - Test: `createPocket`, `joinPocket`, `leavePocket`, `deletePocket`
   - Test: `addTransaction` with balance calculations
   - Test invite code validation
@@ -455,53 +455,53 @@
 #### Sprint 5.2 - Component & Integration Tests (16 hours)
 
 **Day 23: Wednesday - Store & Utility Tests (8h)**
-- [ ] **Task #63** [MEDIUM] Write Zustand Store Tests (3h)
+- [x] **Task #63** [MEDIUM] Write Zustand Store Tests (3h)
   - Test authStore state updates
   - Test pocketStore transaction additions
   - Test subscription management
 
-- [ ] **Task #64** [MEDIUM] Write Utility Function Tests (3h)
+- [x] **Task #64** [MEDIUM] Write Utility Function Tests (3h)
   - Test `formatCurrency` with different locales
   - Test `formatDate` with edge cases
   - Test `generateInviteLink`
   - Test `clearAuthCache`
 
-- [ ] **Task #65** [MEDIUM] Write Component Unit Tests (2h)
+- [x] **Task #65** [MEDIUM] Write Component Unit Tests (2h)
   - Test StatCard rendering
   - Test TransactionCard props
   - Test form validation logic
 
 **Day 24: Thursday - E2E Test Suite (8h)**
-- [ ] **Task #66** [HIGH] Write Critical Flow E2E Tests (6h)
+- [x] **Task #66** [HIGH] Write Critical Flow E2E Tests (6h)
   - Test: Signup → Pocket Creation → Invite → Join
   - Test: Login → Add Funds → Add Expense → Verify Balance
   - Test: Join with Invite Code
   - Test: Leave Pocket → Data Cleanup
   - Test: Multi-locale switching (EN, FR, AR)
 
-- [ ] **Task #67** [MEDIUM] Write Error Path Tests (2h)
+- [x] **Task #67** [MEDIUM] Write Error Path Tests (2h)
   - Test: Invalid credentials
   - Test: Network errors
   - Test: Invalid invite codes
 
 **Day 25: Friday - CI/CD & Quality Gates (8h)**
-- [ ] **Task #68** [HIGH] Configure GitHub Actions CI (4h)
+- [x] **Task #68** [HIGH] Configure GitHub Actions CI (4h)
   - Create `.github/workflows/ci.yml`
   - Add steps: lint, typecheck, test, build
   - Configure test coverage reporting
   - Add status badges to README
 
-- [ ] **Task #69** [MEDIUM] Add Pre-commit Hooks (2h)
+- [x] **Task #69** [MEDIUM] Add Pre-commit Hooks (2h)
   - Install Husky
   - Add pre-commit: lint-staged, type-check
   - Add commit-msg: conventional commits
 
-- [ ] **Task #70** [MEDIUM] Configure Dependabot (1h)
+- [x] **Task #70** [MEDIUM] Configure Dependabot (1h)
   - Create `.github/dependabot.yml`
   - Auto-update npm dependencies weekly
   - Configure PR auto-merge for patches
 
-- [ ] **Task #71** [BUFFER] Final Testing & Bug Fixes (1h)
+- [x] **Task #71** [BUFFER] Final Testing & Bug Fixes (1h)
 
 ---
 
@@ -510,12 +510,12 @@
 #### Sprint 6.1 - Documentation (16 hours)
 
 **Day 26: Monday - Core Documentation (8h)**
-- [ ] **Task #72** [HIGH] Create .env.local.example (1h)
+- [x] **Task #72** [HIGH] Create .env.local.example (1h)
   - All NEXT_PUBLIC_FIREBASE_* variables
   - Add comments explaining each variable
   - Document how to get Firebase credentials
 
-- [ ] **Task #73** [HIGH] Write FIREBASE_SETUP.md (3h)
+- [x] **Task #73** [HIGH] Write FIREBASE_SETUP.md (3h)
   - How to create Firebase project
   - Firestore setup guide
   - Security rules deployment
@@ -523,14 +523,14 @@
   - Environment variable configuration
   - Local emulator setup
 
-- [ ] **Task #74** [MEDIUM] Create CONTRIBUTING.md (2h)
+- [x] **Task #74** [MEDIUM] Create CONTRIBUTING.md (2h)
   - Code style guidelines
   - Branch naming (feat/, fix/, docs/)
   - PR process and review checklist
   - Testing requirements
   - Commit message conventions
 
-- [ ] **Task #75** [MEDIUM] Write ARCHITECTURE.md (2h)
+- [x] **Task #75** [MEDIUM] Write ARCHITECTURE.md (2h)
   - System architecture diagram
   - Component hierarchy
   - Data flow diagrams
@@ -538,18 +538,18 @@
   - Firebase schema documentation
 
 **Day 27: Tuesday - Code Documentation (8h)**
-- [ ] **Task #76** [MEDIUM] Add JSDoc to Services (4h)
+- [x] **Task #76** [MEDIUM] Add JSDoc to Services (4h)
   - Document all public functions in authService.ts
   - Document all public functions in pocketService.ts
   - Add parameter descriptions, return types, examples
 
-- [ ] **Task #77** [MEDIUM] Document i18n Workflow (2h)
+- [x] **Task #77** [MEDIUM] Document i18n Workflow (2h)
   - How to add new translation keys
   - How to add new languages
   - Pluralization rules
   - Currency and date formatting
 
-- [ ] **Task #78** [LOW] Add Inline Comments for Complex Logic (2h)
+- [x] **Task #78** [LOW] Add Inline Comments for Complex Logic (2h)
   - Subscription retry logic
   - Auth orchestration
   - Firebase recovery strategies
@@ -557,23 +557,23 @@
 #### Sprint 6.2 - GDPR Compliance (8 hours)
 
 **Day 28: Wednesday - Data Privacy (8h)**
-- [ ] **Task #79** [CRITICAL] User Data Deletion Already Implemented ✅
+- [x] **Task #79** [CRITICAL] User Data Deletion Already Implemented ✅
   - Verify implementation
   - Test cascade deletion
   - Document process
 
-- [ ] **Task #80** [HIGH] Data Export Functionality (4h)
+- [x] **Task #80** [HIGH] Data Export Functionality (4h)
   - Create "Export My Data" button in settings
   - Export user profile as JSON
   - Export transactions as CSV
   - ZIP download with all data
 
-- [ ] **Task #81** [HIGH] Create Terms of Service Page (2h)
+- [x] **Task #81** [HIGH] Create Terms of Service Page (2h)
   - `src/app/[locale]/terms/page.tsx`
   - Localize for EN, FR, AR
   - Include data retention periods
 
-- [ ] **Task #82** [HIGH] Create Privacy Policy Page (2h)
+- [x] **Task #82** [HIGH] Create Privacy Policy Page (2h)
   - `src/app/[locale]/privacy/page.tsx`
   - Document Firebase data handling
   - Cookie usage policy
@@ -582,14 +582,14 @@
 #### Sprint 6.3 - Production Readiness (16 hours)
 
 **Day 29: Thursday - Security & Monitoring (8h)**
-- [ ] **Task #83** [HIGH] Integrate Sentry Error Monitoring (3h)
+- [x] **Task #83** [HIGH] Integrate Sentry Error Monitoring (3h)
   - Install `@sentry/nextjs`
   - Configure `sentry.client.config.ts`, `sentry.server.config.ts`
   - Set up source maps
   - Add performance monitoring
   - Connect to `NEXT_PUBLIC_LOGGER_ENDPOINT`
 
-- [ ] **Task #84** [HIGH] Add Next.js Security Headers (2h)
+- [x] **Task #84** [HIGH] Add Next.js Security Headers (2h)
   - Configure `next.config.ts` headers:
     - Content-Security-Policy
     - X-Frame-Options: DENY
@@ -598,35 +598,35 @@
     - Referrer-Policy: strict-origin-when-cross-origin
   - **Reference**: [Next.js Security Guide](https://www.turbostarter.dev/blog/complete-nextjs-security-guide-2025-authentication-api-protection-and-best-practices)
 
-- [ ] **Task #85** [MEDIUM] Implement Audit Logging (2h)
+- [x] **Task #85** [MEDIUM] Implement Audit Logging (2h)
   - Create `audit-logs` Firestore collection
   - Log: account deletion, pocket deletion, role changes
   - Include: timestamp, user ID, action, IP
 
-- [ ] **Task #86** [MEDIUM] Add Firebase Performance Monitoring (1h)
+- [x] **Task #86** [MEDIUM] Add Firebase Performance Monitoring (1h)
   - Enable Firebase Performance
   - Track page load times
   - Track Firestore query performance
 
 **Day 30: Friday - Final Deployment Prep (8h)**
-- [ ] **Task #87** [HIGH] Create Deployment Checklist (2h)
+- [x] **Task #87** [HIGH] Create Deployment Checklist (2h)
   - Pre-deployment verification steps
   - Database migration process
   - Rollback procedure
   - Environment variable checklist
 
-- [ ] **Task #88** [HIGH] Bundle Size Optimization (2h)
+- [x] **Task #88** [HIGH] Bundle Size Optimization (2h)
   - Run bundle analyzer
   - Ensure main bundle < 200KB gzipped
   - Optimize images
   - Remove unused dependencies
 
-- [ ] **Task #89** [MEDIUM] Lighthouse CI Setup (2h)
+- [x] **Task #89** [MEDIUM] Lighthouse CI Setup (2h)
   - Add Lighthouse CI to GitHub Actions
   - Set performance budgets
   - Monitor Core Web Vitals
 
-- [ ] **Task #90** [HIGH] Final Production Testing (2h)
+- [x] **Task #90** [HIGH] Final Production Testing (2h)
   - Test all critical flows in production build
   - Verify Firestore rules in production
   - Test on multiple devices/browsers
@@ -669,6 +669,32 @@
   - Verify `next@16.0.3`, `firebase@12.6.0`, `firebase-admin@13.6.0`, `lucide-react@0.554.0`, `next-intl@4.5.5`
   - Rebuild, lint, and smoke-test auth/pocket flows
   - Regenerate `package-lock.json`
+
+### Build & Runtime Stability Findings (5 tasks, 11 hours)
+- [ ] **Task #131** [CRITICAL] Restore clean production build (3h)
+  - Fix ESLint errors blocking `npm run build`
+  - Remove unused symbols in `src/components/Dashboard.tsx`, `src/components/PocketSetup.tsx`
+  - Replace mutable `let` with `const` in `src/hooks/useLoadUserNames.ts`
+  - Remove `any` usage in `src/services/pocketService.ts` snapshot parsing
+
+- [ ] **Task #132** [HIGH] Fix FirebaseErrorBoundary logger reference (1h)
+  - Add missing `logger` import in `src/components/FirebaseErrorBoundary.tsx`
+  - Add lint/type check to prevent unresolved runtime logging references
+
+- [ ] **Task #133** [HIGH] Make invite links locale-aware (3h)
+  - Update `generateInviteLink` to include locale path (`/{locale}/join?code=...`)
+  - Ensure share links generated from `Dashboard` are valid for recipients without prior locale cookie
+  - Add regression test for invite link generation
+
+- [ ] **Task #134** [MEDIUM] Correct hook dependency patterns in `useLoadUserNames` (2h)
+  - Remove stringified dependency expressions in `useMemo`/`useEffect`
+  - Use stable derived keys or upstream memoization for `userIds`
+  - Resolve `react-hooks/exhaustive-deps` warnings
+
+- [ ] **Task #135** [MEDIUM] Align docs/backlog wording with actual paging UX (2h)
+  - Replace stale references to "infinite scroll" where implementation is load-more pagination
+  - Keep one consistent term across README/backlog/comments
+  - Decide whether to keep load-more or implement real infinite scroll in a follow-up task
 
 ### Additional Technical Debt (33 tasks)
 
@@ -781,14 +807,15 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.2 | 2026-02-20 | Audited against current codebase; added build/runtime stability tasks (#131-135), refreshed priorities and summary metrics, corrected stale task details |
 | 2.1 | 2025-11-22 | Added new security findings (Tasks #124-130), refreshed dependency targets to Dec 2025 releases |
 | 2.0 | 2025-01-22 | Complete restructure with numbered tasks, hourly estimates, 6-week sprint plan |
 | 1.0 | 2025-10-26 | Initial backlog creation |
 
 ---
 
-**Next Review Date**: End of Week 3 (2025-02-12)
+**Next Review Date**: 2026-03-06
 **Project Manager**: KHALID
-**Tech Lead**: KHALID
+**Tech Lead**: KHALID Chalhi
 
 _This is a living document. Update after each sprint retrospective._

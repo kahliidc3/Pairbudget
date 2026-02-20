@@ -1,30 +1,31 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import FocusLock from 'react-focus-lock';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { logger } from '@/lib/logger';
-import { createPocket, joinPocket, deletePocket, getPocket } from '@/services/pocketService';
-import { addPocketToUser, removePocketFromUser, getUserProfile, signOut } from '@/services/authService';
-import { UserRole, Pocket } from '@/types';
+import { createPocket, deletePocket, getPocket, joinPocket } from '@/services/pocketService';
+import { addPocketToUser, getUserProfile, removePocketFromUser, signOut } from '@/services/authService';
+import { Pocket, UserRole } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LanguageSelector from '@/components/LanguageSelector';
 import {
-  Wallet,
-  CreditCard,
-  Plus,
-  UserPlus,
   AlertCircle,
-  Trash2,
-  Users,
+  AlertTriangle,
   Calendar,
+  CreditCard,
   Home,
-  X,
-  AlertTriangle
+  Plus,
+  Trash2,
+  UserPlus,
+  Users,
+  Wallet,
+  X
 } from 'lucide-react';
 
 interface PocketSetupProps {
@@ -52,14 +53,31 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
     inviteCode: '',
     role: 'provider' as UserRole
   });
+  const [nameValidationError, setNameValidationError] = useState('');
+  const [inviteValidationError, setInviteValidationError] = useState('');
   
   const { user, userProfile, setUserProfile } = useAuthStore();
   const { setCurrentPocket } = usePocketStore();
+  const pocketNameMinLength = 3;
+  const pocketNameMaxLength = 50;
 
-  const hasPockets = userPockets.length > 0;
-  const headerTitle = hasPockets ? t('managePockets') : t('title');
-  const headerSubtitle = hasPockets ? t('manageSubtitle') : t('subtitle');
-  const displayName = userProfile?.name || user?.displayName || user?.email?.split('@')[0];
+  const normalizeInviteCodeInput = (value: string) => {
+    const compact = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    return compact.length > 3 ? `${compact.slice(0, 3)}-${compact.slice(3)}` : compact;
+  };
+
+  const getInviteCodeRaw = (value: string) => value.replace(/-/g, '');
+
+  const validatePocketName = (name: string) => {
+    const trimmed = name.trim();
+    if (trimmed.length < pocketNameMinLength) {
+      return `Pocket name must be at least ${pocketNameMinLength} characters.`;
+    }
+    if (trimmed.length > pocketNameMaxLength) {
+      return `Pocket name must be ${pocketNameMaxLength} characters or fewer.`;
+    }
+    return '';
+  };
 
   // Load user's existing pockets
   useEffect(() => {
@@ -103,12 +121,19 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
   const handleCreatePocket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !userProfile) return;
+    const trimmedName = formData.name.trim();
+    const validationMessage = validatePocketName(trimmedName);
+    if (validationMessage) {
+      setNameValidationError(validationMessage);
+      return;
+    }
 
     setLoading(true);
     setError('');
+    setNameValidationError('');
 
     try {
-      const pocket = await createPocket(formData.name, user.uid, formData.role);
+      const pocket = await createPocket(trimmedName, user.uid, formData.role);
       
       // Add pocket to user's pocket list and set as current
       await addPocketToUser(user.uid, pocket.id);
@@ -135,12 +160,21 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
   const handleJoinPocket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !userProfile) return;
+    const inviteCodeRaw = getInviteCodeRaw(formData.inviteCode);
+    if (!/^[A-Z0-9]{6}$/.test(inviteCodeRaw)) {
+      setInviteValidationError('Invite code must be 6 letters or numbers.');
+      return;
+    }
 
     setLoading(true);
     setError('');
+    setInviteValidationError('');
 
     try {
-      const pocket = await joinPocket(formData.inviteCode, user.uid, formData.role);
+      const pocket = await joinPocket(inviteCodeRaw, user.uid, formData.role);
+      if (!pocket) {
+        throw new Error('Unable to join pocket right now.');
+      }
       
       // Add pocket to user's pocket list and set as current
       await addPocketToUser(user.uid, pocket.id);
@@ -167,6 +201,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
   const handleSelectPocket = async (pocket: Pocket) => {
     if (!user || !userProfile) return;
 
+    setLoading(true);
     try {
       // Update user's current pocket
       const updatedProfile = await getUserProfile(user.uid);
@@ -182,8 +217,22 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
       }
     } catch (error) {
       logger.error('Error selecting pocket', { error });
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.altKey && (event.key === 'h' || event.key === 'H')) {
+        event.preventDefault();
+        router.push(`/${locale}/dashboard`);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [locale, router]);
 
   const handleDeletePocket = async () => {
     if (!confirmDeletePocket || !user || deleteConfirmText !== 'DELETE') return;
@@ -243,9 +292,10 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
           {/* Mode Toggle */}
           <div className="bg-slate-100 rounded-lg p-1 mb-6">
             <div className="grid grid-cols-2 gap-1">
-              <button
-                onClick={() => setMode('create')}
-                className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
+                <button
+                  onClick={() => setMode('create')}
+                  disabled={loading}
+                  className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
                   mode === 'create'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -254,9 +304,10 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 <Plus className="w-4 h-4" />
                 <span>Create New</span>
               </button>
-              <button
-                onClick={() => setMode('join')}
-                className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
+                <button
+                  onClick={() => setMode('join')}
+                  disabled={loading}
+                  className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
                   mode === 'join'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -359,6 +410,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
               <button
                 onClick={handleSignOut}
                 className="px-2 sm:px-4 py-1.5 sm:py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium min-w-[40px] min-h-[40px] mobile-btn"
+                aria-label={tCommon('signOut')}
               >
                 <span className="hidden sm:inline">{tCommon('signOut')}</span>
                 <span className="sm:hidden">Out</span>
@@ -380,7 +432,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4 mobile-title">
               {userPockets.length === 0 ? t('title') : t('managePockets')}
             </h1>
-            <p className="text-base sm:text-xl text-white/70 max-w-2xl mx-auto mobile-subtitle">
+            <p className="text-base sm:text-xl text-white/90 max-w-2xl mx-auto mobile-subtitle">
               {userPockets.length === 0 ? t('subtitle') : t('manageSubtitle')}
             </p>
           </motion.div>
@@ -394,7 +446,8 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
           >
             <button
               onClick={() => setMode('manage')}
-              className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl sm:rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-sm sm:text-lg font-semibold mobile-btn-lg"
+              disabled={loading}
+              className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl sm:rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl text-sm sm:text-lg font-semibold mobile-btn-lg"
             >
               <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
               <span>Manage My Pockets</span>
@@ -402,7 +455,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 {userPockets.length}
               </span>
             </button>
-            <p className="text-white/60 mt-2 sm:mt-3 text-xs sm:text-sm">
+            <p className="text-white/80 mt-2 sm:mt-3 text-xs sm:text-sm">
               View, select, and manage all your existing budget pockets
             </p>
           </motion.div>
@@ -410,7 +463,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
           {loadingPockets ? (
             <div className="text-center">
               <LoadingSpinner size="lg" className="mb-4" />
-              <p className="text-white/70">{tCommon('loading')}</p>
+              <p className="text-white/90">{tCommon('loading')}</p>
             </div>
           ) : userPockets.length === 0 ? (
             /* No Pockets - Show Create/Join Form */
@@ -424,10 +477,11 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 <div className="grid grid-cols-2 gap-1">
                   <button
                     onClick={() => setMode('create')}
+                    disabled={loading}
                     className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
                       mode === 'create'
                         ? 'bg-white/20 text-white shadow-sm'
-                        : 'text-white/70 hover:text-white'
+                        : 'text-white/90 hover:text-white'
                     }`}
                   >
                     <Plus className="w-4 h-4" />
@@ -435,10 +489,11 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                   </button>
                   <button
                     onClick={() => setMode('join')}
+                    disabled={loading}
                     className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
                       mode === 'join'
                         ? 'bg-white/20 text-white shadow-sm'
-                        : 'text-white/70 hover:text-white'
+                        : 'text-white/90 hover:text-white'
                     }`}
                   >
                     <UserPlus className="w-4 h-4" />
@@ -468,7 +523,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                         <Plus className="w-8 h-8 text-white" />
                       </div>
                       <h3 className="text-xl font-semibold text-white mb-2">Create Your Pocket</h3>
-                      <p className="text-white/70">Set up a new shared expense pocket</p>
+                      <p className="text-white/90">Set up a new shared expense pocket</p>
                     </div>
 
                     <form onSubmit={handleCreatePocket} className="space-y-6">
@@ -479,11 +534,19 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                         <input
                           type="text"
                           value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          onChange={(e) => {
+                            const nextValue = e.target.value;
+                            setFormData({ ...formData, name: nextValue });
+                            setNameValidationError(validatePocketName(nextValue));
+                          }}
                           placeholder="e.g., Family Budget, Trip Fund"
+                          maxLength={pocketNameMaxLength}
                           required
                           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors backdrop-blur-sm"
                         />
+                        {nameValidationError && (
+                          <p className="mt-2 text-sm text-red-300">{nameValidationError}</p>
+                        )}
                       </div>
 
                       <div>
@@ -512,7 +575,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                                 </div>
                                 <div>
                                   <div className="font-medium text-white">Provider</div>
-                                  <div className="text-sm text-white/70">Fund the pocket and manage budget</div>
+                                  <div className="text-sm text-white/90">Fund the pocket and manage budget</div>
                                 </div>
                               </div>
                             </div>
@@ -539,7 +602,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                                 </div>
                                 <div>
                                   <div className="font-medium text-white">Spender</div>
-                                  <div className="text-sm text-white/70">Make purchases and log expenses</div>
+                                  <div className="text-sm text-white/90">Make purchases and log expenses</div>
                                 </div>
                               </div>
                             </div>
@@ -576,7 +639,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                         <UserPlus className="w-8 h-8 text-white" />
                       </div>
                       <h3 className="text-xl font-semibold text-white mb-2">{t('joinExisting')}</h3>
-                      <p className="text-white/70">{t('enterInviteCode')}</p>
+                      <p className="text-white/90">{t('enterInviteCode')}</p>
                     </div>
 
                     <form onSubmit={handleJoinPocket} className="space-y-6">
@@ -587,11 +650,18 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                         <input
                           type="text"
                           value={formData.inviteCode}
-                          onChange={(e) => setFormData({ ...formData, inviteCode: e.target.value.toUpperCase() })}
-                          placeholder="ABC123"
+                          onChange={(e) => {
+                            const normalized = normalizeInviteCodeInput(e.target.value);
+                            setFormData({ ...formData, inviteCode: normalized });
+                            setInviteValidationError('');
+                          }}
+                          placeholder="ABC-123"
                           required
                           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm text-center text-lg font-mono tracking-wider"
                         />
+                        {inviteValidationError && (
+                          <p className="mt-2 text-sm text-red-300">{inviteValidationError}</p>
+                        )}
                       </div>
 
                       <div>
@@ -620,7 +690,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                                 </div>
                                 <div>
                                   <div className="font-medium text-white">Provider</div>
-                                  <div className="text-sm text-white/70">Fund the pocket and manage budget</div>
+                                  <div className="text-sm text-white/90">Fund the pocket and manage budget</div>
                                 </div>
                               </div>
                             </div>
@@ -647,7 +717,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                                 </div>
                                 <div>
                                   <div className="font-medium text-white">Spender</div>
-                                  <div className="text-sm text-white/70">Make purchases and log expenses</div>
+                                  <div className="text-sm text-white/90">Make purchases and log expenses</div>
                                 </div>
                               </div>
                             </div>
@@ -709,6 +779,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                       <button
                         onClick={() => setConfirmDeletePocket(pocket)}
                         className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-all"
+                        aria-label={`Delete ${pocket.name}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -718,14 +789,14 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                     
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center justify-between">
-                        <span className="text-white/70 text-sm">Balance</span>
+                        <span className="text-white/90 text-sm">Balance</span>
                         <span className={`font-medium ${pocket.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {formatCurrency(pocket.balance)}
+                          {formatCurrency(pocket.balance, { locale, currency: userProfile?.preferredCurrency })}
                         </span>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-white/70 text-sm flex items-center space-x-1">
+                        <span className="text-white/90 text-sm flex items-center space-x-1">
                           <Users className="w-3 h-3" />
                           <span>Members</span>
                         </span>
@@ -733,16 +804,17 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-white/70 text-sm flex items-center space-x-1">
+                        <span className="text-white/90 text-sm flex items-center space-x-1">
                           <Calendar className="w-3 h-3" />
                           <span>Created</span>
                         </span>
-                        <span className="text-white/70 text-sm">{formatDate(pocket.createdAt)}</span>
+                        <span className="text-white/90 text-sm">{formatDate(pocket.createdAt, locale)}</span>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleSelectPocket(pocket)}
+                      disabled={loading}
                       className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all border border-white/20 hover:border-white/30 font-medium"
                     >
                       Select Pocket
@@ -761,7 +833,8 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                     <h3 className="text-xl font-semibold text-white">Create New Pocket</h3>
                     <button
                       onClick={() => setMode('manage')}
-                      className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                      className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                      aria-label="Close create pocket form"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -782,11 +855,19 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                       <input
                         type="text"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => {
+                          const nextValue = e.target.value;
+                          setFormData({ ...formData, name: nextValue });
+                          setNameValidationError(validatePocketName(nextValue));
+                        }}
                         placeholder="e.g., Family Budget, Trip Fund"
+                        maxLength={pocketNameMaxLength}
                         required
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors backdrop-blur-sm"
                       />
+                      {nameValidationError && (
+                        <p className="mt-2 text-sm text-red-300">{nameValidationError}</p>
+                      )}
                     </div>
 
                     <div>
@@ -809,7 +890,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                           }`}>
                             <CreditCard className="w-8 h-8 text-white mx-auto mb-2" />
                             <div className="font-medium text-white">Provider</div>
-                            <div className="text-xs text-white/70 mt-1">Fund & manage budget</div>
+                            <div className="text-xs text-white/90 mt-1">Fund & manage budget</div>
                           </div>
                         </label>
 
@@ -828,7 +909,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                           }`}>
                             <Wallet className="w-8 h-8 text-white mx-auto mb-2" />
                             <div className="font-medium text-white">Spender</div>
-                            <div className="text-xs text-white/70 mt-1">Make purchases & log expenses</div>
+                            <div className="text-xs text-white/90 mt-1">Make purchases & log expenses</div>
                           </div>
                         </label>
                       </div>
@@ -859,25 +940,29 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {confirmDeletePocket && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-          >
+          <FocusLock returnFocus autoFocus>
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('deletePocketConfirm')}
             >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+              >
               <div className="text-center mb-6">
                 <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <AlertTriangle className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{t('deletePocketConfirm')}</h3>
-                <p className="text-white/70 mb-4">{t('deletePocketWarning')}</p>
-                <p className="text-sm text-white/50">{t('deleteConfirmText')}</p>
+                <p className="text-white/90 mb-4">{t('deletePocketWarning')}</p>
+                <p className="text-sm text-white/70">{t('deleteConfirmText')}</p>
               </div>
 
               <div className="space-y-4">
@@ -915,8 +1000,9 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                   </button>
                 </div>
               </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </FocusLock>
         )}
       </AnimatePresence>
     </div>
@@ -924,3 +1010,4 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
 };
 
 export default PocketSetup; 
+

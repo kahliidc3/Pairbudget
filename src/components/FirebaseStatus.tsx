@@ -3,7 +3,7 @@
 import React from 'react';
 import { getFirebaseConfigStatus } from '@/lib/firebase-init';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { AlertTriangle, ExternalLink, CheckCircle, Settings, Database, Shield } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Database, ExternalLink, Settings, Shield } from 'lucide-react';
 
 const FirebaseStatus: React.FC = () => {
   const { isConfigured, message } = getFirebaseConfigStatus();

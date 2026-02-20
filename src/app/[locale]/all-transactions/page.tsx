@@ -1,28 +1,30 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { QueryDocumentSnapshot } from 'firebase/firestore';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
-import { getUserProfile } from '@/services/authService';
+import { fetchTransactionsPage } from '@/services/pocketService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { EXPENSE_CATEGORIES } from '@/types';
 import StatCard from '@/components/ui/StatCard';
 import TransactionCard from '@/components/ui/TransactionCard';
 import { 
+  Activity,
   ArrowLeft,
-  Search,
-  Download,
-  Receipt,
-  Filter,
-  X,
-  TrendingUp,
   DollarSign,
-  Activity
+  Download,
+  Filter,
+  Receipt,
+  Search,
+  TrendingUp,
+  X
 } from 'lucide-react';
 import { Transaction } from '@/types';
+import { useLoadUserNames } from '@/hooks/useLoadUserNames';
 
 interface TransactionWithUser extends Transaction {
   userName?: string;
@@ -31,56 +33,84 @@ interface TransactionWithUser extends Transaction {
 export default function AllTransactionsPage() {
   const router = useRouter();
   const locale = useLocale();
-  const { user } = useAuthStore();
-  const { currentPocket, transactions } = usePocketStore();
-  const [transactionsWithUsers, setTransactionsWithUsers] = useState<TransactionWithUser[]>([]);
+  const t = useTranslations('transactions');
+  const tCommon = useTranslations('common');
+  const { user, userProfile } = useAuthStore();
+  const preferredCurrency = userProfile?.preferredCurrency;
+  const currentPocket = usePocketStore((state) => state.currentPocket);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<TransactionWithUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [pageCursor, setPageCursor] = useState<QueryDocumentSnapshot | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'fund' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Load user names for each transaction
-  useEffect(() => {
-    const loadTransactionUsers = async () => {
-      if (!transactions || transactions.length === 0) {
-        setTransactionsWithUsers([]);
-        setLoading(false);
-        return;
-      }
+  const { userNames } = useLoadUserNames(transactions.map((t) => t.userId));
 
+  const transactionsWithUsers = useMemo(
+    () =>
+      transactions.map((transaction) => ({
+        ...transaction,
+        userName: userNames[transaction.userId] || t('unknownUser'),
+      })),
+    [transactions, userNames, t]
+  );
+
+  const loadTransactions = async (reset = false) => {
+    if (!currentPocket) return;
+
+    if (reset) {
       setLoading(true);
-      try {
-        const transactionsWithUserData = await Promise.all(
-          transactions.map(async (transaction) => {
-            try {
-              const userProfile = await getUserProfile(transaction.userId);
-              return {
-                ...transaction,
-                userName: userProfile?.name || 'Unknown User'
-              };
-            } catch (error) {
-              logger.error('Error loading user for transaction', { error });
-              return {
-                ...transaction,
-                userName: 'Unknown User'
-              };
-            }
-          })
-        );
+    } else {
+      setIsLoadingMore(true);
+    }
 
-        setTransactionsWithUsers(transactionsWithUserData);
-      } catch (error) {
-        logger.error('Error loading transaction users', { error });
-        setTransactionsWithUsers(transactions.map(t => ({ ...t, userName: 'Unknown User' })));
-      } finally {
+    try {
+      const result = await fetchTransactionsPage(
+        currentPocket.id,
+        20,
+        reset ? undefined : pageCursor ?? undefined
+      );
+
+      setTransactions((prev) => {
+        const base = reset ? [] : prev;
+        const existingIds = new Set(base.map((t) => t.id));
+        const merged = [...base];
+
+        result.transactions.forEach((tx) => {
+          if (!existingIds.has(tx.id)) {
+            merged.push(tx);
+          }
+        });
+
+        return merged;
+      });
+
+      setPageCursor(result.cursor);
+      setHasMore(result.hasMore);
+    } catch (error) {
+      logger.error('Error loading transactions', { error, context: { pocketId: currentPocket?.id } });
+    } finally {
+      if (reset) {
         setLoading(false);
+      } else {
+        setIsLoadingMore(false);
       }
-    };
+    }
+  };
 
-    loadTransactionUsers();
-  }, [transactions]);
+  useEffect(() => {
+    if (!currentPocket) return;
+    setTransactions([]);
+    setPageCursor(null);
+    setHasMore(true);
+    loadTransactions(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPocket?.id]);
 
   // Filter transactions based on search and filters
   useEffect(() => {
@@ -122,14 +152,14 @@ export default function AllTransactionsPage() {
   const handleExport = () => {
     // Create CSV content
     const csvContent = [
-      ['Date', 'Type', 'Category', 'Description', 'Amount', 'User'].join(','),
+      [t('csv.date'), t('csv.type'), t('csv.category'), t('csv.description'), t('csv.amount'), t('csv.user')].join(','),
       ...filteredTransactions.map(transaction => [
-        formatDate(transaction.date),
+        formatDate(transaction.date, locale),
         transaction.type,
         transaction.category,
         `"${transaction.description}"`,
         transaction.amount,
-        transaction.userName || 'Unknown'
+        transaction.userName || t('unknown')
       ].join(','))
     ].join('\n');
 
@@ -151,12 +181,24 @@ export default function AllTransactionsPage() {
     setFilterCategory('all');
   };
 
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.altKey && (event.key === 'h' || event.key === 'H')) {
+        event.preventDefault();
+        router.push(`/${locale}/dashboard`);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [locale, router]);
+
   if (!user || !currentPocket) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-200 max-w-md w-full mx-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-center font-medium">Loading...</p>
+          <p className="text-gray-600 text-center font-medium">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -172,6 +214,7 @@ export default function AllTransactionsPage() {
               <button
                 onClick={() => router.push(`/${locale}/dashboard`)}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
+                aria-label={t('backToDashboard')}
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -179,7 +222,7 @@ export default function AllTransactionsPage() {
                 <Receipt className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg font-semibold text-gray-900 truncate">All Transactions</h1>
+                <h1 className="text-lg font-semibold text-gray-900 truncate">{t('title')}</h1>
                 <p className="text-sm text-gray-500 truncate">{currentPocket.name}</p>
               </div>
             </div>
@@ -192,13 +235,15 @@ export default function AllTransactionsPage() {
                     ? 'bg-blue-100 text-blue-600' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
+                aria-label={t('toggleFilters')}
               >
                 <Filter className="w-5 h-5" />
               </button>
               <button
                 onClick={handleExport}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
-                title="Export Data"
+                title={t('exportData')}
+                aria-label={t('exportData')}
               >
                 <Download className="w-5 h-5" />
               </button>
@@ -212,25 +257,25 @@ export default function AllTransactionsPage() {
         {/* Stats Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           <StatCard
-            title="Total Funds"
-            value={formatCurrency(totalFunds)}
-            subtitle="Added this month"
+            title={t('totalFunds')}
+            value={formatCurrency(totalFunds, { locale, currency: preferredCurrency })}
+            subtitle={t('addedThisMonth')}
             icon={TrendingUp}
             iconColor="green"
             delay={0}
           />
           <StatCard
-            title="Total Expenses"
-            value={formatCurrency(totalExpenses)}
-            subtitle="Spent this month"
+            title={t('totalExpenses')}
+            value={formatCurrency(totalExpenses, { locale, currency: preferredCurrency })}
+            subtitle={t('spentThisMonth')}
             icon={Activity}
             iconColor="orange"
             delay={0.1}
           />
           <StatCard
-            title="Net Balance"
-            value={formatCurrency(Math.abs(netBalance))}
-            subtitle={netBalance >= 0 ? 'Remaining funds' : 'Overspent'}
+            title={t('netBalance')}
+            value={formatCurrency(Math.abs(netBalance), { locale, currency: preferredCurrency })}
+            subtitle={netBalance >= 0 ? t('remainingFunds') : t('overspent')}
             icon={DollarSign}
             iconColor={netBalance >= 0 ? 'blue' : 'red'}
             delay={0.2}
@@ -241,12 +286,17 @@ export default function AllTransactionsPage() {
         <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100 mb-6">
           {/* Search Bar */}
           <div className="relative mb-4">
+            <label htmlFor="transaction-search" className="sr-only">
+              {t('searchLabel')}
+            </label>
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
+              id="transaction-search"
               type="text"
-              placeholder="Search transactions..."
+              placeholder={t('searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-describedby="transactions-result-count"
               className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
             />
           </div>
@@ -255,26 +305,26 @@ export default function AllTransactionsPage() {
           {showFilters && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterType')}</label>
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value as 'all' | 'fund' | 'expense')}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
                 >
-                  <option value="all">All Types</option>
-                  <option value="fund">Funds Only</option>
-                  <option value="expense">Expenses Only</option>
+                  <option value="all">{t('allTypes')}</option>
+                  <option value="fund">{t('fundsOnly')}</option>
+                  <option value="expense">{t('expensesOnly')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterCategory')}</label>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
                 >
-                  <option value="all">All Categories</option>
+                  <option value="all">{t('allCategories')}</option>
                   {EXPENSE_CATEGORIES.map((category) => (
                     <option key={category} value={category}>{category}</option>
                   ))}
@@ -286,15 +336,15 @@ export default function AllTransactionsPage() {
           {/* Filter Summary */}
           {(searchTerm || filterType !== 'all' || filterCategory !== 'all') && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
-                {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transaction' : 'transactions'}
+              <div id="transactions-result-count" className="text-sm text-gray-600">
+                {filteredTransactions.length} {filteredTransactions.length === 1 ? t('transaction') : t('transactions')}
               </div>
               <button
                 onClick={clearFilters}
                 className="text-sm text-blue-600 hover:text-blue-700 transition-colors flex items-center space-x-1"
               >
                 <X className="w-4 h-4" />
-                <span>Clear Filters</span>
+                <span>{t('clearFilters')}</span>
               </button>
             </div>
           )}
@@ -305,7 +355,7 @@ export default function AllTransactionsPage() {
           {loading ? (
             <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading...</p>
+              <p className="text-gray-600 font-medium">{tCommon('loading')}</p>
             </div>
           ) : filteredTransactions.length > 0 ? (
             filteredTransactions.map((transaction, index) => (
@@ -313,6 +363,7 @@ export default function AllTransactionsPage() {
                 key={transaction.id}
                 transaction={transaction}
                 userName={transaction.userName}
+                currency={preferredCurrency}
                 delay={index * 0.05}
               />
             ))
@@ -323,14 +374,14 @@ export default function AllTransactionsPage() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {searchTerm || filterType !== 'all' || filterCategory !== 'all' 
-                  ? 'No transactions found' 
-                  : 'No transactions recorded'
+                  ? t('noTransactionsFound')
+                  : t('noTransactionsRecorded')
                 }
               </h3>
               <p className="text-gray-600 mb-6">
                 {searchTerm || filterType !== 'all' || filterCategory !== 'all' 
-                  ? 'Try adjusting your search or filters'
-                  : 'Start by adding funds or recording expenses from the dashboard.'
+                  ? t('adjustFilters')
+                  : t('noTransactionsHelp')
                 }
               </p>
               <div className="flex flex-col space-y-3">
@@ -340,19 +391,31 @@ export default function AllTransactionsPage() {
                     className="bg-blue-600 text-white rounded-xl px-6 py-3 hover:bg-blue-700 transition-all duration-200 shadow-sm font-medium flex items-center justify-center space-x-2"
                   >
                     <X className="w-4 h-4" />
-                    <span>Clear Filters</span>
+                    <span>{t('clearFilters')}</span>
                   </button>
                 )}
                 <button
                   onClick={() => router.push(`/${locale}/dashboard`)}
                   className="bg-gray-100 text-gray-700 rounded-xl px-6 py-3 hover:bg-gray-200 transition-all duration-200 border border-gray-200 font-medium"
                 >
-                  Back to Dashboard
+                  {t('backToDashboard')}
                 </button>
               </div>
             </div>
           )}
         </div>
+
+        {!loading && hasMore && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => loadTransactions(false)}
+              disabled={isLoadingMore}
+              className="px-5 py-3 bg-white border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isLoadingMore ? t('loadingMore') : t('loadMore')}
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

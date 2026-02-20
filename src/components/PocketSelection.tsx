@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
@@ -8,15 +8,15 @@ import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { logger } from '@/lib/logger';
 import { getPocket } from '@/services/pocketService';
-import { updateUserProfile, signOut } from '@/services/authService';
+import { signOut, updateUserProfile } from '@/services/authService';
 import { formatCurrency } from '@/lib/utils';
 import { 
-  Plus, 
-  Wallet,
-  Users,
-  TrendingUp,
+  ArrowRight, 
   LogOut,
-  ArrowRight
+  Plus,
+  TrendingUp,
+  Users,
+  Wallet
 } from 'lucide-react';
 import { Pocket } from '@/types';
 import PocketSetup from '@/components/PocketSetup';
@@ -116,6 +116,18 @@ const PocketSelection: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.altKey && (event.key === 'h' || event.key === 'H')) {
+        event.preventDefault();
+        router.push(`/${locale}/dashboard`);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [locale, router]);
+
   if (showCreateNew) {
     return <PocketSetup isModal={false} />;
   }
@@ -160,13 +172,14 @@ const PocketSelection: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-2 sm:space-x-4 nav-actions">
-              <span className="text-xs sm:text-sm text-white/70 hidden lg:block">
+              <span className="text-xs sm:text-sm text-white/90 hidden lg:block">
                 Welcome, {userProfile?.name || user?.displayName || user?.email?.split('@')[0]}
               </span>
               <button
                 onClick={handleSignOut}
                 className="px-2 sm:px-4 py-1.5 sm:py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium min-w-[40px] min-h-[40px] flex items-center justify-center mobile-btn"
                 title="Sign Out"
+                aria-label="Sign Out"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline ml-1">Sign Out</span>
@@ -197,7 +210,7 @@ const PocketSelection: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-sm sm:text-xl text-white/70 max-w-2xl mx-auto mobile-subtitle"
+              className="text-sm sm:text-xl text-white/90 max-w-2xl mx-auto mobile-subtitle"
             >
               You have {userPockets.length} pocket{userPockets.length !== 1 ? 's' : ''} available. 
               Select one to continue managing your budget.
@@ -207,7 +220,7 @@ const PocketSelection: React.FC = () => {
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/30 mx-auto mb-4"></div>
-              <p className="text-white/70">Loading your pockets...</p>
+              <p className="text-white/90">Loading your pockets...</p>
             </div>
           ) : (
             <>
@@ -226,7 +239,7 @@ const PocketSelection: React.FC = () => {
                     transition={{ delay: 0.1 * index }}
                     onClick={() => handlePocketSelect(pocket)}
                     disabled={loadingPocketId === pocket.id}
-                    className={`bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-left hover:bg-white/15 transition-all duration-300 group relative hover:-translate-y-1 shadow-xl mobile-card ${
+                    className={`bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-left hover:bg-white/15 transition-all duration-300 group relative shadow-xl hover:shadow-2xl mobile-card ${
                       loadingPocketId === pocket.id ? 'opacity-50 pointer-events-none' : ''
                     }`}
                   >
@@ -238,21 +251,21 @@ const PocketSelection: React.FC = () => {
                           <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         )}
                       </div>
-                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/60 group-hover:text-white transition-colors" />
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white/80 group-hover:text-white transition-colors" />
                     </div>
                     
                     <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 truncate">{pocket.name}</h3>
                     
                     <div className="space-y-2 mb-3 sm:mb-4">
                       <div className="flex items-center justify-between text-xs sm:text-sm">
-                        <span className="text-white/70">Balance</span>
+                        <span className="text-white/90">Balance</span>
                         <span className={`font-medium ${pocket.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {formatCurrency(pocket.balance)}
+                          {formatCurrency(pocket.balance, { locale, currency: userProfile?.preferredCurrency })}
                         </span>
                       </div>
                       
                       <div className="flex items-center justify-between text-xs sm:text-sm">
-                        <span className="text-white/70">Members</span>
+                        <span className="text-white/90">Members</span>
                         <span className="flex items-center space-x-1 text-white">
                           <Users className="w-3 h-3" />
                           <span>{pocket.participants.length}</span>
@@ -260,12 +273,12 @@ const PocketSelection: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs text-white/60">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs text-white/80">
                       <span className="flex items-center space-x-1">
                         <TrendingUp className="w-3 h-3" />
-                        <span>Funded: {formatCurrency(pocket.totalFunded)}</span>
+                        <span>Funded: {formatCurrency(pocket.totalFunded, { locale, currency: userProfile?.preferredCurrency })}</span>
                       </span>
-                      <span>Spent: {formatCurrency(pocket.totalSpent)}</span>
+                      <span>Spent: {formatCurrency(pocket.totalSpent, { locale, currency: userProfile?.preferredCurrency })}</span>
                     </div>
                   </motion.button>
                 ))}
@@ -280,12 +293,12 @@ const PocketSelection: React.FC = () => {
               >
                 <button
                   onClick={() => setShowCreateNew(true)}
-                  className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 mobile-btn-lg"
+                  className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl mobile-btn-lg"
                 >
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="font-medium text-sm sm:text-base">Create New Pocket</span>
                 </button>
-                <p className="text-xs sm:text-sm text-white/60 mt-2 sm:mt-3">
+                <p className="text-xs sm:text-sm text-white/80 mt-2 sm:mt-3">
                   Want to start fresh? Create a new pocket for different budgets.
                 </p>
               </motion.div>
@@ -298,3 +311,4 @@ const PocketSelection: React.FC = () => {
 };
 
 export default PocketSelection; 
+

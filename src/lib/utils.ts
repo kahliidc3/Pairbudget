@@ -25,17 +25,40 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = 'MAD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency === 'MAD' ? 'USD' : currency, // MAD not supported by Intl
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount).replace('$', currency === 'MAD' ? 'MAD ' : '$');
+interface FormatCurrencyOptions {
+  locale?: string;
+  currency?: string;
 }
 
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
+const getResolvedLocale = (locale?: string) => {
+  if (locale) return locale;
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    return navigator.language;
+  }
+  return 'en-US';
+};
+
+const normalizeCurrencyCode = (currency?: string) => {
+  const fallback = 'MAD';
+  if (!currency) return fallback;
+  const upper = currency.toUpperCase();
+  if (upper === 'USD') return 'MAD';
+  return /^[A-Z]{3}$/.test(upper) ? upper : fallback;
+};
+
+export function formatCurrency(amount: number, options: FormatCurrencyOptions = {}): string {
+  const locale = getResolvedLocale(options.locale);
+  const currency = normalizeCurrencyCode(options.currency);
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export function formatDate(date: Date, locale?: string): string {
+  return new Intl.DateTimeFormat(getResolvedLocale(locale), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -50,8 +73,14 @@ const ensureHttps = (url: URL) => {
   }
 };
 
-export function generateInviteLink(inviteCode: string): string {
-  const fallback = `/join?code=${encodeURIComponent(inviteCode)}`;
+export function generateInviteLink(inviteCode: string, locale?: string): string {
+  const localeSegment = (() => {
+    if (locale && ['en', 'fr', 'ar'].includes(locale)) return locale;
+    if (typeof window === 'undefined') return 'en';
+    const segment = window.location.pathname.split('/').filter(Boolean)[0];
+    return ['en', 'fr', 'ar'].includes(segment) ? segment : 'en';
+  })();
+  const fallback = `/${localeSegment}/join?code=${encodeURIComponent(inviteCode)}`;
   const envBase = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_APP_URL : undefined;
   const baseOrigin = typeof window !== 'undefined' ? window.location.origin : envBase;
 
@@ -62,7 +91,7 @@ export function generateInviteLink(inviteCode: string): string {
   try {
     const url = new URL(baseOrigin);
     ensureHttps(url);
-    url.pathname = '/join';
+    url.pathname = `/${localeSegment}/join`;
     url.search = `code=${encodeURIComponent(inviteCode)}`;
     url.hash = '';
     return url.toString();

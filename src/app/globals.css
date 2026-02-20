@@ -92,6 +92,25 @@
   --touch-target-lg: 48px;
 }
 
+/* Global sharp-edge mode */
+:root {
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+}
+
+[class~="rounded"],
+[class*="rounded-"] {
+  border-radius: 0 !important;
+}
+
+[class~="rounded-full"],
+[class*="rounded-full"] {
+  border-radius: 9999px !important;
+}
+
 /* Base Styles */
 html {
   scroll-behavior: smooth;
@@ -112,6 +131,12 @@ body {
   overflow-x: hidden;
 }
 
+button,
+[role="button"] {
+  min-height: 48px;
+  min-width: 48px;
+}
+
 /* Modern Component Utilities */
 .card-base {
   background-color: white;
@@ -124,7 +149,6 @@ body {
 
 .card-base:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .card-interactive {
@@ -139,7 +163,6 @@ body {
 
 .card-interactive:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
 }
 
 .card-interactive:active {
@@ -167,7 +190,6 @@ body {
 .btn-primary:hover {
   background-color: var(--color-blue-700);
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .btn-primary:active {
@@ -193,7 +215,6 @@ body {
 
 .btn-secondary:hover {
   background-color: var(--color-gray-200);
-  transform: translateY(-1px);
 }
 
 .btn-secondary:active {
@@ -525,7 +546,6 @@ body {
 
   .desktop-card:hover {
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
   }
 
   /* Desktop Typography */

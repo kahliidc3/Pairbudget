@@ -2,13 +2,14 @@
 
 import React, { Component, ReactNode } from 'react';
 import { 
-  handleFirebaseInternalError, 
+  emergencyFirebaseReset, 
   getSubscriptionHealthState, 
-  resetRecoveryTracking,
-  emergencyFirebaseReset
+  handleFirebaseInternalError,
+  resetRecoveryTracking
 } from '@/lib/firebase';
-import { getSubscriptionStats, cleanupAllSubscriptions } from '@/services/pocketService';
-import { AlertTriangle, Activity, RefreshCw, RotateCcw, Zap, Monitor } from 'lucide-react';
+import { logger } from '@/lib/logger';
+import { cleanupAllSubscriptions, getSubscriptionStats } from '@/services/pocketService';
+import { Activity, AlertTriangle, Monitor, RefreshCw, RotateCcw, Zap } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -21,16 +22,10 @@ interface State {
   isRecovering: boolean;
   showDiagnostics: boolean;
   recoveryAttempts: number;
-  subscriptionStats: {
-    activeSubscriptions: number;
-    errorCount: number;
-    lastSuccessfulOperation: number;
-    timeSinceLastSuccess: number;
-  };
 }
 
 class FirebaseErrorBoundary extends Component<Props, State> {
-  private diagnosticsInterval: NodeJS.Timeout | null = null;
+  private isRecoveringNow = false;
 
   constructor(props: Props) {
     super(props);
@@ -41,27 +36,17 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       isRecovering: false,
       showDiagnostics: false,
       recoveryAttempts: 0,
-      subscriptionStats: {
-        activeSubscriptions: 0,
-        errorCount: 0,
-        lastSuccessfulOperation: Date.now(),
-        timeSinceLastSuccess: 0
-      }
     };
   }
 
   componentDidMount() {
     // Set up global error listeners for Firebase errors
     this.setupGlobalErrorHandlers();
-    
-    // Start diagnostics monitoring
-    this.startDiagnosticsMonitoring();
   }
 
   componentWillUnmount() {
-    if (this.diagnosticsInterval) {
-      clearInterval(this.diagnosticsInterval);
-    }
+    window.removeEventListener('unhandledrejection', this.handleUnhandledRejection);
+    window.removeEventListener('error', this.handleGlobalError);
   }
 
   setupGlobalErrorHandlers = () => {
@@ -70,14 +55,6 @@ class FirebaseErrorBoundary extends Component<Props, State> {
     
     // Listen for global errors
     window.addEventListener('error', this.handleGlobalError);
-  };
-
-  startDiagnosticsMonitoring = () => {
-    this.diagnosticsInterval = setInterval(() => {
-      this.setState({
-        subscriptionStats: getSubscriptionStats()
-      });
-    }, 5000); // Update every 5 seconds
   };
 
   handleUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -109,17 +86,18 @@ class FirebaseErrorBoundary extends Component<Props, State> {
   };
 
   handleFirebaseError = async (error: unknown) => {
-    if (this.state.isRecovering) {
+    if (this.isRecoveringNow || this.state.isRecovering) {
       logger.debug('Already recovering from Firebase error, skipping');
       return;
     }
 
     logger.error('FirebaseErrorBoundary handling error', { error });
+    this.isRecoveringNow = true;
     
-    this.setState({ 
+    this.setState((prevState) => ({
       isRecovering: true,
-      recoveryAttempts: this.state.recoveryAttempts + 1
-    });
+      recoveryAttempts: prevState.recoveryAttempts + 1
+    }));
 
     try {
       const recovered = await handleFirebaseInternalError(error);
@@ -143,11 +121,12 @@ class FirebaseErrorBoundary extends Component<Props, State> {
     } catch (recoveryError) {
       logger.error('Error during Firebase recovery', { error: recoveryError });
     } finally {
+      this.isRecoveringNow = false;
       this.setState({ isRecovering: false });
     }
   };
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): Partial<State> | null {
     // Check if this is a Firebase internal error
     const message = error.message || '';
     const isFirebaseError = message.includes('FIRESTORE') && 
@@ -163,17 +142,20 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       };
     }
 
-    // For non-Firebase errors, let them bubble up
-    throw error;
+    // Ignore non-Firebase errors in this boundary to avoid re-entrant update loops.
+    return null;
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     logger.error('FirebaseErrorBoundary caught error', { error, context: { errorInfo } });
     
-    this.setState({
-      error,
-      errorInfo,
-    });
+    if (this.isFirebaseInternalError(error)) {
+      this.setState({
+        hasError: true,
+        error,
+        errorInfo,
+      });
+    }
 
     // Attempt recovery for Firebase errors
     if (this.isFirebaseInternalError(error)) {
@@ -247,11 +229,11 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       error, 
       isRecovering, 
       showDiagnostics, 
-      recoveryAttempts,
-      subscriptionStats 
+      recoveryAttempts
     } = this.state;
 
     if (hasError && error) {
+      const subscriptionStats = getSubscriptionStats();
       const healthState = getSubscriptionHealthState();
       const isInternalAssertion = error.message?.includes('INTERNAL ASSERTION FAILED');
       const errorId = error.message?.match(/ID: (ca9|b815)/)?.[1];

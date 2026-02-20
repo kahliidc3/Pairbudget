@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ interface StatCardProps {
   className?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
+const StatCardComponent: React.FC<StatCardProps> = ({
   title,
   value,
   subtitle,
@@ -29,21 +29,27 @@ const StatCard: React.FC<StatCardProps> = ({
   delay = 0,
   className
 }) => {
-  const colorVariants = {
-    green: 'bg-green-100 text-green-600',
-    red: 'bg-red-100 text-red-600',
-    blue: 'bg-blue-100 text-blue-600',
-    orange: 'bg-orange-100 text-orange-600',
-    purple: 'bg-purple-100 text-purple-600'
-  };
+  const colorVariants = useMemo(
+    () => ({
+      green: 'bg-green-100 text-green-600',
+      red: 'bg-red-100 text-red-600',
+      blue: 'bg-blue-100 text-blue-600',
+      orange: 'bg-orange-100 text-orange-600',
+      purple: 'bg-purple-100 text-purple-600',
+    }),
+    []
+  );
 
-  const textColorVariants = {
-    green: 'text-green-600',
-    red: 'text-red-600',
-    blue: 'text-blue-600',
-    orange: 'text-orange-600',
-    purple: 'text-purple-600'
-  };
+  const textColorVariants = useMemo(
+    () => ({
+      green: 'text-green-600',
+      red: 'text-red-600',
+      blue: 'text-blue-600',
+      orange: 'text-orange-600',
+      purple: 'text-purple-600',
+    }),
+    []
+  );
 
   return (
     <motion.div
@@ -90,5 +96,18 @@ const StatCard: React.FC<StatCardProps> = ({
     </motion.div>
   );
 };
+
+const propsAreEqual = (prev: StatCardProps, next: StatCardProps) =>
+  prev.title === next.title &&
+  prev.value === next.value &&
+  prev.subtitle === next.subtitle &&
+  prev.icon === next.icon &&
+  prev.iconColor === next.iconColor &&
+  prev.delay === next.delay &&
+  prev.className === next.className &&
+  prev.trend?.value === next.trend?.value &&
+  prev.trend?.isPositive === next.trend?.isPositive;
+
+const StatCard = React.memo(StatCardComponent, propsAreEqual);
 
 export default StatCard;

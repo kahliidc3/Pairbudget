@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { 
-  Wallet, 
+  Bell, 
   ChevronDown,
-  Bell,
-  Search
+  Search,
+  Wallet
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Pocket, User } from '@/types';
@@ -25,8 +26,14 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   onNotifications,
   onSearch
 }) => {
+  const tDashboard = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
   const balance = currentPocket?.balance || 0;
   const userRole = currentPocket?.roles[userProfile?.uid || ''] || '';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? tCommon('morning') : hour < 18 ? tCommon('afternoon') : tCommon('evening');
+  const userLabel = userProfile?.name || tCommon('user');
 
   return (
     <div className="bg-white border-b border-gray-100">
@@ -34,9 +41,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         {/* Top Row: Greeting and Actions */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm text-gray-600">Good morning</p>
+            <p className="text-sm text-gray-600">{greeting}</p>
             <p className="font-semibold text-gray-900 truncate max-w-[200px]">
-              {userProfile?.name || 'User'}
+              {userLabel}
             </p>
           </div>
           
@@ -45,6 +52,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
               <button
                 onClick={onSearch}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                aria-label="Search"
               >
                 <Search className="w-5 h-5" />
               </button>
@@ -53,6 +61,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
               <button
                 onClick={onNotifications}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200 relative"
+                aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
                 <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></div>
@@ -77,17 +86,17 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                     {currentPocket.name}
                   </p>
                   <p className="text-sm text-gray-600 capitalize">
-                    {userRole} • {Object.keys(currentPocket.roles).length} members
+                    {tDashboard(`role.${userRole || 'spender'}`)} • {Object.keys(currentPocket.roles).length} {tDashboard('members')}
                   </p>
                 </div>
               </div>
               
               <div className="text-right">
-                <p className="text-xs text-gray-500 mb-1">Balance</p>
+                <p className="text-xs text-gray-500 mb-1">{tDashboard('stats.currentBalance')}</p>
                 <p className={`text-lg font-bold ${
                   balance >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {formatCurrency(Math.abs(balance))}
+                  {formatCurrency(Math.abs(balance), { locale, currency: userProfile?.preferredCurrency })}
                 </p>
               </div>
             </div>
@@ -102,8 +111,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                 <Wallet className="w-6 h-6 text-gray-500" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">No Pocket Selected</p>
-                <p className="text-sm text-gray-500">Tap to select or create</p>
+                <p className="font-semibold text-gray-900">{tDashboard('pocket.noPocketSelected')}</p>
+                <p className="text-sm text-gray-500">{tDashboard('pocket.tapToSelect')}</p>
               </div>
               <ChevronDown className="w-5 h-5 text-gray-400" />
             </div>

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { logger } from '@/lib/logger';
@@ -11,9 +12,9 @@ import { formatCurrency } from '@/lib/utils';
 import { 
   ChevronDown, 
   Plus, 
-  Wallet,
+  TrendingUp,
   Users,
-  TrendingUp
+  Wallet
 } from 'lucide-react';
 import { Pocket } from '@/types';
 
@@ -22,6 +23,7 @@ interface PocketSelectorProps {
 }
 
 const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
+  const locale = useLocale();
   const { user, userProfile, setUserProfile } = useAuthStore();
   const { currentPocket, setCurrentPocket } = usePocketStore();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -105,7 +107,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
           </div>
           {currentPocket && (
             <div className="text-xs text-slate-500 hidden sm:block">
-              {formatCurrency(currentPocket.balance)}
+              {formatCurrency(currentPocket.balance, { locale, currency: userProfile?.preferredCurrency })}
             </div>
           )}
         </div>
@@ -153,7 +155,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
                             <span className="flex items-center space-x-1">
                               <TrendingUp className="w-3 h-3" />
                               <span className={pocket.balance >= 0 ? 'text-green-600' : 'text-red-500'}>
-                                {formatCurrency(pocket.balance)}
+                                {formatCurrency(pocket.balance, { locale, currency: userProfile?.preferredCurrency })}
                               </span>
                             </span>
                           </div>
