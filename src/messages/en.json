@@ -1,0 +1,310 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "language": "Language",
+    "signOut": "Sign Out",
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "user": "User"
+  },
+  "navigation": {
+    "pairbudget": "PairBudget",
+    "dashboard": "Dashboard",
+    "allTransactions": "All Transactions",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "getStarted": "Get Started"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Full Name",
+    "preferredLanguage": "Preferred Language",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me",
+    "description": {
+      "login": "Access your shared budget dashboard",
+      "signup": "Join PairBudget to manage expenses together"
+    },
+    "languages": {
+      "en": "English",
+      "fr": "Français",
+      "ar": "العربية"
+    },
+    "signInInstead": "Sign in instead",
+    "clearCacheRetry": "Clear cache & retry",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "agreeToTermsPrefix": "I agree to the",
+    "and": "and",
+    "loading": {
+      "signingIn": "Signing in...",
+      "creatingAccount": "Creating account..."
+    },
+    "success": {
+      "accountCreated": "Account created successfully! Welcome to PairBudget.",
+      "welcomeBack": "Welcome back! Redirecting to your dashboard...",
+      "cacheCleared": "Cache cleared. Please try signing in again."
+    },
+    "errors": {
+      "unexpected": "An unexpected error occurred. Please try again.",
+      "emailInUse": "This email address is already registered. Please sign in instead or use a different email.",
+      "weakPassword": "Password is too weak. Please choose a stronger password.",
+      "invalidEmail": "Please enter a valid email address.",
+      "userNotFound": "No account found with this email address. Please check your email or sign up.",
+      "wrongPassword": "Incorrect password. Please try again.",
+      "tooManyRequests": "Too many failed attempts. Please wait a moment before trying again.",
+      "userDisabled": "This account has been disabled. Please contact support.",
+      "operationNotAllowed": "This operation is not allowed. Please contact support.",
+      "invalidCredential": "Invalid login credentials. Please check your email and password.",
+      "acceptTerms": "Please agree to the terms and conditions to continue.",
+      "passwordMismatch": "Passwords do not match. Please check and try again.",
+      "passwordPolicy": "Password must be at least 12 characters and include uppercase, lowercase, number, and symbol.",
+      "emailRequired": "Please enter your email address.",
+      "passwordRequired": "Please enter your password.",
+      "nameRequired": "Please enter your name."
+    }
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "landing": {
+    "heroTitle": "Expense Tracking",
+    "heroSubtitle": "Made for Two",
+    "heroDescription": "Perfect for couples, families, and partners. Track shared expenses, manage budgets together, and keep your financial goals in sync.",
+    "startJourney": "Start Your Journey",
+    "quickStats": {
+      "peoplePerPocket": "People per Pocket",
+      "transactions": "Transactions",
+      "realTimeSync": "Real-time Sync"
+    },
+    "features": {
+      "title": "Built for Partnership",
+      "description": "Every feature designed to make shared financial management effortless and transparent.",
+      "twoPersonFocus": {
+        "title": "Two-Person Focus",
+        "description": "Designed specifically for couples, partners, and close collaborators. No complex group management, just simple two-person expense tracking."
+      },
+      "realTimeSync": {
+        "title": "Real-time Sync",
+        "description": "Every transaction syncs instantly. Both partners always see the latest balance and expenses without any delays or conflicts."
+      },
+      "securePrivate": {
+        "title": "Secure & Private",
+        "description": "Your financial data is encrypted and secure. Only you and your partner have access to your shared budget information."
+      }
+    },
+    "cta": {
+      "title": "Ready to Budget Together?",
+      "description": "Join thousands of couples who've simplified their shared expenses with PairBudget.",
+      "createPocket": "Create Your First Pocket"
+    },
+    "pocket": {
+      "familyBudget": "Family Budget",
+      "sharedPocket": "Shared Pocket",
+      "balance": "Balance",
+      "thisMonth": "This Month",
+      "expenses": "Expenses"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "role": {
+      "provider": "Provider",
+      "spender": "Spender"
+    },
+    "stats": {
+      "currentBalance": "Current Balance",
+      "totalFunded": "Total Funded",
+      "totalSpent": "Total Spent",
+      "availableToSpend": "Available to spend",
+      "overBudget": "Over budget",
+      "moneyAdded": "Money added to pocket",
+      "moneySpent": "Money spent from pocket"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "addFunds": "Add Funds",
+      "addFundsDesc": "Add money to pocket",
+      "addExpense": "Add Expense",
+      "addExpenseDesc": "Record a purchase",
+      "invitePartner": "Invite Partner",
+      "invitePartnerDesc": "Share invite code",
+      "viewReports": "View Reports",
+      "viewReportsDesc": "See all transactions",
+      "managePockets": "Manage Pockets",
+      "managePocketsDesc": "Create or manage pockets",
+      "leavePocket": "Leave Pocket",
+      "leavePocketDesc": "Exit this pocket",
+      "exportData": "Export My Data",
+      "exportDataDesc": "Download your profile and transactions",
+      "exportDataSuccess": "Your export is ready.",
+      "exportDataError": "Failed to export data.",
+      "deleteAccount": "Delete Account",
+      "deleteAccountDesc": "Remove profile and data"
+    },
+    "recentTransactions": {
+      "title": "Recent Transactions",
+      "viewAll": "View All",
+      "noTransactions": "No transactions yet",
+      "noTransactionsDesc": "Start by adding funds or recording an expense",
+      "addTransaction": "Add Transaction",
+      "unknownUser": "Unknown User"
+    },
+    "pocketManagement": {
+      "title": "Pocket Management",
+      "description": "Need to leave this pocket? You can always create a new one or join another.",
+      "leavePocket": "Leave Pocket"
+    },
+    "members": "members",
+    "loadingPockets": "Loading pockets...",
+    "noPocketsAvailable": "No pockets available",
+    "youAreThe": "You are the",
+    "modals": {
+      "selectPocket": "Select Pocket",
+      "pocketSelectionMoved": "Pocket selection has been moved to a dedicated page"
+    },
+    "pocket": {
+      "noPocketSelected": "No Pocket Selected",
+      "tapToSelect": "Tap to select or create"
+    }
+  },
+  "transactions": {
+    "title": "All Transactions",
+    "description": "Complete history of all transactions in",
+    "searchPlaceholder": "Search transactions...",
+    "searchLabel": "Search transactions",
+    "allTypes": "All Types",
+    "allCategories": "All Categories",
+    "fundsOnly": "Funds Only",
+    "expensesOnly": "Expenses Only",
+    "transaction": "transaction",
+    "transactions": "transactions",
+    "noTransactionsFound": "No transactions found",
+    "adjustFilters": "Try adjusting your filters to see more results.",
+    "noTransactionsRecorded": "No transactions have been recorded yet.",
+    "clearFilters": "Clear Filters",
+    "addFunds": "Add Funds",
+    "addExpense": "Add Expense",
+    "fund": "fund",
+    "expense": "expense",
+    "exportData": "Export Data",
+    "totalFunds": "Total Funds",
+    "totalExpenses": "Total Expenses",
+    "netBalance": "Net Balance",
+    "addedThisMonth": "Added this month",
+    "spentThisMonth": "Spent this month",
+    "remainingFunds": "Remaining funds",
+    "overspent": "Overspent",
+    "filterType": "Type",
+    "filterCategory": "Category",
+    "toggleFilters": "Toggle filters",
+    "noTransactionsHelp": "Start by adding funds or recording expenses from the dashboard.",
+    "backToDashboard": "Back to Dashboard",
+    "loadingMore": "Loading more...",
+    "loadMore": "Load more",
+    "unknownUser": "Unknown User",
+    "unknown": "Unknown",
+    "csv": {
+      "date": "Date",
+      "type": "Type",
+      "category": "Category",
+      "description": "Description",
+      "amount": "Amount",
+      "user": "User"
+    }
+  },
+  "mobileNav": {
+    "home": "Home",
+    "add": "Add",
+    "history": "History",
+    "settings": "Settings",
+    "addFunds": "Add Funds",
+    "addFundsDesc": "Add money to pocket",
+    "addExpense": "Add Expense",
+    "addExpenseDesc": "Record a purchase"
+  },
+  "pocket": {
+    "createNew": "Create New Pocket",
+    "selectPocket": "Select Pocket",
+    "familyBudget": "Family Budget",
+    "sharedPocket": "Shared Pocket",
+    "balance": "Balance",
+    "thisMonth": "This Month",
+    "expenses": "Expenses"
+  },
+  "pocketSetup": {
+    "title": "Setup Your Pocket",
+    "subtitle": "Create a new budget or join an existing one",
+    "managePockets": "Manage Your Pockets",
+    "manageSubtitle": "View and manage all your existing budget pockets",
+    "yourPockets": "Your Pockets",
+    "noPocketsYet": "No pockets yet",
+    "noPocketsDesc": "Create your first budget pocket or join an existing one to get started.",
+    "deletePocket": "Delete Pocket",
+    "deletePocketConfirm": "Are you sure you want to delete this pocket?",
+    "deletePocketWarning": "This action cannot be undone. All transactions and data in this pocket will be permanently deleted.",
+    "deleteConfirmText": "Type 'DELETE' to confirm",
+    "deleteSuccess": "Pocket deleted successfully",
+    "deleteError": "Failed to delete pocket",
+    "unauthorized": "You are not authorized to delete this pocket",
+    "backToDashboard": "Back to Dashboard",
+    "joinExisting": "Join Existing",
+    "inviteCode": "Invite Code",
+    "enterInviteCode": "Enter the invite code shared with you"
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated: February 20, 2026",
+      "intro": "By using PairBudget, you agree to these terms.",
+      "acceptableUseTitle": "Acceptable Use",
+      "acceptableUseBody": "You must use the service lawfully and must not attempt to abuse or disrupt it.",
+      "dataRetentionTitle": "Data Retention",
+      "dataRetentionBody": "Account and pocket data is retained until deleted by users or cleanup workflows. Audit logs may be retained for security investigations.",
+      "liabilityTitle": "Liability",
+      "liabilityBody": "PairBudget is provided as-is without warranties. We are not liable for indirect or consequential losses.",
+      "contactTitle": "Contact",
+      "contactBody": "For legal requests, contact support through your project channels."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: February 20, 2026",
+      "intro": "This policy explains how PairBudget handles personal data.",
+      "dataCollectedTitle": "Data We Collect",
+      "dataCollectedBody": "We store account profile data, pocket membership, transactions, and technical diagnostics required to operate the app.",
+      "firebaseTitle": "Firebase Processing",
+      "firebaseBody": "Authentication, Firestore, and Storage are powered by Firebase. Data is processed under Firebase terms and security controls.",
+      "cookiesTitle": "Cookies and Local Storage",
+      "cookiesBody": "The app uses local storage/session data for auth state, preferences, and application stability.",
+      "rightsTitle": "Your Rights",
+      "rightsBody": "You can request export of your data and delete your account data from within the app settings."
+    }
+  },
+  "errors": {
+    "unexpected": "An unexpected error occurred.",
+    "network": "Network issue detected. Please check your connection.",
+    "permission": "You do not have permission to perform this action.",
+    "tooManyRequests": "Too many requests. Please wait and try again.",
+    "tryAgain": "Please try again."
+  }
+} 

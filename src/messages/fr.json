@@ -1,0 +1,310 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "language": "Langue",
+    "signOut": "Se déconnecter",
+    "morning": "Bonjour",
+    "afternoon": "Bon après-midi",
+    "evening": "Bonsoir",
+    "user": "Utilisateur"
+  },
+  "navigation": {
+    "pairbudget": "PairBudget",
+    "dashboard": "Tableau de bord",
+    "allTransactions": "Toutes les transactions",
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "getStarted": "Commencer"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "name": "Nom complet",
+    "preferredLanguage": "Langue préférée",
+    "createAccount": "Créer un compte",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "forgotPassword": "Mot de passe oublié ?",
+    "rememberMe": "Se souvenir de moi",
+    "description": {
+      "login": "Accédez à votre tableau de bord de budget partagé",
+      "signup": "Rejoignez PairBudget pour gérer les dépenses ensemble"
+    },
+    "languages": {
+      "en": "English",
+      "fr": "Français",
+      "ar": "العربية"
+    },
+    "signInInstead": "Se connecter à la place",
+    "clearCacheRetry": "Vider le cache et réessayer",
+    "termsOfService": "Conditions d'utilisation",
+    "privacyPolicy": "Politique de confidentialité",
+    "agreeToTermsPrefix": "J'accepte les",
+    "and": "et la",
+    "loading": {
+      "signingIn": "Connexion...",
+      "creatingAccount": "Création du compte..."
+    },
+    "success": {
+      "accountCreated": "Compte créé avec succès ! Bienvenue sur PairBudget.",
+      "welcomeBack": "Bon retour ! Redirection vers votre tableau de bord...",
+      "cacheCleared": "Cache vidé. Veuillez réessayer de vous connecter."
+    },
+    "errors": {
+      "unexpected": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+      "emailInUse": "Cette adresse e-mail est déjà enregistrée. Connectez-vous ou utilisez une autre adresse.",
+      "weakPassword": "Le mot de passe est trop faible. Veuillez choisir un mot de passe plus fort.",
+      "invalidEmail": "Veuillez entrer une adresse e-mail valide.",
+      "userNotFound": "Aucun compte trouvé avec cette adresse e-mail. Vérifiez votre e-mail ou inscrivez-vous.",
+      "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
+      "tooManyRequests": "Trop de tentatives échouées. Veuillez patienter avant de réessayer.",
+      "userDisabled": "Ce compte a été désactivé. Contactez le support.",
+      "operationNotAllowed": "Cette opération n'est pas autorisée. Contactez le support.",
+      "invalidCredential": "Identifiants invalides. Vérifiez votre e-mail et mot de passe.",
+      "acceptTerms": "Veuillez accepter les conditions pour continuer.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "passwordPolicy": "Le mot de passe doit comporter au moins 12 caractères avec majuscule, minuscule, chiffre et symbole.",
+      "emailRequired": "Veuillez entrer votre adresse e-mail.",
+      "passwordRequired": "Veuillez entrer votre mot de passe.",
+      "nameRequired": "Veuillez entrer votre nom."
+    }
+  },
+  "languages": {
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "landing": {
+    "heroTitle": "Suivi des dépenses",
+    "heroSubtitle": "Conçu pour deux",
+    "heroDescription": "Parfait pour les couples, les familles et les partenaires. Suivez les dépenses partagées, gérez les budgets ensemble et gardez vos objectifs financiers synchronisés.",
+    "startJourney": "Commencer votre parcours",
+    "quickStats": {
+      "peoplePerPocket": "Personnes par poche",
+      "transactions": "Transactions",
+      "realTimeSync": "Synchronisation temps réel"
+    },
+    "features": {
+      "title": "Conçu pour le partenariat",
+      "description": "Chaque fonctionnalité conçue pour rendre la gestion financière partagée sans effort et transparente.",
+      "twoPersonFocus": {
+        "title": "Focus sur deux personnes",
+        "description": "Conçu spécifiquement pour les couples, partenaires et collaborateurs proches. Pas de gestion de groupe complexe, juste un suivi simple des dépenses à deux."
+      },
+      "realTimeSync": {
+        "title": "Synchronisation temps réel",
+        "description": "Chaque transaction se synchronise instantanément. Les deux partenaires voient toujours le solde et les dépenses les plus récents sans délais ni conflits."
+      },
+      "securePrivate": {
+        "title": "Sécurisé et privé",
+        "description": "Vos données financières sont cryptées et sécurisées. Seuls vous et votre partenaire avez accès aux informations de votre budget partagé."
+      }
+    },
+    "cta": {
+      "title": "Prêt à budgétiser ensemble ?",
+      "description": "Rejoignez des milliers de couples qui ont simplifié leurs dépenses partagées avec PairBudget.",
+      "createPocket": "Créer votre première poche"
+    },
+    "pocket": {
+      "familyBudget": "Budget familial",
+      "sharedPocket": "Poche partagée",
+      "balance": "Solde",
+      "thisMonth": "Ce mois",
+      "expenses": "Dépenses"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "role": {
+      "provider": "Fournisseur",
+      "spender": "Dépensier"
+    },
+    "stats": {
+      "currentBalance": "Solde actuel",
+      "totalFunded": "Total financé",
+      "totalSpent": "Total dépensé",
+      "availableToSpend": "Disponible à dépenser",
+      "overBudget": "Dépassement de budget",
+      "moneyAdded": "Argent ajouté à la poche",
+      "moneySpent": "Argent dépensé de la poche"
+    },
+    "quickActions": {
+      "title": "Actions rapides",
+      "addFunds": "Ajouter des fonds",
+      "addFundsDesc": "Ajouter de l'argent à la poche",
+      "addExpense": "Ajouter une dépense",
+      "addExpenseDesc": "Enregistrer un achat",
+      "invitePartner": "Inviter un partenaire",
+      "invitePartnerDesc": "Partager le code d'invitation",
+      "viewReports": "Voir les rapports",
+      "viewReportsDesc": "Voir toutes les transactions",
+      "managePockets": "Gérer les poches",
+      "managePocketsDesc": "Créer ou gérer des poches",
+      "leavePocket": "Quitter la poche",
+      "leavePocketDesc": "Quitter cette poche",
+      "exportData": "Exporter mes données",
+      "exportDataDesc": "Télécharger votre profil et vos transactions",
+      "exportDataSuccess": "Votre export est prêt.",
+      "exportDataError": "Échec de l'export des données.",
+      "deleteAccount": "Supprimer le compte",
+      "deleteAccountDesc": "Supprimer le profil et les données"
+    },
+    "recentTransactions": {
+      "title": "Transactions récentes",
+      "viewAll": "Voir tout",
+      "noTransactions": "Aucune transaction encore",
+      "noTransactionsDesc": "Commencez par ajouter des fonds ou enregistrer une dépense",
+      "addTransaction": "Ajouter une transaction",
+      "unknownUser": "Utilisateur inconnu"
+    },
+    "pocketManagement": {
+      "title": "Gestion de la poche",
+      "description": "Besoin de quitter cette poche ? Vous pouvez toujours en créer une nouvelle ou rejoindre une autre.",
+      "leavePocket": "Quitter la poche"
+    },
+    "members": "membres",
+    "loadingPockets": "Chargement des poches...",
+    "noPocketsAvailable": "Aucune poche disponible",
+    "youAreThe": "Vous êtes le",
+    "modals": {
+      "selectPocket": "Sélectionner une poche",
+      "pocketSelectionMoved": "La sélection de poche a été déplacée vers une page dédiée"
+    },
+    "pocket": {
+      "noPocketSelected": "Aucune poche sélectionnée",
+      "tapToSelect": "Touchez pour sélectionner ou créer"
+    }
+  },
+  "transactions": {
+    "title": "Toutes les transactions",
+    "description": "Historique complet de toutes les transactions dans",
+    "searchPlaceholder": "Rechercher des transactions...",
+    "searchLabel": "Rechercher des transactions",
+    "allTypes": "Tous les types",
+    "allCategories": "Toutes les catégories",
+    "fundsOnly": "Fonds seulement",
+    "expensesOnly": "Dépenses seulement",
+    "transaction": "transaction",
+    "transactions": "transactions",
+    "noTransactionsFound": "Aucune transaction trouvée",
+    "adjustFilters": "Essayez d'ajuster vos filtres pour voir plus de résultats.",
+    "noTransactionsRecorded": "Aucune transaction n'a encore été enregistrée.",
+    "clearFilters": "Effacer les filtres",
+    "addFunds": "Ajouter des fonds",
+    "addExpense": "Ajouter une dépense",
+    "fund": "fonds",
+    "expense": "dépense",
+    "exportData": "Exporter les données",
+    "totalFunds": "Total financé",
+    "totalExpenses": "Total dépensé",
+    "netBalance": "Solde net",
+    "addedThisMonth": "Ajouté ce mois-ci",
+    "spentThisMonth": "Dépensé ce mois-ci",
+    "remainingFunds": "Fonds restants",
+    "overspent": "Dépassement",
+    "filterType": "Type",
+    "filterCategory": "Catégorie",
+    "toggleFilters": "Afficher/masquer les filtres",
+    "noTransactionsHelp": "Commencez par ajouter des fonds ou enregistrer des dépenses depuis le tableau de bord.",
+    "backToDashboard": "Retour au tableau de bord",
+    "loadingMore": "Chargement...",
+    "loadMore": "Charger plus",
+    "unknownUser": "Utilisateur inconnu",
+    "unknown": "Inconnu",
+    "csv": {
+      "date": "Date",
+      "type": "Type",
+      "category": "Catégorie",
+      "description": "Description",
+      "amount": "Montant",
+      "user": "Utilisateur"
+    }
+  },
+  "mobileNav": {
+    "home": "Accueil",
+    "add": "Ajouter",
+    "history": "Historique",
+    "settings": "Réglages",
+    "addFunds": "Ajouter des fonds",
+    "addFundsDesc": "Ajouter de l'argent à la poche",
+    "addExpense": "Ajouter une dépense",
+    "addExpenseDesc": "Enregistrer un achat"
+  },
+  "pocket": {
+    "createNew": "Créer une nouvelle poche",
+    "selectPocket": "Sélectionner une poche",
+    "familyBudget": "Budget familial",
+    "sharedPocket": "Poche partagée",
+    "balance": "Solde",
+    "thisMonth": "Ce mois",
+    "expenses": "Dépenses"
+  },
+  "pocketSetup": {
+    "title": "Configurez Votre Poche",
+    "subtitle": "Créez un nouveau budget ou rejoignez un existant",
+    "managePockets": "Gérer Vos Poches",
+    "manageSubtitle": "Visualisez et gérez toutes vos poches budgétaires existantes",
+    "yourPockets": "Vos Poches",
+    "noPocketsYet": "Aucune poche pour le moment",
+    "noPocketsDesc": "Créez votre première poche budgétaire ou rejoignez une existante pour commencer.",
+    "deletePocket": "Supprimer Poche",
+    "deletePocketConfirm": "Êtes-vous sûr de vouloir supprimer cette poche ?",
+    "deletePocketWarning": "Cette action ne peut pas être annulée. Toutes les transactions et données de cette poche seront définitivement supprimées.",
+    "deleteConfirmText": "Tapez 'DELETE' pour confirmer",
+    "deleteSuccess": "Poche supprimée avec succès",
+    "deleteError": "Échec de la suppression de la poche",
+    "unauthorized": "Vous n'êtes pas autorisé à supprimer cette poche",
+    "backToDashboard": "Retour au Tableau de Bord",
+    "joinExisting": "Rejoindre Existante",
+    "inviteCode": "Code d'Invitation",
+    "enterInviteCode": "Entrez le code d'invitation partagé avec vous"
+  },
+  "legal": {
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "lastUpdated": "Dernière mise à jour : 20 février 2026",
+      "intro": "En utilisant PairBudget, vous acceptez ces conditions.",
+      "acceptableUseTitle": "Utilisation acceptable",
+      "acceptableUseBody": "Vous devez utiliser le service de manière légale et ne pas tenter de l'abuser ou de le perturber.",
+      "dataRetentionTitle": "Conservation des données",
+      "dataRetentionBody": "Les données de compte et de poche sont conservées jusqu'à suppression par les utilisateurs ou par des flux de nettoyage. Les journaux d'audit peuvent être conservés pour les enquêtes de sécurité.",
+      "liabilityTitle": "Responsabilité",
+      "liabilityBody": "PairBudget est fourni en l'état sans garantie. Nous ne sommes pas responsables des pertes indirectes ou consécutives.",
+      "contactTitle": "Contact",
+      "contactBody": "Pour les demandes juridiques, contactez le support via vos canaux projet."
+    },
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "lastUpdated": "Dernière mise à jour : 20 février 2026",
+      "intro": "Cette politique explique comment PairBudget traite les données personnelles.",
+      "dataCollectedTitle": "Données collectées",
+      "dataCollectedBody": "Nous stockons les données de profil, l'appartenance aux poches, les transactions et les diagnostics techniques nécessaires au fonctionnement de l'application.",
+      "firebaseTitle": "Traitement via Firebase",
+      "firebaseBody": "L'authentification, Firestore et Storage sont fournis par Firebase. Les données sont traitées selon les conditions et contrôles de sécurité Firebase.",
+      "cookiesTitle": "Cookies et stockage local",
+      "cookiesBody": "L'application utilise des données locales/session pour l'état d'authentification, les préférences et la stabilité de l'application.",
+      "rightsTitle": "Vos droits",
+      "rightsBody": "Vous pouvez exporter vos données et supprimer votre compte depuis les paramètres de l'application."
+    }
+  },
+  "errors": {
+    "unexpected": "Une erreur inattendue s'est produite.",
+    "network": "Problème réseau détecté. Vérifiez votre connexion.",
+    "permission": "Vous n'êtes pas autorisé à effectuer cette action.",
+    "tooManyRequests": "Trop de requêtes. Veuillez patienter avant de réessayer.",
+    "tryAgain": "Veuillez réessayer."
+  }
+} 

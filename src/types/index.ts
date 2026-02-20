@@ -4,6 +4,8 @@ export interface User {
   email: string;
   currentPocketId?: string;
   pocketIds: string[]; // Array of pocket IDs the user belongs to
+  preferredLanguage?: string;
+  preferredCurrency?: string;
   createdAt: Date;
 }
 
@@ -19,6 +21,9 @@ export interface Pocket {
   totalFunded: number;
   totalSpent: number;
   inviteCode?: string;
+  deleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }
 
 export interface Transaction {
