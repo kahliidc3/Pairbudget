@@ -12,7 +12,11 @@
     "filter": "Filter",
     "export": "Export",
     "language": "Language",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "user": "User"
   },
   "navigation": {
     "pairbudget": "PairBudget",
@@ -34,7 +38,49 @@
     "alreadyHaveAccount": "Already have an account?",
     "dontHaveAccount": "Don't have an account?",
     "forgotPassword": "Forgot password?",
-    "rememberMe": "Remember me"
+    "rememberMe": "Remember me",
+    "description": {
+      "login": "Access your shared budget dashboard",
+      "signup": "Join PairBudget to manage expenses together"
+    },
+    "languages": {
+      "en": "English",
+      "fr": "Français",
+      "ar": "العربية"
+    },
+    "signInInstead": "Sign in instead",
+    "clearCacheRetry": "Clear cache & retry",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "agreeToTermsPrefix": "I agree to the",
+    "and": "and",
+    "loading": {
+      "signingIn": "Signing in...",
+      "creatingAccount": "Creating account..."
+    },
+    "success": {
+      "accountCreated": "Account created successfully! Welcome to PairBudget.",
+      "welcomeBack": "Welcome back! Redirecting to your dashboard...",
+      "cacheCleared": "Cache cleared. Please try signing in again."
+    },
+    "errors": {
+      "unexpected": "An unexpected error occurred. Please try again.",
+      "emailInUse": "This email address is already registered. Please sign in instead or use a different email.",
+      "weakPassword": "Password is too weak. Please choose a stronger password.",
+      "invalidEmail": "Please enter a valid email address.",
+      "userNotFound": "No account found with this email address. Please check your email or sign up.",
+      "wrongPassword": "Incorrect password. Please try again.",
+      "tooManyRequests": "Too many failed attempts. Please wait a moment before trying again.",
+      "userDisabled": "This account has been disabled. Please contact support.",
+      "operationNotAllowed": "This operation is not allowed. Please contact support.",
+      "invalidCredential": "Invalid login credentials. Please check your email and password.",
+      "acceptTerms": "Please agree to the terms and conditions to continue.",
+      "passwordMismatch": "Passwords do not match. Please check and try again.",
+      "passwordPolicy": "Password must be at least 12 characters and include uppercase, lowercase, number, and symbol.",
+      "emailRequired": "Please enter your email address.",
+      "passwordRequired": "Please enter your password.",
+      "nameRequired": "Please enter your name."
+    }
   },
   "languages": {
     "en": "English",
@@ -102,14 +148,27 @@
       "addExpense": "Add Expense",
       "addExpenseDesc": "Record a purchase",
       "invitePartner": "Invite Partner",
-      "invitePartnerDesc": "Share invite code"
+      "invitePartnerDesc": "Share invite code",
+      "viewReports": "View Reports",
+      "viewReportsDesc": "See all transactions",
+      "managePockets": "Manage Pockets",
+      "managePocketsDesc": "Create or manage pockets",
+      "leavePocket": "Leave Pocket",
+      "leavePocketDesc": "Exit this pocket",
+      "exportData": "Export My Data",
+      "exportDataDesc": "Download your profile and transactions",
+      "exportDataSuccess": "Your export is ready.",
+      "exportDataError": "Failed to export data.",
+      "deleteAccount": "Delete Account",
+      "deleteAccountDesc": "Remove profile and data"
     },
     "recentTransactions": {
       "title": "Recent Transactions",
       "viewAll": "View All",
       "noTransactions": "No transactions yet",
       "noTransactionsDesc": "Start by adding funds or recording an expense",
-      "addTransaction": "Add Transaction"
+      "addTransaction": "Add Transaction",
+      "unknownUser": "Unknown User"
     },
     "pocketManagement": {
       "title": "Pocket Management",
@@ -117,12 +176,23 @@
       "leavePocket": "Leave Pocket"
     },
     "members": "members",
-    "youAreThe": "You are the"
+    "loadingPockets": "Loading pockets...",
+    "noPocketsAvailable": "No pockets available",
+    "youAreThe": "You are the",
+    "modals": {
+      "selectPocket": "Select Pocket",
+      "pocketSelectionMoved": "Pocket selection has been moved to a dedicated page"
+    },
+    "pocket": {
+      "noPocketSelected": "No Pocket Selected",
+      "tapToSelect": "Tap to select or create"
+    }
   },
   "transactions": {
-    "title": "Transaction History",
+    "title": "All Transactions",
     "description": "Complete history of all transactions in",
     "searchPlaceholder": "Search transactions...",
+    "searchLabel": "Search transactions",
     "allTypes": "All Types",
     "allCategories": "All Categories",
     "fundsOnly": "Funds Only",
@@ -136,7 +206,42 @@
     "addFunds": "Add Funds",
     "addExpense": "Add Expense",
     "fund": "fund",
-    "expense": "expense"
+    "expense": "expense",
+    "exportData": "Export Data",
+    "totalFunds": "Total Funds",
+    "totalExpenses": "Total Expenses",
+    "netBalance": "Net Balance",
+    "addedThisMonth": "Added this month",
+    "spentThisMonth": "Spent this month",
+    "remainingFunds": "Remaining funds",
+    "overspent": "Overspent",
+    "filterType": "Type",
+    "filterCategory": "Category",
+    "toggleFilters": "Toggle filters",
+    "noTransactionsHelp": "Start by adding funds or recording expenses from the dashboard.",
+    "backToDashboard": "Back to Dashboard",
+    "loadingMore": "Loading more...",
+    "loadMore": "Load more",
+    "unknownUser": "Unknown User",
+    "unknown": "Unknown",
+    "csv": {
+      "date": "Date",
+      "type": "Type",
+      "category": "Category",
+      "description": "Description",
+      "amount": "Amount",
+      "user": "User"
+    }
+  },
+  "mobileNav": {
+    "home": "Home",
+    "add": "Add",
+    "history": "History",
+    "settings": "Settings",
+    "addFunds": "Add Funds",
+    "addFundsDesc": "Add money to pocket",
+    "addExpense": "Add Expense",
+    "addExpenseDesc": "Record a purchase"
   },
   "pocket": {
     "createNew": "Create New Pocket",
@@ -166,5 +271,40 @@
     "joinExisting": "Join Existing",
     "inviteCode": "Invite Code",
     "enterInviteCode": "Enter the invite code shared with you"
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated: February 20, 2026",
+      "intro": "By using PairBudget, you agree to these terms.",
+      "acceptableUseTitle": "Acceptable Use",
+      "acceptableUseBody": "You must use the service lawfully and must not attempt to abuse or disrupt it.",
+      "dataRetentionTitle": "Data Retention",
+      "dataRetentionBody": "Account and pocket data is retained until deleted by users or cleanup workflows. Audit logs may be retained for security investigations.",
+      "liabilityTitle": "Liability",
+      "liabilityBody": "PairBudget is provided as-is without warranties. We are not liable for indirect or consequential losses.",
+      "contactTitle": "Contact",
+      "contactBody": "For legal requests, contact support through your project channels."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: February 20, 2026",
+      "intro": "This policy explains how PairBudget handles personal data.",
+      "dataCollectedTitle": "Data We Collect",
+      "dataCollectedBody": "We store account profile data, pocket membership, transactions, and technical diagnostics required to operate the app.",
+      "firebaseTitle": "Firebase Processing",
+      "firebaseBody": "Authentication, Firestore, and Storage are powered by Firebase. Data is processed under Firebase terms and security controls.",
+      "cookiesTitle": "Cookies and Local Storage",
+      "cookiesBody": "The app uses local storage/session data for auth state, preferences, and application stability.",
+      "rightsTitle": "Your Rights",
+      "rightsBody": "You can request export of your data and delete your account data from within the app settings."
+    }
+  },
+  "errors": {
+    "unexpected": "An unexpected error occurred.",
+    "network": "Network issue detected. Please check your connection.",
+    "permission": "You do not have permission to perform this action.",
+    "tooManyRequests": "Too many requests. Please wait and try again.",
+    "tryAgain": "Please try again."
   }
 } 

@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { useRouter, usePathname } from 'next/navigation';
+import { signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { auth } from '@/lib/firebase';
 import { useAuthStore } from '@/store/authStore';
 import { getUserProfile, updateUserProfile } from '@/services/authService';
+import { APP_LIMITS } from '@/constants/config';
 import { setUserLocale } from '@/i18n/locale';
 import { clearAuthCache } from '@/lib/utils';
 import { logger } from '@/lib/logger';
@@ -31,7 +32,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     authTimeoutRef.current = setTimeout(() => {
       logger.warn('Authentication timeout - setting loading to false');
       setLoading(false);
-    }, 10000); // 10 seconds timeout
+    }, APP_LIMITS.authStateTimeoutMs);
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       // Clear the timeout since we received an auth state change
@@ -70,7 +71,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                } else {
                  router.replace(`/${currentLocale}?auth=login`);
                }
-             }, 1000);
+             }, APP_LIMITS.orphanedReauthRedirectDelayMs);
           } catch (error) {
             logger.error('Error force signing out orphaned user', { error });
             // Fallback: redirect to home
@@ -109,7 +110,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                  } else {
                    router.replace(`/${currentLocale}?auth=login`);
                  }
-               }, 500);
+               }, APP_LIMITS.orphanedRedirectDelayMs);
             } catch (signOutError) {
               logger.error('Error signing out orphaned user', { error: signOutError });
               // Fallback: redirect to login
@@ -175,7 +176,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
                          cleanupTimeoutRef.current = setTimeout(() => {
                router.replace(`/${currentLocale}?auth=login`);
-             }, 500);
+             }, APP_LIMITS.orphanedRedirectDelayMs);
           } catch (signOutError) {
             logger.error('Error signing out after profile fetch error', { error: signOutError });
               router.replace(`/${currentLocale}?auth=login`);

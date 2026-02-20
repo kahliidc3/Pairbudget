@@ -12,7 +12,11 @@
     "filter": "تصفية",
     "export": "تصدير",
     "language": "اللغة",
-    "signOut": "تسجيل الخروج"
+    "signOut": "تسجيل الخروج",
+    "morning": "صباح الخير",
+    "afternoon": "مساء الخير",
+    "evening": "مساء الخير",
+    "user": "المستخدم"
   },
   "navigation": {
     "pairbudget": "بير بدجت",
@@ -34,7 +38,49 @@
     "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
     "dontHaveAccount": "ليس لديك حساب؟",
     "forgotPassword": "نسيت كلمة المرور؟",
-    "rememberMe": "تذكرني"
+    "rememberMe": "تذكرني",
+    "description": {
+      "login": "ادخل إلى لوحة الميزانية المشتركة",
+      "signup": "انضم إلى PairBudget لإدارة المصروفات معًا"
+    },
+    "languages": {
+      "en": "English",
+      "fr": "Français",
+      "ar": "العربية"
+    },
+    "signInInstead": "سجّل الدخول بدلًا من ذلك",
+    "clearCacheRetry": "امسح التخزين المؤقت وحاول مرة أخرى",
+    "termsOfService": "شروط الخدمة",
+    "privacyPolicy": "سياسة الخصوصية",
+    "agreeToTermsPrefix": "أوافق على",
+    "and": "و",
+    "loading": {
+      "signingIn": "جاري تسجيل الدخول...",
+      "creatingAccount": "جاري إنشاء الحساب..."
+    },
+    "success": {
+      "accountCreated": "تم إنشاء الحساب بنجاح! مرحبًا بك في PairBudget.",
+      "welcomeBack": "مرحبًا بعودتك! جارٍ تحويلك إلى لوحة التحكم...",
+      "cacheCleared": "تم مسح التخزين المؤقت. يرجى محاولة تسجيل الدخول مرة أخرى."
+    },
+    "errors": {
+      "unexpected": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+      "emailInUse": "هذا البريد الإلكتروني مسجل بالفعل. سجّل الدخول أو استخدم بريدًا آخر.",
+      "weakPassword": "كلمة المرور ضعيفة. يرجى اختيار كلمة مرور أقوى.",
+      "invalidEmail": "يرجى إدخال بريد إلكتروني صالح.",
+      "userNotFound": "لم يتم العثور على حساب بهذا البريد الإلكتروني.",
+      "wrongPassword": "كلمة المرور غير صحيحة.",
+      "tooManyRequests": "عدد كبير جدًا من المحاولات الفاشلة. يرجى الانتظار قليلًا.",
+      "userDisabled": "تم تعطيل هذا الحساب. يرجى التواصل مع الدعم.",
+      "operationNotAllowed": "هذه العملية غير مسموح بها.",
+      "invalidCredential": "بيانات تسجيل الدخول غير صحيحة.",
+      "acceptTerms": "يرجى الموافقة على الشروط والأحكام للمتابعة.",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "passwordPolicy": "يجب أن تكون كلمة المرور 12 حرفًا على الأقل وتحتوي على حرف كبير وصغير ورقم ورمز.",
+      "emailRequired": "يرجى إدخال البريد الإلكتروني.",
+      "passwordRequired": "يرجى إدخال كلمة المرور.",
+      "nameRequired": "يرجى إدخال الاسم."
+    }
   },
   "languages": {
     "en": "English",
@@ -102,14 +148,27 @@
       "addExpense": "إضافة مصروف",
       "addExpenseDesc": "تسجيل عملية شراء",
       "invitePartner": "دعوة شريك",
-      "invitePartnerDesc": "مشاركة رمز الدعوة"
+      "invitePartnerDesc": "مشاركة رمز الدعوة",
+      "viewReports": "عرض التقارير",
+      "viewReportsDesc": "عرض كل المعاملات",
+      "managePockets": "إدارة الجيوب",
+      "managePocketsDesc": "إنشاء أو إدارة الجيوب",
+      "leavePocket": "مغادرة الجيب",
+      "leavePocketDesc": "الخروج من هذا الجيب",
+      "exportData": "تصدير بياناتي",
+      "exportDataDesc": "تنزيل ملفك ومعاملاتك",
+      "exportDataSuccess": "تم تجهيز ملف التصدير.",
+      "exportDataError": "فشل تصدير البيانات.",
+      "deleteAccount": "حذف الحساب",
+      "deleteAccountDesc": "حذف الملف والبيانات"
     },
     "recentTransactions": {
       "title": "المعاملات الأخيرة",
       "viewAll": "عرض الكل",
       "noTransactions": "لا توجد معاملات بعد",
       "noTransactionsDesc": "ابدأ بإضافة أموال أو تسجيل مصروف",
-      "addTransaction": "إضافة معاملة"
+      "addTransaction": "إضافة معاملة",
+      "unknownUser": "مستخدم غير معروف"
     },
     "pocketManagement": {
       "title": "إدارة الجيب",
@@ -117,12 +176,23 @@
       "leavePocket": "مغادرة الجيب"
     },
     "members": "أعضاء",
-    "youAreThe": "أنت"
+    "loadingPockets": "جاري تحميل الجيوب...",
+    "noPocketsAvailable": "لا توجد جيوب متاحة",
+    "youAreThe": "أنت",
+    "modals": {
+      "selectPocket": "اختيار الجيب",
+      "pocketSelectionMoved": "تم نقل اختيار الجيب إلى صفحة مخصصة"
+    },
+    "pocket": {
+      "noPocketSelected": "لم يتم اختيار جيب",
+      "tapToSelect": "اضغط للاختيار أو الإنشاء"
+    }
   },
   "transactions": {
-    "title": "تاريخ المعاملات",
+    "title": "جميع المعاملات",
     "description": "التاريخ الكامل لجميع المعاملات في",
     "searchPlaceholder": "البحث في المعاملات...",
+    "searchLabel": "البحث في المعاملات",
     "allTypes": "جميع الأنواع",
     "allCategories": "جميع الفئات",
     "fundsOnly": "الأموال فقط",
@@ -136,7 +206,42 @@
     "addFunds": "إضافة أموال",
     "addExpense": "إضافة مصروف",
     "fund": "تمويل",
-    "expense": "مصروف"
+    "expense": "مصروف",
+    "exportData": "تصدير البيانات",
+    "totalFunds": "إجمالي التمويل",
+    "totalExpenses": "إجمالي المصروف",
+    "netBalance": "الرصيد الصافي",
+    "addedThisMonth": "المضاف هذا الشهر",
+    "spentThisMonth": "المصروف هذا الشهر",
+    "remainingFunds": "الأموال المتبقية",
+    "overspent": "تجاوز الإنفاق",
+    "filterType": "النوع",
+    "filterCategory": "الفئة",
+    "toggleFilters": "تبديل عوامل التصفية",
+    "noTransactionsHelp": "ابدأ بإضافة أموال أو تسجيل مصروفات من لوحة التحكم.",
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "loadingMore": "جاري التحميل...",
+    "loadMore": "تحميل المزيد",
+    "unknownUser": "مستخدم غير معروف",
+    "unknown": "غير معروف",
+    "csv": {
+      "date": "التاريخ",
+      "type": "النوع",
+      "category": "الفئة",
+      "description": "الوصف",
+      "amount": "المبلغ",
+      "user": "المستخدم"
+    }
+  },
+  "mobileNav": {
+    "home": "الرئيسية",
+    "add": "إضافة",
+    "history": "السجل",
+    "settings": "الإعدادات",
+    "addFunds": "إضافة أموال",
+    "addFundsDesc": "إضافة مال إلى الجيب",
+    "addExpense": "إضافة مصروف",
+    "addExpenseDesc": "تسجيل عملية شراء"
   },
   "pocket": {
     "createNew": "إنشاء جيب جديد",
@@ -166,5 +271,40 @@
     "joinExisting": "الانضمام لموجود",
     "inviteCode": "رمز الدعوة",
     "enterInviteCode": "أدخل رمز الدعوة الذي تم مشاركته معك"
+  },
+  "legal": {
+    "terms": {
+      "title": "شروط الخدمة",
+      "lastUpdated": "آخر تحديث: 20 فبراير 2026",
+      "intro": "باستخدام PairBudget فإنك توافق على هذه الشروط.",
+      "acceptableUseTitle": "الاستخدام المقبول",
+      "acceptableUseBody": "يجب استخدام الخدمة بشكل قانوني وعدم محاولة إساءة استخدامها أو تعطيلها.",
+      "dataRetentionTitle": "الاحتفاظ بالبيانات",
+      "dataRetentionBody": "يتم الاحتفاظ ببيانات الحساب والجيب حتى يقوم المستخدم بالحذف أو عبر مهام التنظيف. قد يتم الاحتفاظ بسجلات التدقيق لأغراض أمنية.",
+      "liabilityTitle": "المسؤولية",
+      "liabilityBody": "يتم تقديم PairBudget كما هو بدون ضمانات. نحن غير مسؤولين عن الخسائر غير المباشرة أو التبعية.",
+      "contactTitle": "التواصل",
+      "contactBody": "للطلبات القانونية، تواصل مع الدعم عبر قنوات المشروع."
+    },
+    "privacy": {
+      "title": "سياسة الخصوصية",
+      "lastUpdated": "آخر تحديث: 20 فبراير 2026",
+      "intro": "توضح هذه السياسة كيفية تعامل PairBudget مع البيانات الشخصية.",
+      "dataCollectedTitle": "البيانات التي نجمعها",
+      "dataCollectedBody": "نخزن بيانات الملف الشخصي وعضوية الجيوب والمعاملات والتشخيصات التقنية اللازمة لتشغيل التطبيق.",
+      "firebaseTitle": "المعالجة عبر Firebase",
+      "firebaseBody": "المصادقة وFirestore وStorage تعمل عبر Firebase. تتم معالجة البيانات وفق شروط Firebase وضوابطها الأمنية.",
+      "cookiesTitle": "الكوكيز والتخزين المحلي",
+      "cookiesBody": "يستخدم التطبيق التخزين المحلي/بيانات الجلسة لحالة تسجيل الدخول والتفضيلات واستقرار التطبيق.",
+      "rightsTitle": "حقوقك",
+      "rightsBody": "يمكنك تصدير بياناتك وحذف بيانات الحساب من إعدادات التطبيق."
+    }
+  },
+  "errors": {
+    "unexpected": "حدث خطأ غير متوقع.",
+    "network": "تم اكتشاف مشكلة في الشبكة. يرجى التحقق من الاتصال.",
+    "permission": "ليست لديك صلاحية لتنفيذ هذا الإجراء.",
+    "tooManyRequests": "عدد كبير جداً من الطلبات. يرجى الانتظار ثم المحاولة مرة أخرى.",
+    "tryAgain": "يرجى المحاولة مرة أخرى."
   }
 } 

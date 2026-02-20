@@ -31,13 +31,15 @@ export function isFirebaseConfigured(): boolean {
     // Only log once every 30 seconds to avoid spam
     if (now - lastLog > 30000) {
       logger.debug('Firebase config check', {
-        hasApiKey: !!apiKey,
-        hasAuthDomain: !!authDomain,
-        hasProjectId: !!projectId,
-        hasStorageBucket: !!storageBucket,
-        hasMessagingSenderId: !!messagingSenderId,
-        hasAppId: !!appId,
-        isValid
+        context: {
+          hasApiKey: !!apiKey,
+          hasAuthDomain: !!authDomain,
+          hasProjectId: !!projectId,
+          hasStorageBucket: !!storageBucket,
+          hasMessagingSenderId: !!messagingSenderId,
+          hasAppId: !!appId,
+          isValid
+        }
       });
       localStorage.setItem(lastLogKey, now.toString());
     }
@@ -70,8 +72,8 @@ export function getFirebaseConfigStatus(): {
 
   // Only log in development to reduce console spam
   if (process.env.NODE_ENV === 'development' && missingVars.length > 0) {
-    logger.debug('Environment variables status', { envVars });
-    logger.debug('Missing environment variables', { missingVars });
+    logger.debug('Environment variables status', { context: { envVars } });
+    logger.debug('Missing environment variables', { context: { missingVars } });
   }
 
   let message = '';

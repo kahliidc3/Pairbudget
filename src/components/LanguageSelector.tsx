@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { updateUserProfile } from '@/services/authService';
 import { setUserLocale } from '@/i18n/locale';
+import { logger } from '@/lib/logger';
 import { ChevronDown } from 'lucide-react';
 
 const LanguageSelector: React.FC = () => {

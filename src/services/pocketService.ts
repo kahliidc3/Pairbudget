@@ -1,26 +1,32 @@
 import {
-  doc,
-  setDoc,
-  getDoc,
   collection,
-  query,
-  where,
-  onSnapshot,
-  updateDoc,
-  increment,
-  getDocs,
-  runTransaction,
-  orderBy,
+  doc,
+  DocumentData,
+  DocumentSnapshot,
   limit as firestoreLimit,
-  startAfter,
+  getDoc,
+  getDocs,
+  increment,
+  onSnapshot,
+  orderBy,
+  query,
+  QueryConstraint,
   QueryDocumentSnapshot,
+  QuerySnapshot,
+  runTransaction,
+  setDoc,
+  startAfter,
+  updateDoc,
+  where,
 } from 'firebase/firestore';
-import { db, handleFirebaseInternalError, getSubscriptionHealthState, resetRecoveryTracking } from '@/lib/firebase';
+import { db, getSubscriptionHealthState, handleFirebaseInternalError, resetRecoveryTracking } from '@/lib/firebase';
+import { APP_LIMITS, RATE_LIMITS, SUBSCRIPTION_CONFIG } from '@/constants/config';
 import { Pocket, Transaction, UserRole } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { generateSecureRandomString } from '@/lib/secureRandom';
 import { enforceRateLimit } from '@/lib/rateLimiter';
 import { logger } from '@/lib/logger';
+import { writeAuditLog } from '@/lib/audit';
 
 type SubscriptionEntry = {
   cleanup: () => void;
@@ -33,9 +39,6 @@ type SubscriptionEntry = {
 const activeSubscriptions = new Map<string, SubscriptionEntry>();
 let subscriptionErrorCount = 0;
 let lastSuccessfulOperation = Date.now();
-const MAX_SUBSCRIPTION_AGE_MS = 5 * 60 * 1000; // 5 minutes
-
-const MAX_TRANSACTION_AMOUNT = 1_000_000;
 
 const cleanupSubscription = (id: string, invokeCleanup = true) => {
   const entry = activeSubscriptions.get(id);
@@ -60,7 +63,7 @@ const registerSubscription = (id: string, pocketId: string, type: SubscriptionEn
   const timerId = setTimeout(() => {
     logger.info('Subscription exceeded max age, cleaning up', { context: { id, pocketId, type } });
     cleanupSubscription(id);
-  }, MAX_SUBSCRIPTION_AGE_MS);
+  }, SUBSCRIPTION_CONFIG.maxAgeMs);
 
   activeSubscriptions.set(id, { cleanup, createdAt: Date.now(), timerId, pocketId, type });
 };
@@ -103,8 +106,7 @@ const createSubscription = <T>({
   let unsubscribeFunction: (() => void) | null = null;
   let retryCount = 0;
   let consecutiveErrors = 0;
-  const maxRetries = 5;
-  const maxConsecutiveErrors = 3;
+  const { maxRetries, maxConsecutiveErrors } = SUBSCRIPTION_CONFIG;
 
   cleanupExistingByPrefix(`${keyPrefix}_${pocketId}`);
 
@@ -129,8 +131,15 @@ const createSubscription = <T>({
       unsubscribeFunction = null;
     }
 
-    const baseDelay = consecutiveErrors > 0 && subscriptionErrorCount > 5 ? 5000 : 1000;
-    const exponentialDelay = Math.min(baseDelay * Math.pow(2, retryCount - 1), 30000);
+    const baseDelay =
+      consecutiveErrors > 0 && subscriptionErrorCount > 5
+        ? SUBSCRIPTION_CONFIG.degradedRetryDelayMs
+        : SUBSCRIPTION_CONFIG.baseRetryDelayMs;
+    // Exponential backoff with jitter avoids synchronized retries under outage conditions.
+    const exponentialDelay = Math.min(
+      baseDelay * Math.pow(2, retryCount - 1),
+      SUBSCRIPTION_CONFIG.maxRetryDelayMs
+    );
     const jitter = Math.random() * 1000;
     const delay = exponentialDelay + jitter;
 
@@ -197,7 +206,7 @@ const createSubscription = <T>({
                 if (isActive) {
                   retrySubscription();
                 }
-              }, 3000);
+              }, SUBSCRIPTION_CONFIG.recoveryRetryDelayMs);
             } else if (isActive) {
               logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId, type } });
               retrySubscription();
@@ -223,7 +232,7 @@ const createSubscription = <T>({
       if (errorMessage.includes('INTERNAL ASSERTION FAILED')) {
         handleFirebaseInternalError(error).then((recovered) => {
           if (recovered && isActive) {
-            setTimeout(() => retrySubscription(), 2000);
+            setTimeout(() => retrySubscription(), SUBSCRIPTION_CONFIG.internalAssertionRetryDelayMs);
           }
         });
       } else {
@@ -257,16 +266,113 @@ const sanitizePocketServiceError = (
   error: unknown,
   allowedMessages: string[],
   fallbackMessage: string,
-  logContext: string
+  logContext: string,
+  context?: Record<string, unknown>
 ): never => {
   if (error instanceof Error && allowedMessages.includes(error.message)) {
     throw error;
   }
 
-  logger.error(logContext, { error });
+  logger.error(logContext, { error, context });
   throw new Error(fallbackMessage);
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isIndexRequiredError = (error: unknown): boolean => {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const code = 'code' in error ? String((error as { code?: string }).code ?? '') : '';
+  const message = 'message' in error ? String((error as { message?: string }).message ?? '') : '';
+
+  return code === 'failed-precondition' || message.includes('requires an index');
+};
+
+const parsePocketDocument = (snapshot: DocumentSnapshot<DocumentData>, pocketId?: string): Pocket | null => {
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  const rawData = snapshot.data();
+  if (!isRecord(rawData)) {
+    logger.warn('Pocket document is not an object', { context: { pocketId } });
+    return null;
+  }
+
+  const participants = Array.isArray(rawData.participants)
+    ? rawData.participants.filter((id): id is string => typeof id === 'string')
+    : [];
+
+  const rolesRaw = isRecord(rawData.roles) ? rawData.roles : {};
+  const roles = Object.entries(rolesRaw).reduce<Record<string, UserRole>>((acc, [uid, role]) => {
+    if (role === 'provider' || role === 'spender') {
+      acc[uid] = role;
+    }
+    return acc;
+  }, {});
+
+  const createdAt =
+    isRecord(rawData.createdAt) && typeof rawData.createdAt.toDate === 'function'
+      ? rawData.createdAt.toDate()
+      : new Date();
+  const deletedAt =
+    isRecord(rawData.deletedAt) && typeof rawData.deletedAt.toDate === 'function'
+      ? rawData.deletedAt.toDate()
+      : undefined;
+
+  return {
+    id: typeof rawData.id === 'string' ? rawData.id : snapshot.id,
+    name: typeof rawData.name === 'string' ? rawData.name : 'Untitled Pocket',
+    createdAt,
+    participants,
+    roles,
+    balance: typeof rawData.balance === 'number' ? rawData.balance : 0,
+    totalFunded: typeof rawData.totalFunded === 'number' ? rawData.totalFunded : 0,
+    totalSpent: typeof rawData.totalSpent === 'number' ? rawData.totalSpent : 0,
+    inviteCode: typeof rawData.inviteCode === 'string' ? rawData.inviteCode : undefined,
+    deleted: Boolean(rawData.deleted),
+    deletedAt,
+    deletedBy: typeof rawData.deletedBy === 'string' ? rawData.deletedBy : undefined,
+  };
+};
+
+const parseTransactionSnapshot = (snapshot: QuerySnapshot<DocumentData>): Transaction[] =>
+  snapshot.docs
+    .filter((docSnap) => docSnap.data()?.deleted !== true)
+    .map((docSnap) => {
+    const data = docSnap.data();
+    const date =
+      isRecord(data.date) && typeof data.date.toDate === 'function'
+        ? data.date.toDate()
+        : new Date();
+    const createdAt =
+      isRecord(data.createdAt) && typeof data.createdAt.toDate === 'function'
+        ? data.createdAt.toDate()
+        : new Date();
+
+    const txType: Transaction['type'] = data.type === 'fund' ? 'fund' : 'expense';
+
+    return {
+      id: docSnap.id,
+      pocketId: typeof data.pocketId === 'string' ? data.pocketId : '',
+      userId: typeof data.userId === 'string' ? data.userId : '',
+      type: txType,
+      category: typeof data.category === 'string' ? data.category : '',
+      description: typeof data.description === 'string' ? data.description : '',
+      amount: typeof data.amount === 'number' ? data.amount : 0,
+      date,
+      createdAt,
+      receiptUrl: typeof data.receiptUrl === 'string' ? data.receiptUrl : undefined,
+    };
+  })
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+/**
+ * Creates a new pocket with an invite code and initializes all numeric totals.
+ */
 export const createPocket = async (
   name: string,
   creatorUid: string,
@@ -293,7 +399,7 @@ export const createPocket = async (
     await setDoc(doc(db, 'pockets', pocketId), pocket);
     return pocket;
   } catch (error) {
-    sanitizePocketServiceError(
+    return sanitizePocketServiceError(
       error,
       [],
       'Unable to create pocket right now. Please try again later.',
@@ -302,12 +408,15 @@ export const createPocket = async (
   }
 };
 
+/**
+ * Joins a pocket using invite code and assigns the selected role.
+ */
 export const joinPocket = async (inviteCode: string, userUid: string, role: UserRole) => {
   try {
     enforceRateLimit({
       key: `join-pocket:${userUid}`,
-      windowMs: 60_000,
-      maxRequests: 5,
+      windowMs: RATE_LIMITS.joinPocket.windowMs,
+      maxRequests: RATE_LIMITS.joinPocket.maxRequests,
     });
 
     // Find pocket by invite code
@@ -322,7 +431,10 @@ export const joinPocket = async (inviteCode: string, userUid: string, role: User
     }
 
     const pocketDoc = querySnapshot.docs[0];
-    const pocketData = pocketDoc.data() as Pocket;
+    const pocketData = parsePocketDocument(pocketDoc, pocketDoc.id);
+    if (!pocketData) {
+      throw new Error('Pocket not found');
+    }
 
     if (pocketData.participants.includes(userUid)) {
       throw new Error('You are already a member of this pocket');
@@ -337,33 +449,43 @@ export const joinPocket = async (inviteCode: string, userUid: string, role: User
       participants: [...pocketData.participants, userUid],
       [`roles.${userUid}`]: role,
     });
+    await writeAuditLog({
+      actorUid: userUid,
+      action: 'pocket.role.assigned',
+      targetId: pocketData.id,
+      targetType: 'pocket',
+      metadata: { role, source: 'joinPocket' },
+    });
 
     return { ...pocketData, participants: [...pocketData.participants, userUid] };
   } catch (error) {
-    sanitizePocketServiceError(
+    return sanitizePocketServiceError(
       error,
       [
         'Invalid invite code',
+        'Pocket not found',
         'You are already a member of this pocket',
         'This pocket is already full',
         'Too many requests. Please try again soon.',
       ],
       'Unable to join pocket right now. Please try again later.',
-      'Error joining pocket'
+      'Error joining pocket',
+      { inviteCode, userUid, role }
     );
   }
 };
 
+/**
+ * Fetches a pocket by ID and returns null for missing or deleted pockets.
+ */
 export const getPocket = async (pocketId: string): Promise<Pocket | null> => {
   try {
     const pocketDoc = await getDoc(doc(db, 'pockets', pocketId));
     if (pocketDoc.exists()) {
-      const data = pocketDoc.data();
-      const pocket = {
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        deletedAt: data.deletedAt?.toDate(),
-      } as Pocket;
+      const pocket = parsePocketDocument(pocketDoc, pocketId);
+      if (!pocket) {
+        return null;
+      }
       
       // Return null for deleted pockets
       if (pocket.deleted) {
@@ -379,6 +501,9 @@ export const getPocket = async (pocketId: string): Promise<Pocket | null> => {
   }
 };
 
+/**
+ * Adds a transaction and atomically updates pocket aggregates.
+ */
 export const addTransaction = async (
   pocketId: string,
   userId: string,
@@ -390,13 +515,13 @@ export const addTransaction = async (
   try {
     enforceRateLimit({
       key: `add-transaction:${userId}`,
-      windowMs: 30_000,
-      maxRequests: 10,
+      windowMs: RATE_LIMITS.addTransaction.windowMs,
+      maxRequests: RATE_LIMITS.addTransaction.maxRequests,
     });
 
     const normalizedAmount = Number(amount);
 
-    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0 || normalizedAmount > MAX_TRANSACTION_AMOUNT) {
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0 || normalizedAmount > APP_LIMITS.maxTransactionAmount) {
       throw new Error('Invalid transaction amount');
     }
 
@@ -430,7 +555,10 @@ export const addTransaction = async (
         throw new Error('Pocket not found');
       }
 
-      const pocketData = pocketSnapshot.data() as Pocket;
+      const pocketData = parsePocketDocument(pocketSnapshot, pocketId);
+      if (!pocketData) {
+        throw new Error('Pocket not found');
+      }
 
       if (pocketData.deleted) {
         throw new Error('Pocket not available');
@@ -449,7 +577,7 @@ export const addTransaction = async (
 
     return { ...transactionPayload, id: transactionDocRef.id };
   } catch (error) {
-    sanitizePocketServiceError(
+    return sanitizePocketServiceError(
       error,
       [
         'Invalid transaction amount',
@@ -460,7 +588,8 @@ export const addTransaction = async (
         'Too many requests. Please try again soon.',
       ],
       'Unable to add this transaction right now. Please try again later.',
-      'Error adding transaction'
+      'Error adding transaction',
+      { pocketId, userId, type }
     );
   }
 };
@@ -471,13 +600,16 @@ export interface PaginatedTransactionsResult {
   hasMore: boolean;
 }
 
+/**
+ * Loads a paginated transactions page sorted by most recent date first.
+ */
 export const fetchTransactionsPage = async (
   pocketId: string,
   pageSize = 20,
   cursor?: QueryDocumentSnapshot
 ): Promise<PaginatedTransactionsResult> => {
   try {
-    const constraints = [
+    const constraints: QueryConstraint[] = [
       where('pocketId', '==', pocketId),
       orderBy('date', 'desc'),
       firestoreLimit(pageSize),
@@ -494,15 +626,7 @@ export const fetchTransactionsPage = async (
 
     const snapshot = await getDocs(paginatedQuery);
 
-    const transactions = snapshot.docs.map((docSnap) => {
-      const data = docSnap.data();
-      return {
-        ...data,
-        id: docSnap.id,
-        date: data.date?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate() || new Date(),
-      } as Transaction;
-    });
+    const transactions = parseTransactionSnapshot(snapshot);
 
     const lastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
 
@@ -512,23 +636,42 @@ export const fetchTransactionsPage = async (
       hasMore: snapshot.size === pageSize,
     };
   } catch (error) {
-    sanitizePocketServiceError(
+    if (isIndexRequiredError(error)) {
+      logger.warn('Missing Firestore index for paginated transactions query. Falling back to non-indexed query.', {
+        error,
+        context: { pocketId },
+      });
+
+      const fallbackSnapshot = await getDocs(query(collection(db, 'transactions'), where('pocketId', '==', pocketId)));
+      const fallbackTransactions = parseTransactionSnapshot(fallbackSnapshot);
+
+      return {
+        transactions: fallbackTransactions,
+        cursor: null,
+        hasMore: false,
+      };
+    }
+
+    return sanitizePocketServiceError(
       error,
       [],
       'Unable to load transactions right now. Please try again later.',
-      'Error fetching paginated transactions'
+      'Error fetching paginated transactions',
+      { pocketId, pageSize, hasCursor: Boolean(cursor) }
     );
   }
 };
 
+/**
+ * Subscribes to real-time transaction updates for a pocket.
+ */
 export const subscribeToTransactions = (
   pocketId: string,
   callback: (transactions: Transaction[]) => void
 ) => {
   const transactionsQuery = query(
     collection(db, 'transactions'),
-    where('pocketId', '==', pocketId),
-    orderBy('date', 'desc')
+    where('pocketId', '==', pocketId)
   );
 
   return createSubscription<Transaction[]>({
@@ -537,24 +680,17 @@ export const subscribeToTransactions = (
     keyPrefix: 'transactions',
     subscribe: (onData, onError) => onSnapshot(transactionsQuery, onData, onError),
     processSnapshot: (snapshot) => {
-      const querySnapshot = snapshot as { forEach: (fn: (doc: any) => void) => void };
-      const transactions: Transaction[] = [];
-      (querySnapshot as any).forEach((doc: any) => {
-        const data = doc.data();
-        transactions.push({
-          ...data,
-          id: doc.id,
-          date: data.date?.toDate() || new Date(),
-          createdAt: data.createdAt?.toDate() || new Date(),
-        } as Transaction);
-      });
-      return transactions;
+      const querySnapshot = snapshot as QuerySnapshot<DocumentData>;
+      return parseTransactionSnapshot(querySnapshot);
     },
     onDataErrorFallback: () => [],
     callback,
   });
 };
 
+/**
+ * Removes the current user from pocket participants and role mapping.
+ */
 export const leavePocket = async (pocketId: string, userUid: string): Promise<void> => {
   try {
     const pocketRef = doc(db, 'pockets', pocketId);
@@ -564,7 +700,10 @@ export const leavePocket = async (pocketId: string, userUid: string): Promise<vo
       throw new Error('Pocket not found');
     }
     
-    const pocketData = pocketDoc.data() as Pocket;
+    const pocketData = parsePocketDocument(pocketDoc, pocketId);
+    if (!pocketData) {
+      throw new Error('Pocket not found');
+    }
     
     // More robust membership check - allow leaving even if not in participants list
     // This handles cases where the user might be in an inconsistent state
@@ -592,18 +731,28 @@ export const leavePocket = async (pocketId: string, userUid: string): Promise<vo
       participants: updatedParticipants,
       roles: updatedRoles,
     });
+    await writeAuditLog({
+      actorUid: userUid,
+      action: 'pocket.leave',
+      targetId: pocketId,
+      targetType: 'pocket',
+    });
     
     logger.debug('Pocket departure completed for current user.', { context: { pocketId, userUid } });
   } catch (error) {
-    sanitizePocketServiceError(
+    return sanitizePocketServiceError(
       error,
       ['Pocket not found'],
       'Unable to leave this pocket right now. Please try again later.',
-      'Error leaving pocket'
+      'Error leaving pocket',
+      { pocketId, userUid }
     );
   }
 };
 
+/**
+ * Soft-deletes a pocket and marks associated transactions as deleted.
+ */
 export const deletePocket = async (pocketId: string, userUid: string): Promise<void> => {
   try {
     const pocketRef = doc(db, 'pockets', pocketId);
@@ -613,7 +762,10 @@ export const deletePocket = async (pocketId: string, userUid: string): Promise<v
       throw new Error('Pocket not found');
     }
     
-    const pocketData = pocketDoc.data() as Pocket;
+    const pocketData = parsePocketDocument(pocketDoc, pocketId);
+    if (!pocketData) {
+      throw new Error('Pocket not found');
+    }
     
     // Check if user is a participant
     const isParticipant = pocketData.participants && pocketData.participants.includes(userUid);
@@ -643,18 +795,28 @@ export const deletePocket = async (pocketId: string, userUid: string): Promise<v
       deletedAt: new Date(),
       deletedBy: userUid
     });
+    await writeAuditLog({
+      actorUid: userUid,
+      action: 'pocket.delete',
+      targetId: pocketId,
+      targetType: 'pocket',
+    });
     
     logger.info('Pocket deletion completed by authorized user.', { context: { pocketId, userUid } });
   } catch (error) {
-    sanitizePocketServiceError(
+    return sanitizePocketServiceError(
       error,
       ['Pocket not found', 'Only the provider can delete this pocket'],
       'Unable to delete this pocket right now. Please try again later.',
-      'Error deleting pocket'
+      'Error deleting pocket',
+      { pocketId, userUid }
     );
   }
 };
 
+/**
+ * Subscribes to real-time pocket metadata updates for a pocket document.
+ */
 export const subscribeToPocket = (
   pocketId: string,
   callback: (pocket: Pocket | null) => void
@@ -667,19 +829,17 @@ export const subscribeToPocket = (
     keyPrefix: 'pocket',
     subscribe: (onData, onError) => onSnapshot(pocketDocRef, onData, onError),
     processSnapshot: (snapshot) => {
-      const snap = snapshot as { exists: () => boolean; data: () => any };
-      if (!snap.exists()) return null;
-      const data = snap.data();
-      return {
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-      } as Pocket;
+      const snap = snapshot as DocumentSnapshot<DocumentData>;
+      return parsePocketDocument(snap, pocketId);
     },
     onDataErrorFallback: () => null,
     callback,
   });
 };
 
+/**
+ * Cleans up all active Firestore subscriptions managed by this service.
+ */
 export const cleanupAllSubscriptions = () => {
   if (process.env.NODE_ENV === 'development') {
   logger.debug(`Cleaning up ${activeSubscriptions.size} active subscriptions`);
@@ -710,11 +870,14 @@ export const getSubscriptionStats = () => ({
   errorCount: subscriptionErrorCount,
   lastSuccessfulOperation,
   timeSinceLastSuccess: Date.now() - lastSuccessfulOperation,
-  oldestSubscriptionAge: activeSubscriptions.size
-    ? Date.now() - Math.min(...Array.from(activeSubscriptions.values()).map(entry => entry.createdAt))
-    : 0,
+    oldestSubscriptionAge: activeSubscriptions.size
+      ? Date.now() - Math.min(...Array.from(activeSubscriptions.values()).map(entry => entry.createdAt))
+      : 0,
 });
 
+/**
+ * Returns subscription runtime status for troubleshooting.
+ */
 export const getSubscriptionHealthDashboard = () => {
   const now = Date.now();
   return Array.from(activeSubscriptions.entries()).map(([id, entry]) => ({
@@ -722,6 +885,6 @@ export const getSubscriptionHealthDashboard = () => {
     type: entry.type,
     pocketId: entry.pocketId,
     ageMs: now - entry.createdAt,
-    expiresInMs: Math.max(0, MAX_SUBSCRIPTION_AGE_MS - (now - entry.createdAt)),
+    expiresInMs: Math.max(0, SUBSCRIPTION_CONFIG.maxAgeMs - (now - entry.createdAt)),
   }));
 };

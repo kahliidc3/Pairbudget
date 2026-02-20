@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useLocale } from 'next-intl';
 import { 
-  ArrowUpRight,
   ArrowDownRight,
+  ArrowUpRight,
   Calendar,
-  User,
-  Tag
+  Tag,
+  User
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Transaction } from '@/types';
@@ -15,17 +16,27 @@ import { Transaction } from '@/types';
 interface TransactionCardProps {
   transaction: Transaction;
   userName?: string;
+  currency?: string;
   delay?: number;
   onClick?: () => void;
 }
 
-const TransactionCard: React.FC<TransactionCardProps> = ({
+const TransactionCardComponent: React.FC<TransactionCardProps> = ({
   transaction,
   userName,
+  currency,
   delay = 0,
   onClick
 }) => {
+  const locale = useLocale();
   const isFund = transaction.type === 'fund';
+  const cardClassName = useMemo(
+    () =>
+      `bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 ${
+        onClick ? 'cursor-pointer' : ''
+      }`,
+    [onClick]
+  );
 
   return (
     <motion.div
@@ -33,9 +44,7 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay }}
       onClick={onClick}
-      className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 ${
-        onClick ? 'cursor-pointer' : ''
-      }`}
+      className={cardClassName}
     >
       <div className="flex items-start space-x-3">
         {/* Icon */}
@@ -74,7 +83,7 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
             <div className={`text-lg font-bold ml-3 ${
               isFund ? 'text-green-600' : 'text-orange-600'
             }`}>
-              {isFund ? '+' : '-'}{formatCurrency(transaction.amount)}
+              {isFund ? '+' : '-'}{formatCurrency(transaction.amount, { locale, currency })}
             </div>
           </div>
           
@@ -88,7 +97,7 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
             )}
             <div className="flex items-center space-x-1">
               <Calendar className="w-3 h-3" />
-              <span>{formatDate(transaction.date)}</span>
+              <span>{formatDate(transaction.date, locale)}</span>
             </div>
           </div>
         </div>
@@ -96,5 +105,19 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
     </motion.div>
   );
 };
+
+const propsAreEqual = (prev: TransactionCardProps, next: TransactionCardProps) =>
+  prev.transaction.id === next.transaction.id &&
+  prev.transaction.type === next.transaction.type &&
+  prev.transaction.amount === next.transaction.amount &&
+  prev.transaction.description === next.transaction.description &&
+  prev.transaction.category === next.transaction.category &&
+  prev.transaction.date?.getTime?.() === next.transaction.date?.getTime?.() &&
+  prev.userName === next.userName &&
+  prev.currency === next.currency &&
+  prev.delay === next.delay &&
+  prev.onClick === next.onClick;
+
+const TransactionCard = React.memo(TransactionCardComponent, propsAreEqual);
 
 export default TransactionCard;

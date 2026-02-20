@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiGlobe } from 'react-icons/fi';
-import { useTranslations, useLocale } from 'next-intl';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { FiEye, FiEyeOff, FiGlobe, FiLock, FiMail, FiUser } from 'react-icons/fi';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { signIn, signUp } from '@/services/authService';
 import { clearAuthCache } from '@/lib/utils';
@@ -32,6 +32,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const [success, setSuccess] = useState('');
 
   const { setUser, setUserProfile } = useAuthStore();
@@ -53,64 +54,65 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
     setSuccess('');
   }, [mode]);
 
-  const getErrorMessage = (error: unknown): string => {
+  const getErrorMessage = (error: unknown): { code: string; message: string } => {
     if (typeof error !== 'object' || error === null) {
-      return 'An unexpected error occurred. Please try again.';
+      return { code: 'unknown', message: t('errors.unexpected') };
     }
     
     const err = error as { code?: string; message?: string };
-    if (!err.code) return 'An unexpected error occurred. Please try again.';
+    if (!err.code) return { code: 'unknown', message: t('errors.unexpected') };
     
     switch (err.code) {
       case 'auth/email-already-in-use':
-        return 'This email address is already registered. Please sign in instead or use a different email.';
+        return { code: err.code, message: t('errors.emailInUse') };
       case 'auth/weak-password':
-        return 'Password is too weak. Please choose a stronger password with at least 6 characters.';
+        return { code: err.code, message: t('errors.weakPassword') };
       case 'auth/invalid-email':
-        return 'Please enter a valid email address.';
+        return { code: err.code, message: t('errors.invalidEmail') };
       case 'auth/user-not-found':
-        return 'No account found with this email address. Please check your email or sign up.';
+        return { code: err.code, message: t('errors.userNotFound') };
       case 'auth/wrong-password':
-        return 'Incorrect password. Please try again.';
+        return { code: err.code, message: t('errors.wrongPassword') };
       case 'auth/too-many-requests':
-        return 'Too many failed attempts. Please wait a moment before trying again.';
+        return { code: err.code, message: t('errors.tooManyRequests') };
       case 'auth/user-disabled':
-        return 'This account has been disabled. Please contact support.';
+        return { code: err.code, message: t('errors.userDisabled') };
       case 'auth/operation-not-allowed':
-        return 'This operation is not allowed. Please contact support.';
+        return { code: err.code, message: t('errors.operationNotAllowed') };
       case 'auth/invalid-credential':
-        return 'Invalid login credentials. Please check your email and password.';
+        return { code: err.code, message: t('errors.invalidCredential') };
       default:
-        return err.message || 'An unexpected error occurred. Please try again.';
+        return { code: err.code, message: err.message || t('errors.unexpected') };
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(''); // Clear any previous errors
+    setErrorCode('');
     
     if (mode === 'signup' && !agreeToTerms) {
-      setError('Please agree to the terms and conditions to continue.');
+      setError(t('errors.acceptTerms'));
       return;
     }
     if (mode === 'signup' && formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match. Please check and try again.');
+      setError(t('errors.passwordMismatch'));
       return;
     }
     if (mode === 'signup' && !PASSWORD_POLICY_REGEX.test(formData.password)) {
-      setError('Password must be at least 12 characters and include uppercase, lowercase, number, and symbol.');
+      setError(t('errors.passwordPolicy'));
       return;
     }
     if (!formData.email.trim()) {
-      setError('Please enter your email address.');
+      setError(t('errors.emailRequired'));
       return;
     }
     if (!formData.password.trim()) {
-      setError('Please enter your password.');
+      setError(t('errors.passwordRequired'));
       return;
     }
     if (mode === 'signup' && !formData.name.trim()) {
-      setError('Please enter your name.');
+      setError(t('errors.nameRequired'));
       return;
     }
 
@@ -125,15 +127,17 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
         );
         setUser(user);
         setUserProfile(userProfile);
-        setSuccess('Account created successfully! Welcome to PairBudget.');
+        setSuccess(t('success.accountCreated'));
       } else {
         const user = await signIn(formData.email, formData.password);
         setUser(user);
-        setSuccess('Welcome back! Redirecting to your dashboard...');
+        setSuccess(t('success.welcomeBack'));
       }
     } catch (error: unknown) {
       logger.error('Auth error', { error });
-      setError(getErrorMessage(error));
+      const parsedError = getErrorMessage(error);
+      setErrorCode(parsedError.code);
+      setError(parsedError.message);
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +163,8 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   const handleClearCacheAndRetry = () => {
     clearAuthCache();
     setError('');
-    setSuccess('Cache cleared. Please try signing in again.');
+    setErrorCode('');
+    setSuccess(t('success.cacheCleared'));
     // Reset form
     setFormData({
       email: '',
@@ -243,8 +248,8 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                 className="text-sm sm:text-base text-slate-600 mobile-subtitle"
               >
                 {mode === 'login' 
-                  ? 'Access your shared budget dashboard' 
-                  : 'Join PairBudget to manage expenses together'
+                  ? t('description.login')
+                  : t('description.signup')
                 }
               </motion.p>
             </div>
@@ -268,26 +273,22 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-red-900">{error}</p>
                       <div className="mt-2 space-y-2">
-                        {error.includes('email address is already registered') && (
+                        {errorCode === 'auth/email-already-in-use' && (
                           <button
                             type="button"
                             onClick={onToggleMode}
                             className="block text-sm text-red-600 hover:text-red-800 underline font-medium"
                           >
-                            Sign in instead
+                            {t('signInInstead')}
                           </button>
                         )}
-                        {(error.includes('Invalid login credentials') || 
-                          error.includes('user-not-found') || 
-                          error.includes('wrong-password') ||
-                          error.includes('too-many-requests') ||
-                          error.includes('unexpected error')) && (
+                        {['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password', 'auth/too-many-requests', 'unknown'].includes(errorCode) && (
                           <button
                             type="button"
                             onClick={handleClearCacheAndRetry}
                             className="block text-sm text-red-600 hover:text-red-800 underline font-medium"
                           >
-                            Clear cache & retry
+                            {t('clearCacheRetry')}
                           </button>
                         )}
                       </div>
@@ -366,9 +367,9 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                         onChange={handleInputChange}
                         className="w-full pl-12 pr-4 py-3 sm:py-4 rounded-lg sm:rounded-xl border border-slate-300 bg-slate-50 text-slate-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white appearance-none mobile-input text-base"
                       >
-                        <option value="en">English</option>
-                        <option value="fr">Français</option>
-                        <option value="ar">العربية</option>
+                        <option value="en">{t('languages.en')}</option>
+                        <option value="fr">{t('languages.fr')}</option>
+                        <option value="ar">{t('languages.ar')}</option>
                       </select>
                       <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
                         <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,13 +475,13 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                       className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded transition-colors"
                     />
                     <label htmlFor="terms" className="text-sm text-slate-600 leading-relaxed">
-                      I agree to the{' '}
-                      <a href="#" className="text-blue-600 hover:text-blue-700 underline">
-                        Terms of Service
+                      {t('agreeToTermsPrefix')}{' '}
+                      <a href={`/${locale}/terms`} className="text-blue-600 hover:text-blue-700 underline">
+                        {t('termsOfService')}
                       </a>{' '}
-                      and{' '}
-                      <a href="#" className="text-blue-600 hover:text-blue-700 underline">
-                        Privacy Policy
+                      {t('and')}{' '}
+                      <a href={`/${locale}/privacy`} className="text-blue-600 hover:text-blue-700 underline">
+                        {t('privacyPolicy')}
                       </a>
                     </label>
                   </motion.div>
@@ -499,7 +500,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
                 {isLoading ? (
                   <>
                     <LoadingSpinner size="sm" />
-                    <span className="text-sm sm:text-base">{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
+                    <span className="text-sm sm:text-base">{mode === 'login' ? t('loading.signingIn') : t('loading.creatingAccount')}</span>
                   </>
                 ) : (
                   <span className="text-sm sm:text-base">{mode === 'login' ? t('signIn') : t('signUp')}</span>
@@ -515,7 +516,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
               className="text-center mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-slate-200"
             >
               <p className="text-sm sm:text-base text-slate-600">
-                {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                {mode === 'login' ? t('dontHaveAccount') + ' ' : t('alreadyHaveAccount') + ' '}
                 <button
                   type="button"
                   onClick={onToggleMode}

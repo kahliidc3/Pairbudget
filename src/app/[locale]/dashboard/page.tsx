@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import nextDynamic from 'next/dynamic';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -8,13 +9,14 @@ import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
-import { subscribeToPocket, subscribeToTransactions, cleanupAllSubscriptions } from '@/services/pocketService';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import PocketSetup from '@/components/PocketSetup';
-import PocketSelection from '@/components/PocketSelection';
-import Dashboard from '@/components/Dashboard';
+import { cleanupAllSubscriptions, subscribeToPocket, subscribeToTransactions } from '@/services/pocketService';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { logger } from '@/lib/logger';
+
+const Dashboard = nextDynamic(() => import('@/components/Dashboard'));
+const PocketSelection = nextDynamic(() => import('@/components/PocketSelection'));
+const PocketSetup = nextDynamic(() => import('@/components/PocketSetup'));
 
 export default function DashboardPage() {
   const { user, userProfile, loading: authLoading } = useAuthStore();

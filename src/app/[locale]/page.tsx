@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import nextDynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { useTranslations, useLocale } from 'next-intl';
-import AuthForm from '@/components/AuthForm';
+import { useLocale, useTranslations } from 'next-intl';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import FirebaseStatus from '@/components/FirebaseStatus';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -16,16 +16,18 @@ import { logger } from '@/lib/logger';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { 
-  Users, 
-  Shield, 
-  Zap, 
+  ArrowRight, 
+  CreditCard, 
+  RefreshCw, 
+  Shield,
   Star,
-  ArrowRight,
-  Wallet,
   TrendingUp,
-  CreditCard,
-  RefreshCw
+  Users,
+  Wallet,
+  Zap
 } from 'lucide-react';
+
+const AuthForm = nextDynamic(() => import('@/components/AuthForm'));
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -336,15 +338,15 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-green-50 rounded-xl border border-green-100">
                       <span className="text-sm font-medium text-slate-700">{t('pocket.balance')}</span>
-                      <span className="font-bold text-green-600 text-lg">$1,247.50</span>
+                      <span className="font-bold text-green-600 text-lg">1,247.50 MAD</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
                       <span className="text-sm font-medium text-slate-700">{t('pocket.thisMonth')}</span>
-                      <span className="font-bold text-blue-600 text-lg">$892.30</span>
+                      <span className="font-bold text-blue-600 text-lg">892.30 MAD</span>
                     </div>
                     <div className="flex justify-between items-center p-4 bg-orange-50 rounded-xl border border-orange-100">
                       <span className="text-sm font-medium text-slate-700">{t('pocket.expenses')}</span>
-                      <span className="font-bold text-orange-600 text-lg">$654.80</span>
+                      <span className="font-bold text-orange-600 text-lg">654.80 MAD</span>
                     </div>
                   </div>
                 </motion.div>
@@ -361,7 +363,7 @@ export default function HomePage() {
                       <TrendingUp className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">+$500.00</p>
+                      <p className="font-semibold text-slate-900">+500.00 MAD</p>
                       <p className="text-xs text-slate-600">Monthly funding</p>
                     </div>
                   </div>
@@ -378,7 +380,7 @@ export default function HomePage() {
                       <CreditCard className="w-5 h-5 text-orange-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">-$89.50</p>
+                      <p className="font-semibold text-slate-900">-89.50 MAD</p>
                       <p className="text-xs text-slate-600">Groceries</p>
                     </div>
                   </div>
@@ -502,4 +504,5 @@ export default function HomePage() {
 
   return null;
 }
+
 

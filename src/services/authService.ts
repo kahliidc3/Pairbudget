@@ -1,31 +1,35 @@
 import {
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
 import {
-  doc,
-  setDoc,
-  getDoc,
-  deleteField,
   collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  writeBatch,
   deleteDoc,
-  DocumentReference
+  deleteField,
+  doc,
+  DocumentReference,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+  writeBatch
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Pocket, User } from '@/types';
 import { enforceRateLimit } from '@/lib/rateLimiter';
 import { logger } from '@/lib/logger';
+import { writeAuditLog } from '@/lib/audit';
 
 const SIGN_UP_RATE_LIMIT_ERROR = 'Too many sign up attempts. Please wait and try again.';
 const SIGN_UP_GENERIC_ERROR = 'Unable to complete signup. Please try again later.';
 
+/**
+ * Registers a new user account and creates the corresponding Firestore user profile.
+ */
 export const signUp = async (email: string, password: string, name: string, preferredLanguage?: string) => {
   try {
     enforceRateLimit({
@@ -49,6 +53,7 @@ export const signUp = async (email: string, password: string, name: string, pref
       email,
       pocketIds: [],
       preferredLanguage: preferredLanguage || 'en',
+      preferredCurrency: 'MAD',
       createdAt: new Date(),
     };
     
@@ -87,6 +92,9 @@ export const signUp = async (email: string, password: string, name: string, pref
   }
 };
 
+/**
+ * Signs in an existing user with email/password credentials.
+ */
 export const signIn = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -96,6 +104,9 @@ export const signIn = async (email: string, password: string) => {
   }
 };
 
+/**
+ * Signs out the current user session.
+ */
 export const signOut = async () => {
   try {
     await firebaseSignOut(auth);
@@ -104,6 +115,9 @@ export const signOut = async () => {
   }
 };
 
+/**
+ * Fetches a single user profile by UID.
+ */
 export const getUserProfile = async (uid: string): Promise<User | null> => {
   try {
     const userDoc = await getDoc(doc(db, 'users', uid));
@@ -132,6 +146,9 @@ export const getUserProfile = async (uid: string): Promise<User | null> => {
   }
 };
 
+/**
+ * Fetches multiple user profiles using chunked `in` queries.
+ */
 export const getUserProfilesBatch = async (uids: string[]): Promise<Record<string, User>> => {
   const uniqueUids = Array.from(new Set(uids.filter(Boolean)));
   if (uniqueUids.length === 0) {
@@ -166,6 +183,9 @@ export const getUserProfilesBatch = async (uids: string[]): Promise<Record<strin
   return results;
 };
 
+/**
+ * Partially updates user profile fields and removes fields passed as `undefined`.
+ */
 export const updateUserProfile = async (uid: string, updates: Partial<User>) => {
   try {
     // Filter out undefined values and handle special cases
@@ -186,6 +206,9 @@ export const updateUserProfile = async (uid: string, updates: Partial<User>) => 
   }
 };
 
+/**
+ * Adds a pocket membership to the user profile if it is not already present.
+ */
 export const addPocketToUser = async (uid: string, pocketId: string) => {
   try {
     const userProfile = await getUserProfile(uid);
@@ -206,6 +229,9 @@ export const addPocketToUser = async (uid: string, pocketId: string) => {
   }
 };
 
+/**
+ * Removes a pocket membership from the user profile and updates current pocket fallback.
+ */
 export const removePocketFromUser = async (uid: string, pocketId: string) => {
   try {
     const userProfile = await getUserProfile(uid);
@@ -229,6 +255,9 @@ export const removePocketFromUser = async (uid: string, pocketId: string) => {
   }
 };
 
+/**
+ * Creates a missing Firestore profile for an existing Firebase Auth user.
+ */
 export const createMissingUserProfile = async (uid: string, email: string, name: string, preferredLanguage = 'en') => {
   try {
     logger.debug('Creating missing user profile record', { context: { uid } });
@@ -239,6 +268,7 @@ export const createMissingUserProfile = async (uid: string, email: string, name:
       email,
       pocketIds: [],
       preferredLanguage,
+      preferredCurrency: 'MAD',
       createdAt: new Date(),
     };
     
@@ -309,6 +339,13 @@ const ensurePocketCleanup = async (pocketId: string, userUid: string) => {
     if (reassignedProvider) {
       updatedRoles[reassignedProvider] = 'provider';
       updates.roles = updatedRoles;
+      await writeAuditLog({
+        actorUid: userUid,
+        action: 'pocket.role.reassigned',
+        targetId: pocketId,
+        targetType: 'pocket',
+        metadata: { reassignedProvider },
+      });
     }
   }
 
@@ -326,6 +363,9 @@ const ensurePocketCleanup = async (pocketId: string, userUid: string) => {
   }
 };
 
+/**
+ * Deletes the currently authenticated user account and cascades cleanup of related data.
+ */
 export const deleteUserAccountAndData = async (): Promise<void> => {
   const currentUser = auth.currentUser;
 
@@ -354,6 +394,12 @@ export const deleteUserAccountAndData = async (): Promise<void> => {
     }
 
     await deleteDoc(doc(db, 'users', userUid));
+    await writeAuditLog({
+      actorUid: userUid,
+      action: 'account.delete',
+      targetId: userUid,
+      targetType: 'user',
+    });
   } catch (error) {
     logger.error('Error deleting user data', { error, context: { userUid } });
     throw new Error('Unable to delete account data at this time. Please try again later.');

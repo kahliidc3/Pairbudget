@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
-import PocketSetup from '@/components/PocketSetup';
 import LoadingSpinner from '@/components/LoadingSpinner';
+
+const PocketSetup = dynamic(() => import('@/components/PocketSetup'));
 
 export default function PocketSetupPage() {
   const router = useRouter();

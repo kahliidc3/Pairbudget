@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getUserProfilesBatch } from '@/services/authService';
+import { APP_LIMITS } from '@/constants/config';
 import { logger } from '@/lib/logger';
 
 type UserNameMap = Record<string, string>;
-
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 interface CachedName {
   name: string;
@@ -16,17 +15,18 @@ const userNameCache = new Map<string, CachedName>();
 export const useLoadUserNames = (userIds: string[]) => {
   const [userNames, setUserNames] = useState<UserNameMap>({});
   const [loading, setLoading] = useState(false);
-
-  // Normalize IDs to a stable, sorted array to avoid unnecessary effects
-  const normalizedIds = useMemo(() => {
+  // Normalize IDs into a stable key to avoid re-running effects on every render.
+  const normalizedIdsKey = useMemo(() => {
     const ids = Array.from(new Set(userIds.filter(Boolean)));
     ids.sort();
-    return ids;
-  }, [userIds.join('|')]);
+    return ids.join('|');
+  }, [userIds]);
 
   useEffect(() => {
+    const normalizedIds = normalizedIdsKey ? normalizedIdsKey.split('|').filter(Boolean) : [];
+
     if (normalizedIds.length === 0) {
-      setUserNames({});
+      setUserNames((prev) => (Object.keys(prev).length === 0 ? prev : {}));
       return;
     }
 
@@ -47,12 +47,12 @@ export const useLoadUserNames = (userIds: string[]) => {
         }
       });
 
-      let fetchedEntries: UserNameMap = {};
+      const fetchedEntries: UserNameMap = {};
 
       if (missingIds.length > 0) {
         try {
           const batchResult = await getUserProfilesBatch(missingIds);
-          const expiry = Date.now() + CACHE_TTL_MS;
+          const expiry = Date.now() + APP_LIMITS.userNameCacheTtlMs;
 
           Object.entries(batchResult).forEach(([id, profile]) => {
             const name = profile?.name || 'Unknown User';
@@ -77,11 +77,21 @@ export const useLoadUserNames = (userIds: string[]) => {
       }
 
       if (!isCancelled) {
-        setUserNames((prev) => ({
-          ...prev,
-          ...cachedEntries,
-          ...fetchedEntries,
-        }));
+        setUserNames((prev) => {
+          const next = {
+            ...prev,
+            ...cachedEntries,
+            ...fetchedEntries,
+          };
+
+          const prevKeys = Object.keys(prev);
+          const nextKeys = Object.keys(next);
+          const isSame =
+            prevKeys.length === nextKeys.length &&
+            nextKeys.every((key) => prev[key] === next[key]);
+
+          return isSame ? prev : next;
+        });
         setLoading(false);
       }
     };
@@ -91,7 +101,7 @@ export const useLoadUserNames = (userIds: string[]) => {
     return () => {
       isCancelled = true;
     };
-  }, [normalizedIds.join('|')]);
+  }, [normalizedIdsKey]);
 
   return { userNames, loading };
 };

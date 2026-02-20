@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import AppToaster from '@/components/AppToaster';
 import FirebaseErrorBoundary from '@/components/FirebaseErrorBoundary';
 
 const inter = Inter({ 
@@ -39,6 +40,7 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
+          <AppToaster />
         </FirebaseErrorBoundary>
       </body>
     </html>

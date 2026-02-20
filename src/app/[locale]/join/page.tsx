@@ -1,29 +1,30 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { logger } from '@/lib/logger';
-import { joinPocket, getPocket } from '@/services/pocketService';
+import { formatCurrency } from '@/lib/utils';
+import { getPocket, joinPocket } from '@/services/pocketService';
 import { updateUserProfile } from '@/services/authService';
 import { usePocketStore } from '@/store/pocketStore';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { UserRole, Pocket } from '@/types';
+import { Pocket, UserRole } from '@/types';
 import LanguageSelector from '@/components/LanguageSelector';
 import {
-  Wallet,
-  CreditCard,
+  AlertCircle,
   ArrowLeft,
   Check,
-  AlertCircle,
+  CreditCard,
+  DollarSign,
   Heart,
+  Shield,
   Sparkles,
   UserPlus,
-  Shield,
   Users,
-  DollarSign
+  Wallet
 } from 'lucide-react';
 
 // Force dynamic rendering
@@ -48,6 +49,18 @@ function JoinPageContent() {
       router.push(`/${locale}`);
     }
   }, [user, router, locale]);
+
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.altKey && (event.key === 'h' || event.key === 'H')) {
+        event.preventDefault();
+        router.push(`/${locale}/dashboard`);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [locale, router]);
 
   // Load user's existing pockets
   useEffect(() => {
@@ -93,6 +106,9 @@ function JoinPageContent() {
 
     try {
       const pocket = await joinPocket(inviteCode, user.uid, selectedRole);
+      if (!pocket) {
+        throw new Error('Unable to join pocket right now.');
+      }
       
       // Update user profile with pocket ID
       const updatedPocketIds = [...(userProfile.pocketIds || []), pocket.id];
@@ -128,19 +144,12 @@ function JoinPageContent() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
   if (!user || !userProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl">
           <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-white/70 font-medium">Loading...</p>
+          <p className="text-white/90 font-medium">Loading...</p>
         </div>
       </div>
     );
@@ -213,7 +222,7 @@ function JoinPageContent() {
             </div>
             
             <h2 className="text-2xl font-bold text-white mb-4">Invalid Invite Link</h2>
-            <p className="text-white/70 mb-8">
+            <p className="text-white/90 mb-8">
               This invite link is not valid or has expired. Please ask your partner to send you a new invite link.
             </p>
             
@@ -281,10 +290,11 @@ function JoinPageContent() {
             
             <div className="flex items-center space-x-4">
               <LanguageSelector />
-              <button
-                onClick={() => router.push(`/${locale}/dashboard`)}
-                className="flex items-center space-x-2 px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
-              >
+                <button
+                  onClick={() => router.push(`/${locale}/dashboard`)}
+                  className="flex items-center space-x-2 px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
+                  aria-label="Back to Dashboard"
+                >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Back to Dashboard</span>
               </button>
@@ -314,7 +324,7 @@ function JoinPageContent() {
                   <UserPlus className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">Join Shared Pocket</h1>
-                <p className="text-white/70">Choose your role to get started with collaborative budgeting</p>
+                <p className="text-white/90">Choose your role to get started with collaborative budgeting</p>
               </div>
 
               {/* Content */}
@@ -339,7 +349,7 @@ function JoinPageContent() {
                           selectedRole === 'provider' ? 'bg-blue-500/30' : 'bg-white/10'
                         }`}>
                           <Wallet className={`w-5 h-5 ${
-                            selectedRole === 'provider' ? 'text-blue-300' : 'text-white/70'
+                            selectedRole === 'provider' ? 'text-blue-300' : 'text-white/90'
                           }`} />
                         </div>
                         <div className="flex-1">
@@ -349,7 +359,7 @@ function JoinPageContent() {
                               <Check className="w-4 h-4 text-blue-300" />
                             )}
                           </div>
-                          <p className="text-sm text-white/70">Add funds and track expenses</p>
+                          <p className="text-sm text-white/90">Add funds and track expenses</p>
                         </div>
                       </div>
                     </motion.button>
@@ -370,7 +380,7 @@ function JoinPageContent() {
                           selectedRole === 'spender' ? 'bg-green-500/30' : 'bg-white/10'
                         }`}>
                           <CreditCard className={`w-5 h-5 ${
-                            selectedRole === 'spender' ? 'text-green-300' : 'text-white/70'
+                            selectedRole === 'spender' ? 'text-green-300' : 'text-white/90'
                           }`} />
                         </div>
                         <div className="flex-1">
@@ -380,7 +390,7 @@ function JoinPageContent() {
                               <Check className="w-4 h-4 text-green-300" />
                             )}
                           </div>
-                          <p className="text-sm text-white/70">Track expenses and add funds</p>
+                          <p className="text-sm text-white/90">Track expenses and add funds</p>
                         </div>
                       </div>
                     </motion.button>
@@ -393,7 +403,7 @@ function JoinPageContent() {
                     <Sparkles className="w-4 h-4 text-purple-400" />
                     <span>What you&apos;ll get access to:</span>
                   </h4>
-                  <div className="space-y-2 text-sm text-white/70">
+                  <div className="space-y-2 text-sm text-white/90">
                     <div className="flex items-center space-x-2">
                       <Users className="w-4 h-4 text-blue-400" />
                       <span>Real-time collaboration with your partner</span>
@@ -460,22 +470,22 @@ function JoinPageContent() {
                   <Wallet className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">Your Existing Pockets</h2>
-                <p className="text-white/70">Or continue with one of your existing shared budgets</p>
+                <p className="text-white/90">Or continue with one of your existing shared budgets</p>
               </div>
 
               <div className="p-8">
                 {loadingPockets ? (
                   <div className="text-center py-8">
                     <LoadingSpinner size="lg" className="mb-4" />
-                    <p className="text-white/70">Loading your pockets...</p>
+                    <p className="text-white/90">Loading your pockets...</p>
                   </div>
                 ) : userPockets.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Wallet className="w-8 h-8 text-white/50" />
+                      <Wallet className="w-8 h-8 text-white/70" />
                     </div>
                     <h3 className="text-lg font-semibold text-white mb-2">No Existing Pockets</h3>
-                    <p className="text-white/60">This will be your first shared budget pocket</p>
+                    <p className="text-white/80">This will be your first shared budget pocket</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -495,20 +505,20 @@ function JoinPageContent() {
                             </div>
                             <div>
                               <h3 className="font-semibold text-white">{pocket.name}</h3>
-                              <p className="text-sm text-white/60">{pocket.participants.length} members</p>
+                              <p className="text-sm text-white/80">{pocket.participants.length} members</p>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className={`font-medium ${pocket.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {formatCurrency(pocket.balance)}
+                              {formatCurrency(pocket.balance, { locale, currency: userProfile?.preferredCurrency })}
                             </p>
                             <ArrowLeft className="w-4 h-4 text-white/40 group-hover:text-white/80 transition-colors rotate-180" />
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4 text-xs text-white/50">
-                          <span>Funded: {formatCurrency(pocket.totalFunded)}</span>
+                        <div className="flex items-center space-x-4 text-xs text-white/70">
+                          <span>Funded: {formatCurrency(pocket.totalFunded, { locale, currency: userProfile?.preferredCurrency })}</span>
                           <span>•</span>
-                          <span>Spent: {formatCurrency(pocket.totalSpent)}</span>
+                          <span>Spent: {formatCurrency(pocket.totalSpent, { locale, currency: userProfile?.preferredCurrency })}</span>
                         </div>
                       </motion.button>
                     ))}
@@ -529,7 +539,7 @@ export default function JoinPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl">
           <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-white/70 font-medium">Loading...</p>
+          <p className="text-white/90 font-medium">Loading...</p>
         </div>
       </div>
     }>
@@ -537,3 +547,4 @@ export default function JoinPage() {
     </Suspense>
   );
 } 
+
