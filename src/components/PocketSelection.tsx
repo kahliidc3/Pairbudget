@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
@@ -133,39 +132,19 @@ const PocketSelection: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-      {/* Animated Background Shapes */}
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
+      {/* Background Shapes */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div 
-          className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"
-          animate={{ 
-            y: [0, -20, 0], 
-            scale: [1, 1.1, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-lg"
-          animate={{ 
-            y: [0, 15, 0], 
-            x: [0, 10, 0],
-            scale: [1, 0.9, 1]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-full blur-xl" />
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-emerald-500/20 rounded-full blur-lg" />
       </div>
 
       {/* Navigation Header */}
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-2 sm:mx-4"
-      >
+      <header className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-2 sm:mx-4">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-4 shadow-xl mobile-nav">
           <div className="flex items-center justify-between nav-content">
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center flex-shrink-0">
                 <Wallet className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
               <span className="font-bold text-white text-sm sm:text-lg nav-logo truncate">PairBudget</span>
@@ -187,35 +166,20 @@ const PocketSelection: React.FC = () => {
             </div>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-16 sm:py-24 relative z-10 mobile-content">
         <div className="max-w-4xl mx-auto w-full">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center mb-8 sm:mb-12"
-          >
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 mobile-title"
-            >
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 mobile-title">
               Choose Your Pocket
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-sm sm:text-xl text-white/90 max-w-2xl mx-auto mobile-subtitle"
-            >
-              You have {userPockets.length} pocket{userPockets.length !== 1 ? 's' : ''} available. 
+            </h1>
+            <p className="text-sm sm:text-xl text-white/90 max-w-2xl mx-auto mobile-subtitle">
+              You have {userPockets.length} pocket{userPockets.length !== 1 ? 's' : ''} available.
               Select one to continue managing your budget.
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
           {loading ? (
             <div className="text-center py-12">
@@ -225,18 +189,11 @@ const PocketSelection: React.FC = () => {
           ) : (
             <>
               {/* Pockets Grid */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8"
-              >
-                {userPockets.map((pocket, index) => (
-                  <motion.button
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                {userPockets.map((pocket) => (
+                  <button
                     key={pocket.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * index }}
+                    type="button"
                     onClick={() => handlePocketSelect(pocket)}
                     disabled={loadingPocketId === pocket.id}
                     className={`bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-left hover:bg-white/15 transition-all duration-300 group relative shadow-xl hover:shadow-2xl mobile-card ${
@@ -244,7 +201,7 @@ const PocketSelection: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
                         {loadingPocketId === pocket.id ? (
                           <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white" />
                         ) : (
@@ -280,20 +237,15 @@ const PocketSelection: React.FC = () => {
                       </span>
                       <span>Spent: {formatCurrency(pocket.totalSpent, { locale, currency: userProfile?.preferredCurrency })}</span>
                     </div>
-                  </motion.button>
+                  </button>
                 ))}
-              </motion.div>
+              </div>
 
               {/* Create New Pocket */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-center"
-              >
+              <div className="text-center">
                 <button
                   onClick={() => setShowCreateNew(true)}
-                  className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl mobile-btn-lg"
+                  className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-emerald-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-emerald-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl mobile-btn-lg"
                 >
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="font-medium text-sm sm:text-base">Create New Pocket</span>
@@ -301,7 +253,7 @@ const PocketSelection: React.FC = () => {
                 <p className="text-xs sm:text-sm text-white/80 mt-2 sm:mt-3">
                   Want to start fresh? Create a new pocket for different budgets.
                 </p>
-              </motion.div>
+              </div>
             </>
           )}
         </div>

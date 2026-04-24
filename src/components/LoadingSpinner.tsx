@@ -42,7 +42,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       <div className="relative">
         {/* Main spinner */}
         <div 
-          className={`${getSizeClasses()} ${getBorderWidth()} border-slate-200 border-t-blue-600 rounded-full animate-spin`}
+          className={`${getSizeClasses()} ${getBorderWidth()} border-slate-200 border-t-emerald-600 rounded-full animate-spin`}
           style={{ animationDuration: '0.8s' }}
         />
         

@@ -23,7 +23,7 @@ export default function PocketSetupPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
         <div className="text-center">
           <LoadingSpinner size="lg" className="mb-4" />
           <p className="text-white/70">Loading...</p>

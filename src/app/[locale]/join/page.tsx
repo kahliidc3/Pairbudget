@@ -146,7 +146,7 @@ function JoinPageContent() {
 
   if (!user || !userProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl">
           <LoadingSpinner size="lg" className="mb-4" />
           <p className="text-white/90 font-medium">Loading...</p>
@@ -157,44 +157,24 @@ function JoinPageContent() {
 
   if (!inviteCode) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-        {/* Animated Background Shapes */}
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
+        {/* Background Shapes */}
         <div className="absolute inset-0 overflow-hidden">
-          <motion.div 
-            className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"
-            animate={{ 
-              y: [0, -20, 0], 
-              scale: [1, 1.1, 1],
-              opacity: [0.3, 0.5, 0.3]
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div 
-            className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-lg"
-            animate={{ 
-              y: [0, 15, 0], 
-              x: [0, 10, 0],
-              scale: [1, 0.9, 1]
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          />
+          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-full blur-xl" />
+          <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-emerald-500/20 rounded-full blur-lg" />
         </div>
 
         {/* Navigation */}
-        <motion.nav
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
-        >
+        <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4">
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
                   <Wallet className="w-6 h-6 text-white" />
                 </div>
                 <span className="font-bold text-white text-lg">PairBudget</span>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="hidden sm:flex items-center text-sm text-white/80 font-medium mr-2">
                   Welcome, {userProfile?.name || user?.displayName || user?.email?.split('@')[0]}
@@ -209,14 +189,10 @@ function JoinPageContent() {
               </div>
             </div>
           </div>
-        </motion.nav>
+        </nav>
 
         <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 max-w-md w-full text-center shadow-xl"
-          >
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 max-w-md w-full text-center shadow-xl">
             <div className="w-20 h-20 bg-red-500/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-10 h-10 text-red-400" />
             </div>
@@ -230,94 +206,58 @@ function JoinPageContent() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => router.push(`/${locale}/dashboard`)}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl px-6 py-3 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-xl font-medium flex items-center justify-center space-x-2"
+              className="w-full bg-gradient-to-r from-emerald-600 to-purple-600 text-white rounded-xl px-6 py-3 hover:from-emerald-700 hover:to-purple-700 transition-all duration-200 shadow-xl font-medium flex items-center justify-center space-x-2"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Go to Dashboard</span>
             </motion.button>
-          </motion.div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-      {/* Animated Background Shapes */}
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
+      {/* Background Shapes */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div 
-          className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"
-          animate={{ 
-            y: [0, -20, 0], 
-            scale: [1, 1.1, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-lg"
-          animate={{ 
-            y: [0, 15, 0], 
-            x: [0, 10, 0],
-            scale: [1, 0.9, 1]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-full blur-md"
-          animate={{ 
-            y: [0, -25, 0], 
-            rotate: [0, 180, 360]
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        />
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-full blur-xl" />
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-emerald-500/20 rounded-full blur-lg" />
+        <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-emerald-600/20 rounded-full blur-md" />
       </div>
 
       {/* Navigation */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4"
-      >
+      <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-4">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 shadow-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
                 <Wallet className="w-6 h-6 text-white" />
               </div>
               <span className="font-bold text-white text-lg">PairBudget</span>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <LanguageSelector />
-                <button
-                  onClick={() => router.push(`/${locale}/dashboard`)}
-                  className="flex items-center space-x-2 px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
-                  aria-label="Back to Dashboard"
-                >
+              <button
+                onClick={() => router.push(`/${locale}/dashboard`)}
+                className="flex items-center space-x-2 px-4 py-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-medium"
+                aria-label="Back to Dashboard"
+              >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Back to Dashboard</span>
               </button>
             </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       <div className="min-h-screen flex items-center justify-center p-4 py-24 relative z-10">
         <div className="max-w-6xl mx-auto w-full">
           {/* Main Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid lg:grid-cols-2 gap-8 items-start"
-          >
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
             {/* Join Form */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden"
-            >
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-8 pb-6 text-center">
                 <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -340,23 +280,23 @@ function JoinPageContent() {
                       onClick={() => setSelectedRole('provider')}
                       className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                         selectedRole === 'provider'
-                          ? 'border-blue-400 bg-blue-500/20'
+                          ? 'border-emerald-400 bg-emerald-500/20'
                           : 'border-white/20 hover:border-white/40'
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          selectedRole === 'provider' ? 'bg-blue-500/30' : 'bg-white/10'
+                          selectedRole === 'provider' ? 'bg-emerald-500/30' : 'bg-white/10'
                         }`}>
                           <Wallet className={`w-5 h-5 ${
-                            selectedRole === 'provider' ? 'text-blue-300' : 'text-white/90'
+                            selectedRole === 'provider' ? 'text-emerald-300' : 'text-white/90'
                           }`} />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             <h4 className="font-semibold text-white">Provider</h4>
                             {selectedRole === 'provider' && (
-                              <Check className="w-4 h-4 text-blue-300" />
+                              <Check className="w-4 h-4 text-emerald-300" />
                             )}
                           </div>
                           <p className="text-sm text-white/90">Add funds and track expenses</p>
@@ -405,7 +345,7 @@ function JoinPageContent() {
                   </h4>
                   <div className="space-y-2 text-sm text-white/90">
                     <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-blue-400" />
+                      <Users className="w-4 h-4 text-emerald-400" />
                       <span>Real-time collaboration with your partner</span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -421,16 +361,12 @@ function JoinPageContent() {
 
                 {/* Error Message */}
                 {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 bg-red-500/20 border border-red-400/30 rounded-xl"
-                  >
+                  <div className="mb-6 p-4 bg-red-500/20 border border-red-400/30 rounded-xl">
                     <div className="flex items-center space-x-2">
                       <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
                       <p className="text-sm text-red-300">{error}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 {/* Action Buttons */}
@@ -456,17 +392,12 @@ function JoinPageContent() {
                   </motion.button>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Existing Pockets */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden"
-            >
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl overflow-hidden">
               <div className="px-8 pt-8 pb-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-cyan-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Wallet className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">Your Existing Pockets</h2>
@@ -489,12 +420,10 @@ function JoinPageContent() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {userPockets.map((pocket, index) => (
-                      <motion.button
+                    {userPockets.map((pocket) => (
+                      <button
                         key={pocket.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 * index }}
+                        type="button"
                         onClick={() => handleSelectExistingPocket(pocket)}
                         className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl p-4 text-left transition-all duration-300 group"
                       >
@@ -520,13 +449,13 @@ function JoinPageContent() {
                           <span>•</span>
                           <span>Spent: {formatCurrency(pocket.totalSpent, { locale, currency: userProfile?.preferredCurrency })}</span>
                         </div>
-                      </motion.button>
+                      </button>
                     ))}
                   </div>
                 )}
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -536,7 +465,7 @@ function JoinPageContent() {
 export default function JoinPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center max-w-md w-full mx-4 shadow-xl">
           <LoadingSpinner size="lg" className="mb-4" />
           <p className="text-white/90 font-medium">Loading...</p>

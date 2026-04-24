@@ -14,7 +14,7 @@ const Input: React.FC<InputProps> = ({
   type = 'text',
   ...props
 }) => {
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId = id || `input-${Math.random().toString(36).slice(2, 11)}`;
 
   return (
     <div className="w-full">
@@ -30,7 +30,7 @@ const Input: React.FC<InputProps> = ({
         id={inputId}
         type={type}
         className={cn(
-          'block w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 placeholder-slate-500 shadow-sm transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600',
+          'block w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 placeholder-slate-500 shadow-sm transition-colors focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600',
           error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
           className
         )}

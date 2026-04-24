@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useLocale } from 'next-intl';
-import { 
+import {
   ArrowDownRight,
   ArrowUpRight,
   Calendar,
   Pencil,
   Tag,
   Trash2,
-  User
+  User,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Transaction } from '@/types';
@@ -25,55 +25,72 @@ interface TransactionCardProps {
   showActions?: boolean;
 }
 
-const TransactionCardComponent: React.FC<TransactionCardProps> = ({
+const BASE_CARD = 'relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200';
+
+function TransactionIcon({ isFund }: Readonly<{ isFund: boolean }>) {
+  return (
+    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+      isFund ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
+    }`}>
+      {isFund ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
+    </div>
+  );
+}
+
+function ActionButtons({ onEdit }: Readonly<{ onEdit?: () => void }>) {
+  if (!onEdit) return null;
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onEdit(); }}
+      className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+      aria-label="Edit transaction"
+    >
+      <Pencil className="w-4 h-4" />
+    </button>
+  );
+}
+
+function CardContent({
   transaction,
   userName,
   currency,
-  delay = 0,
-  onClick,
+  isFund,
+  showActions,
   onEdit,
   onDelete,
-  showActions = false,
-}) => {
-  const locale = useLocale();
-  const isFund = transaction.type === 'fund';
-  const cardClassName = useMemo(
-    () =>
-      `bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 ${
-        onClick ? 'cursor-pointer' : ''
-      }`,
-    [onClick]
-  );
-
+  locale,
+}: Readonly<{
+  transaction: Transaction;
+  userName?: string;
+  currency?: string;
+  isFund: boolean;
+  showActions: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  locale: string;
+}>) {
   return (
-    <div
-      data-delay={delay}
-      onClick={onClick}
-      className={cardClassName}
-    >
-      <div className="flex items-start space-x-3">
-        {/* Icon */}
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-          isFund 
-            ? 'bg-green-100 text-green-600' 
-            : 'bg-orange-100 text-orange-600'
-        }`}>
-          {isFund ? (
-            <ArrowUpRight className="w-6 h-6" />
-          ) : (
-            <ArrowDownRight className="w-6 h-6" />
-          )}
-        </div>
-        
-        {/* Content */}
+    <>
+      {onDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors z-10"
+          aria-label="Delete transaction"
+        >
+          <Trash2 size={15} />
+        </button>
+      )}
+      <div className="flex items-start space-x-3 pr-8">
+        <TransactionIcon isFund={isFund} />
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-2">
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-gray-900 text-base truncate">
                 {transaction.description}
               </h3>
-              
-              {/* Category */}
               {transaction.category && (
                 <div className="flex items-center mt-1">
                   <Tag className="w-3 h-3 text-gray-400 mr-1" />
@@ -83,48 +100,15 @@ const TransactionCardComponent: React.FC<TransactionCardProps> = ({
                 </div>
               )}
             </div>
-            
-            {/* Amount */}
+
             <div className="ml-3 flex flex-col items-end gap-2">
-              <div className={`text-lg font-bold ${
-                isFund ? 'text-green-600' : 'text-orange-600'
-              }`}>
+              <div className={`text-lg font-bold ${isFund ? 'text-green-600' : 'text-orange-600'}`}>
                 {isFund ? '+' : '-'}{formatCurrency(transaction.amount, { locale, currency })}
               </div>
-              {showActions && (onEdit || onDelete) ? (
-                <div className="flex items-center gap-1">
-                  {onEdit ? (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onEdit();
-                      }}
-                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                      aria-label="Edit transaction"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                  ) : null}
-                  {onDelete ? (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDelete();
-                      }}
-                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      aria-label="Delete transaction"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
+              {showActions && <ActionButtons onEdit={onEdit} />}
             </div>
           </div>
-          
-          {/* Metadata */}
+
           <div className="flex items-center space-x-4 text-xs text-gray-500">
             {userName && (
               <div className="flex items-center space-x-1">
@@ -139,6 +123,52 @@ const TransactionCardComponent: React.FC<TransactionCardProps> = ({
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+const TransactionCardComponent: React.FC<TransactionCardProps> = ({
+  transaction,
+  userName,
+  currency,
+  delay = 0,
+  onClick,
+  onEdit,
+  onDelete,
+  showActions = false,
+}) => {
+  const locale = useLocale();
+  const isFund = transaction.type === 'fund';
+
+  const content = (
+    <CardContent
+      transaction={transaction}
+      userName={userName}
+      currency={currency}
+      isFund={isFund}
+      showActions={showActions}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      locale={locale}
+    />
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        data-delay={delay}
+        onClick={onClick}
+        className={`${BASE_CARD} w-full text-left cursor-pointer`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div data-delay={delay} className={BASE_CARD}>
+      {content}
     </div>
   );
 };

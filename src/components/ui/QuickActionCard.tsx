@@ -26,7 +26,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
   badge
 }) => {
   const colorVariants = {
-    blue: 'bg-blue-50 border-blue-100 hover:bg-blue-100 text-blue-600',
+    blue: 'bg-emerald-50 border-emerald-100 hover:bg-emerald-100 text-emerald-600',
     green: 'bg-green-50 border-green-100 hover:bg-green-100 text-green-600',
     orange: 'bg-orange-50 border-orange-100 hover:bg-orange-100 text-orange-600',
     purple: 'bg-purple-50 border-purple-100 hover:bg-purple-100 text-purple-600',
@@ -35,7 +35,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
   };
 
   const iconColorVariants = {
-    blue: 'bg-blue-100 text-blue-600',
+    blue: 'bg-emerald-100 text-emerald-600',
     green: 'bg-green-100 text-green-600',
     orange: 'bg-orange-100 text-orange-600',
     purple: 'bg-purple-100 text-purple-600',

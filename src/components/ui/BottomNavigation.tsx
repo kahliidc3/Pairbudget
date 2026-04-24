@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { 
-  ArrowDownRight, 
-  ArrowUpRight, 
-  History, 
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  History,
   Home,
+  Layers,
   Plus,
   Settings
 } from 'lucide-react';
@@ -32,6 +33,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   const tabs = [
     { id: 'home', label: tNav('home'), icon: Home },
+    { id: 'pockets', label: tNav('pockets'), icon: Layers },
     { id: 'add', label: tNav('add'), icon: Plus, isAction: true },
     { id: 'history', label: tNav('history'), icon: History },
     { id: 'settings', label: tNav('settings'), icon: Settings }
@@ -119,9 +121,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 className={cn(
                   "flex flex-col items-center justify-center min-w-[60px] py-2 px-3 rounded-xl transition-all duration-200",
                   tab.isAction 
-                    ? "bg-blue-600 text-white scale-110 shadow-lg" 
+                    ? "bg-emerald-600 text-white scale-110 shadow-lg" 
                     : activeTab === tab.id
-                    ? "bg-blue-50 text-blue-600"
+                    ? "bg-emerald-50 text-emerald-600"
                     : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 )}
                 aria-label={tab.label}

@@ -330,7 +330,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 transition={{ duration: 0.2 }}
               >
                 <div className="text-center mb-6">
-                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <div className="w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                     <Plus className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900 mb-1">Create Your Pocket</h3>
@@ -347,47 +347,20 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
 
   // Full page version with all the new features
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-      {/* Animated Background Shapes */}
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
+      {/* Background Shapes */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div 
-          className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-xl"
-          animate={{ 
-            y: [0, -20, 0], 
-            scale: [1, 1.1, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-lg"
-          animate={{ 
-            y: [0, 15, 0], 
-            x: [0, 10, 0],
-            scale: [1, 0.9, 1]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-full blur-md"
-          animate={{ 
-            y: [0, -25, 0], 
-            rotate: [0, 180, 360]
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        />
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-full blur-xl" />
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-purple-500/20 to-emerald-500/20 rounded-full blur-lg" />
+        <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-emerald-600/20 rounded-full blur-md" />
       </div>
 
       {/* Navigation */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-2 sm:mx-4"
-      >
+      <nav className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl mx-2 sm:mx-4">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-4 shadow-xl mobile-nav">
           <div className="flex items-center justify-between nav-content">
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center flex-shrink-0">
                 <Wallet className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
               <span className="font-bold text-white text-sm sm:text-lg nav-logo truncate">{tNav('pairbudget')}</span>
@@ -418,36 +391,27 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
             </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Main Content */}
       <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-16 sm:py-24 relative z-10 mobile-content">
         <div className="max-w-4xl mx-auto w-full">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-6 sm:mb-8"
-          >
+          <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4 mobile-title">
               {userPockets.length === 0 ? t('title') : t('managePockets')}
             </h1>
             <p className="text-base sm:text-xl text-white/90 max-w-2xl mx-auto mobile-subtitle">
               {userPockets.length === 0 ? t('subtitle') : t('manageSubtitle')}
             </p>
-          </motion.div>
+          </div>
 
           {/* Manage Pockets Button - Always visible */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center mb-8 sm:mb-12"
-          >
+          <div className="text-center mb-8 sm:mb-12">
             <button
               onClick={() => setMode('manage')}
               disabled={loading}
-              className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl sm:rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl text-sm sm:text-lg font-semibold mobile-btn-lg"
+              className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white rounded-xl sm:rounded-2xl hover:from-cyan-700 hover:to-emerald-700 transition-all duration-300 shadow-xl hover:shadow-2xl text-sm sm:text-lg font-semibold mobile-btn-lg"
             >
               <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
               <span>Manage My Pockets</span>
@@ -458,7 +422,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
             <p className="text-white/80 mt-2 sm:mt-3 text-xs sm:text-sm">
               View, select, and manage all your existing budget pockets
             </p>
-          </motion.div>
+          </div>
 
           {loadingPockets ? (
             <div className="text-center">
@@ -467,11 +431,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
             </div>
           ) : userPockets.length === 0 ? (
             /* No Pockets - Show Create/Join Form */
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-xl max-w-2xl mx-auto"
-            >
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-xl max-w-2xl mx-auto">
               {/* Mode Toggle */}
               <div className="bg-white/10 rounded-lg p-1 mb-8">
                 <div className="grid grid-cols-2 gap-1">
@@ -513,13 +473,13 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 {mode === 'create' ? (
                   <motion.div
                     key="create"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
                   >
                     <div className="text-center mb-8">
-                      <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                      <div className="w-16 h-16 bg-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                         <Plus className="w-8 h-8 text-white" />
                       </div>
                       <h3 className="text-xl font-semibold text-white mb-2">Create Your Pocket</h3>
@@ -542,7 +502,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                           placeholder="e.g., Family Budget, Trip Fund"
                           maxLength={pocketNameMaxLength}
                           required
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors backdrop-blur-sm"
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors backdrop-blur-sm"
                         />
                         {nameValidationError && (
                           <p className="mt-2 text-sm text-red-300">{nameValidationError}</p>
@@ -564,12 +524,12 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                             />
                             <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                               formData.role === 'provider'
-                                ? 'border-blue-500 bg-blue-500/20'
+                                ? 'border-emerald-500 bg-emerald-500/20'
                                 : 'border-white/20 hover:border-white/30 bg-white/5'
                             }`}>
                               <div className="flex items-center space-x-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  formData.role === 'provider' ? 'bg-blue-600' : 'bg-white/20'
+                                  formData.role === 'provider' ? 'bg-emerald-600' : 'bg-white/20'
                                 }`}>
                                   <CreditCard className="w-5 h-5 text-white" />
                                 </div>
@@ -591,12 +551,12 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                             />
                             <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                               formData.role === 'spender'
-                                ? 'border-blue-500 bg-blue-500/20'
+                                ? 'border-emerald-500 bg-emerald-500/20'
                                 : 'border-white/20 hover:border-white/30 bg-white/5'
                             }`}>
                               <div className="flex items-center space-x-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  formData.role === 'spender' ? 'bg-blue-600' : 'bg-white/20'
+                                  formData.role === 'spender' ? 'bg-emerald-600' : 'bg-white/20'
                                 }`}>
                                   <Wallet className="w-5 h-5 text-white" />
                                 </div>
@@ -613,7 +573,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                       <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                       >
                         {loading ? (
                           <LoadingSpinner size="sm" />
@@ -629,10 +589,10 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 ) : (
                   <motion.div
                     key="join"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
                   >
                     <div className="text-center mb-8">
                       <div className="w-16 h-16 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -743,19 +703,15 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
           ) : (
             /* Existing Pockets - Show Management View */
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
+            <div className="space-y-6">
               {/* Create New Pocket Button */}
               <div className="text-center">
                 <button
                   onClick={() => setMode('create')}
-                  className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg font-medium"
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg font-medium"
                 >
                   <Plus className="w-5 h-5" />
                   <span>Create New Pocket</span>
@@ -764,16 +720,13 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
 
               {/* Existing Pockets Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userPockets.map((pocket, index) => (
-                  <motion.div
+                {userPockets.map((pocket) => (
+                  <div
                     key={pocket.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * index }}
                     className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group"
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                      <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
                         <Wallet className="w-6 h-6 text-white" />
                       </div>
                       <button
@@ -819,16 +772,12 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                     >
                       Select Pocket
                     </button>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
               {mode === 'create' && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-xl max-w-2xl mx-auto"
-                >
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-xl max-w-2xl mx-auto">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold text-white">Create New Pocket</h3>
                     <button
@@ -863,7 +812,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                         placeholder="e.g., Family Budget, Trip Fund"
                         maxLength={pocketNameMaxLength}
                         required
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors backdrop-blur-sm"
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors backdrop-blur-sm"
                       />
                       {nameValidationError && (
                         <p className="mt-2 text-sm text-red-300">{nameValidationError}</p>
@@ -885,7 +834,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                           />
                           <div className={`p-4 rounded-lg border-2 transition-all duration-200 text-center ${
                             formData.role === 'provider'
-                              ? 'border-blue-500 bg-blue-500/20'
+                              ? 'border-emerald-500 bg-emerald-500/20'
                               : 'border-white/20 hover:border-white/30 bg-white/5'
                           }`}>
                             <CreditCard className="w-8 h-8 text-white mx-auto mb-2" />
@@ -904,7 +853,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                           />
                           <div className={`p-4 rounded-lg border-2 transition-all duration-200 text-center ${
                             formData.role === 'spender'
-                              ? 'border-blue-500 bg-blue-500/20'
+                              ? 'border-emerald-500 bg-emerald-500/20'
                               : 'border-white/20 hover:border-white/30 bg-white/5'
                           }`}>
                             <Wallet className="w-8 h-8 text-white mx-auto mb-2" />
@@ -918,7 +867,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                      className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                     >
                       {loading ? (
                         <LoadingSpinner size="sm" />
@@ -930,9 +879,9 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                       )}
                     </button>
                   </form>
-                </motion.div>
+                </div>
               )}
-            </motion.div>
+            </div>
           )}
         </div>
       </div>

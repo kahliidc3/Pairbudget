@@ -82,7 +82,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
       <div className="relative">
         <button
           onClick={onCreateNew}
-          className="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1.5 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-sm md:text-base"
+          className="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1.5 md:py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-300 text-sm md:text-base"
         >
           <Plus className="w-3 h-3 md:w-4 md:h-4" />
           <span className="hidden sm:inline">Create Pocket</span>
@@ -98,7 +98,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
         onClick={() => setShowDropdown(!showDropdown)}
         className="flex items-center space-x-2 md:space-x-3 px-2 md:px-4 py-1.5 md:py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all duration-300 min-w-0 w-full max-w-xs shadow-sm"
       >
-        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
           <Wallet className="w-3 h-3 md:w-4 md:h-4 text-white" />
         </div>
         <div className="flex-1 text-left min-w-0">
@@ -129,7 +129,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
               
               {loading ? (
                 <div className="px-3 py-4 text-center text-slate-500">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600 mx-auto"></div>
                 </div>
               ) : (
                 <div className="space-y-1">
@@ -138,11 +138,11 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
                       key={pocket.id}
                       onClick={() => handlePocketSwitch(pocket)}
                       className={`w-full px-3 py-2 md:py-3 rounded-lg text-left hover:bg-slate-50 transition-colors ${
-                        currentPocket?.id === pocket.id ? 'bg-blue-50 border-l-2 border-blue-600' : ''
+                        currentPocket?.id === pocket.id ? 'bg-emerald-50 border-l-2 border-emerald-600' : ''
                       }`}
                     >
                       <div className="flex items-center space-x-2 md:space-x-3">
-                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
                           <Wallet className="w-3 h-3 md:w-4 md:h-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -172,7 +172,7 @@ const PocketSelector: React.FC<PocketSelectorProps> = ({ onCreateNew }) => {
                     setShowDropdown(false);
                     onCreateNew();
                   }}
-                  className="w-full px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center space-x-2"
+                  className="w-full px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Create New Pocket</span>

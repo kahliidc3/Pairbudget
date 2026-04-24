@@ -51,7 +51,7 @@ const LanguageSelector: React.FC = () => {
         <select
           value={locale}
           onChange={(e) => handleLanguageChange(e.target.value)}
-          className="appearance-none bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors cursor-pointer hover:bg-slate-50"
+          className="appearance-none bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition-colors cursor-pointer hover:bg-slate-50"
         >
           {languages.map((language) => (
             <option key={language.code} value={language.code} className="text-slate-900">

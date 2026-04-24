@@ -43,7 +43,7 @@ const FirebaseStatus: React.FC = () => {
             {/* Setup Steps */}
             <div>
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-blue-600" />
+                <Settings className="h-5 w-5 mr-2 text-emerald-600" />
                 Quick Setup Steps
               </h3>
               <ol className="space-y-4">
@@ -71,7 +71,7 @@ const FirebaseStatus: React.FC = () => {
                   }
                 ].map((step, index) => (
                   <li key={index} className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 mt-0.5">
                       {index + 1}
                     </div>
                     <div className="flex-1">
@@ -82,7 +82,7 @@ const FirebaseStatus: React.FC = () => {
                           href={step.link} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm mt-2 font-medium"
+                          className="inline-flex items-center text-emerald-600 hover:text-emerald-700 text-sm mt-2 font-medium"
                         >
                           Open Firebase Console
                           <ExternalLink className="h-3 w-3 ml-1" />
@@ -106,7 +106,7 @@ const FirebaseStatus: React.FC = () => {
                     icon: Shield,
                     title: "Authentication",
                     description: "Email/Password sign-in for user accounts",
-                    color: "text-blue-600 bg-blue-50"
+                    color: "text-emerald-600 bg-emerald-50"
                   },
                   {
                     icon: Database,
@@ -156,13 +156,13 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef123456`}
 
           {/* Help Links */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-1">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex-1">
               <div className="flex items-start space-x-3">
-                <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-medium text-blue-900 mb-1">Detailed Instructions</h4>
-                  <p className="text-blue-800 text-sm">
-                    Check the <code className="bg-blue-100 px-1 rounded text-xs">FIREBASE_SETUP.md</code> file 
+                  <h4 className="font-medium text-emerald-900 mb-1">Detailed Instructions</h4>
+                  <p className="text-emerald-800 text-sm">
+                    Check the <code className="bg-emerald-100 px-1 rounded text-xs">FIREBASE_SETUP.md</code> file 
                     in your project root for comprehensive setup guidance.
                   </p>
                 </div>

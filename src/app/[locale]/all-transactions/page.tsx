@@ -279,7 +279,7 @@ export default function AllTransactionsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-200 max-w-md w-full mx-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-center font-medium">{tCommon('loading')}</p>
         </div>
       </div>
@@ -300,7 +300,7 @@ export default function AllTransactionsPage() {
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
                 <Receipt className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -314,7 +314,7 @@ export default function AllTransactionsPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`p-2 rounded-xl transition-all duration-200 ${
                   showFilters 
-                    ? 'bg-blue-100 text-blue-600' 
+                    ? 'bg-emerald-100 text-emerald-600' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
                 aria-label={t('toggleFilters')}
@@ -379,7 +379,7 @@ export default function AllTransactionsPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               aria-describedby="transactions-result-count"
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
             />
           </div>
 
@@ -391,7 +391,7 @@ export default function AllTransactionsPage() {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value as 'all' | 'fund' | 'expense')}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
                 >
                   <option value="all">{t('allTypes')}</option>
                   <option value="fund">{t('fundsOnly')}</option>
@@ -404,7 +404,7 @@ export default function AllTransactionsPage() {
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
                 >
                   <option value="all">{t('allCategories')}</option>
                   {EXPENSE_CATEGORIES.map((category) => (
@@ -423,7 +423,7 @@ export default function AllTransactionsPage() {
               </div>
               <button
                 onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-700 transition-colors flex items-center space-x-1"
+                className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors flex items-center space-x-1"
               >
                 <X className="w-4 h-4" />
                 <span>{t('clearFilters')}</span>
@@ -436,7 +436,7 @@ export default function AllTransactionsPage() {
         <div className="space-y-3 lg:space-y-4">
           {loading ? (
             <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
               <p className="text-gray-600 font-medium">{tCommon('loading')}</p>
             </div>
           ) : filteredTransactions.length > 0 ? (
@@ -473,7 +473,7 @@ export default function AllTransactionsPage() {
                 {(searchTerm || filterType !== 'all' || filterCategory !== 'all') && (
                   <button
                     onClick={clearFilters}
-                    className="bg-blue-600 text-white rounded-xl px-6 py-3 hover:bg-blue-700 transition-all duration-200 shadow-sm font-medium flex items-center justify-center space-x-2"
+                    className="bg-emerald-600 text-white rounded-xl px-6 py-3 hover:bg-emerald-700 transition-all duration-200 shadow-sm font-medium flex items-center justify-center space-x-2"
                   >
                     <X className="w-4 h-4" />
                     <span>{t('clearFilters')}</span>
@@ -524,7 +524,7 @@ export default function AllTransactionsPage() {
                   category: event.target.value === 'fund' ? '' : prev.category,
                 }))
               }
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="fund">{t('fund')}</option>
               <option value="expense">{t('expense')}</option>
@@ -537,7 +537,7 @@ export default function AllTransactionsPage() {
               type="text"
               value={editForm.description}
               onChange={(event) => setEditForm((prev) => ({ ...prev, description: event.target.value }))}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -549,7 +549,7 @@ export default function AllTransactionsPage() {
               step="0.01"
               value={editForm.amount}
               onChange={(event) => setEditForm((prev) => ({ ...prev, amount: event.target.value }))}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -559,7 +559,7 @@ export default function AllTransactionsPage() {
               <select
                 value={editForm.category}
                 onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="">{t('allCategories')}</option>
                 {EXPENSE_CATEGORIES.map((category) => (
@@ -582,7 +582,7 @@ export default function AllTransactionsPage() {
             <button
               onClick={handleUpdateTransaction}
               disabled={editLoading}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-all duration-200 font-medium"
+              className="flex-1 py-3 px-4 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition-all duration-200 font-medium"
             >
               {editLoading ? t('updating') : t('saveChanges')}
             </button>

@@ -19,7 +19,7 @@ const WaitingOverlay: React.FC<WaitingOverlayProps> = ({ isVisible, label = 'Ple
       aria-label={label}
     >
       <div className="bg-white border border-gray-200 px-5 py-4 shadow-lg flex items-center gap-3">
-        <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+        <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
         <span className="text-sm font-medium text-gray-800">{label}</span>
       </div>
     </div>

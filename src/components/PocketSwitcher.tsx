@@ -108,7 +108,7 @@ export default function PocketSwitcher() {
                 className="flex items-center justify-between"
               >
                 <span className="truncate">{pocket.name}</span>
-                {isCurrent ? <Check className="h-4 w-4 text-blue-600" /> : null}
+                {isCurrent ? <Check className="h-4 w-4 text-emerald-600" /> : null}
               </DropdownMenuItem>
             );
           })

@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
-import { addTransaction, deleteTransaction, leavePocket, updateTransaction } from '@/services/pocketService';
-import { deleteUserAccountAndData, removePocketFromUser, signOut } from '@/services/authService';
+import { addTransaction, deleteTransaction, getPocket, leavePocket, updateTransaction } from '@/services/pocketService';
+import { deleteUserAccountAndData, removePocketFromUser, signOut, updateUserProfile } from '@/services/authService';
 import { exportUserData } from '@/services/exportService';
 import { formatCurrency, generateInviteLink } from '@/lib/utils';
-import { EXPENSE_CATEGORIES, Transaction } from '@/types';
+import { EXPENSE_CATEGORIES, Pocket, Transaction } from '@/types';
 import MobileHeader from '@/components/ui/MobileHeader';
 import BottomNavigation from '@/components/ui/BottomNavigation';
 import StatCard from '@/components/ui/StatCard';
@@ -21,6 +21,7 @@ import { logger } from '@/lib/logger';
 import { useLoadUserNames } from '@/hooks/useLoadUserNames';
 import { toast } from 'sonner';
 import PocketSwitcher from '@/components/PocketSwitcher';
+import MobilePocketSheet from '@/components/ui/MobilePocketSheet';
 
 import { 
   Activity, 
@@ -51,7 +52,7 @@ const Dashboard: React.FC = () => {
   const tTransactions = useTranslations('transactions');
   const tCommon = useTranslations('common');
   const { user, userProfile, setUserProfile, reset } = useAuthStore();
-  const { currentPocket, transactions, clearPocketData } = usePocketStore();
+  const { currentPocket, transactions, clearPocketData, setCurrentPocket } = usePocketStore();
   
   // Modal states
   const [showTransactionForm, setShowTransactionForm] = useState(false);
@@ -60,7 +61,32 @@ const Dashboard: React.FC = () => {
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false);
   const [showDeleteTransactionModal, setShowDeleteTransactionModal] = useState(false);
-  
+  const [showMobilePocketSheet, setShowMobilePocketSheet] = useState(false);
+
+  // Mobile pocket switcher — load all user pockets
+  const [userPockets, setUserPockets] = useState<Pocket[]>([]);
+  const pocketIds = useMemo(() => userProfile?.pocketIds || [], [userProfile?.pocketIds]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      if (pocketIds.length === 0) { setUserPockets([]); return; }
+      try {
+        const results = await Promise.all(pocketIds.map(id => getPocket(id).catch(() => null)));
+        if (isMounted) setUserPockets(results.filter((p): p is Pocket => p !== null));
+      } catch { /* ignore */ }
+    };
+    load();
+    return () => { isMounted = false; };
+  }, [pocketIds]);
+
+  const handlePocketSwitch = useCallback(async (pocket: Pocket) => {
+    if (!user || !userProfile) return;
+    await updateUserProfile(user.uid, { currentPocketId: pocket.id });
+    setUserProfile({ ...userProfile, currentPocketId: pocket.id });
+    setCurrentPocket(pocket);
+  }, [user, userProfile, setUserProfile, setCurrentPocket]);
+
   // UI states
   const [activeTab, setActiveTab] = useState('home');
   const [transactionLoading, setTransactionLoading] = useState(false);
@@ -333,6 +359,8 @@ const Dashboard: React.FC = () => {
       router.push(`/${locale}/all-transactions`);
     } else if (tab === 'settings') {
       setShowLeavePocketModal(true);
+    } else if (tab === 'pockets') {
+      setShowMobilePocketSheet(true);
     }
   }, [locale, router]);
 
@@ -354,7 +382,7 @@ const Dashboard: React.FC = () => {
         <MobileHeader
           currentPocket={currentPocket}
           userProfile={userProfile}
-          onPocketSelect={() => router.push(`/${locale}/pocket-setup`)}
+          onPocketSelect={() => setShowMobilePocketSheet(true)}
         />
       </div>
 
@@ -364,7 +392,7 @@ const Dashboard: React.FC = () => {
           <div className="w-full px-4 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
                   <Wallet className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -463,10 +491,10 @@ const Dashboard: React.FC = () => {
                   
                   <button
                     onClick={() => router.push(`/${locale}/all-transactions`)}
-                    className="w-full flex items-center space-x-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-200 group"
+                    className="w-full flex items-center space-x-3 p-3 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all duration-200 group"
                   >
-                    <div className="w-10 h-10 bg-blue-100 group-hover:bg-blue-200 rounded-xl flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-gray-900">{tDashboard('quickActions.viewReports')}</p>
@@ -578,10 +606,10 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
                   <div className="flex items-center justify-between mb-1">
-                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                    <TrendingUp className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div className="text-xs font-medium text-gray-600 mb-1">{tDashboard('stats.totalFunded')}</div>
-                  <div className="text-sm font-bold text-blue-600">
+                  <div className="text-sm font-bold text-emerald-600">
                     {formatCurrency(totalFunds, { locale, currency: preferredCurrency })}
                   </div>
                 </div>
@@ -603,7 +631,7 @@ const Dashboard: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-900">{tDashboard('recentTransactions.title')}</h2>
                 <button
                   onClick={() => router.push(`/${locale}/all-transactions`)}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-200"
+                  className="text-emerald-600 hover:text-emerald-700 text-sm font-medium flex items-center space-x-1 hover:bg-emerald-50 px-3 py-2 rounded-lg transition-all duration-200"
                 >
                   <span>{tDashboard('recentTransactions.viewAll')}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -634,7 +662,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-gray-600 mb-6">{tDashboard('recentTransactions.noTransactionsDesc')}</p>
                   <button
                     onClick={() => setShowTransactionForm(true)}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm"
+                    className="bg-emerald-600 text-white px-6 py-3 rounded-xl hover:bg-emerald-700 transition-all duration-200 font-medium shadow-sm"
                   >
                     {tDashboard('recentTransactions.addTransaction')}
                   </button>
@@ -711,6 +739,15 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
+      {/* Mobile Pocket Sheet */}
+      <MobilePocketSheet
+        isOpen={showMobilePocketSheet}
+        onClose={() => setShowMobilePocketSheet(false)}
+        pockets={userPockets}
+        currentPocketId={userProfile?.currentPocketId}
+        onSelect={handlePocketSwitch}
+      />
+
       {/* Transaction Form Modal */}
       <MobileModal
         isOpen={showTransactionForm}
@@ -758,7 +795,7 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
               placeholder="0.00"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
             />
           </div>
 
@@ -774,7 +811,7 @@ const Dashboard: React.FC = () => {
               placeholder={formData.type === 'fund' ? 'Monthly allowance' : 'Grocery shopping'}
               maxLength={descriptionMaxLength}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
             />
             <p className="mt-2 text-xs text-gray-500 text-right">
               {formData.description.length}/{descriptionMaxLength}
@@ -791,7 +828,7 @@ const Dashboard: React.FC = () => {
                 value={formData.category}
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
               >
                 <option value="">Select a category</option>
                 {EXPENSE_CATEGORIES.map((category) => (
@@ -814,7 +851,7 @@ const Dashboard: React.FC = () => {
             <button
               type="submit"
               disabled={transactionLoading}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center space-x-2 text-base"
+              className="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center space-x-2 text-base"
             >
               {transactionLoading ? (
                 <>
@@ -902,7 +939,7 @@ const Dashboard: React.FC = () => {
                   category: event.target.value === 'fund' ? '' : prev.category,
                 }))
               }
-              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
             >
               <option value="fund">{tTransactions('fund')}</option>
               <option value="expense">{tTransactions('expense')}</option>
@@ -916,7 +953,7 @@ const Dashboard: React.FC = () => {
               value={editFormData.description}
               onChange={(event) => setEditFormData((prev) => ({ ...prev, description: event.target.value }))}
               maxLength={descriptionMaxLength}
-              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
             />
             <p className="mt-2 text-xs text-gray-500 text-right">
               {editFormData.description.length}/{descriptionMaxLength}
@@ -931,7 +968,7 @@ const Dashboard: React.FC = () => {
               step="0.01"
               value={editFormData.amount}
               onChange={(event) => setEditFormData((prev) => ({ ...prev, amount: event.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
             />
           </div>
 
@@ -941,7 +978,7 @@ const Dashboard: React.FC = () => {
               <select
                 value={editFormData.category}
                 onChange={(event) => setEditFormData((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
               >
                 <option value="">{tTransactions('allCategories')}</option>
                 {EXPENSE_CATEGORIES.map((category) => (
@@ -964,7 +1001,7 @@ const Dashboard: React.FC = () => {
             <button
               onClick={handleEditTransactionSubmit}
               disabled={editTransactionLoading}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-all duration-200 font-medium"
+              className="flex-1 py-3 px-4 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition-all duration-200 font-medium"
             >
               {editTransactionLoading ? tTransactions('updating') : tTransactions('saveChanges')}
             </button>

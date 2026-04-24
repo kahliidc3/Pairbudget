@@ -289,7 +289,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
 
             {isRecovering ? (
               <div className="text-center">
-                <div className="inline-flex items-center px-6 py-3 bg-blue-50 text-blue-700 rounded-lg border border-blue-200">
+                <div className="inline-flex items-center px-6 py-3 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200">
                   <RefreshCw className="animate-spin w-4 h-4 mr-3" />
                   <span className="font-medium">Recovering...</span>
                 </div>
@@ -298,7 +298,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
               <div className="space-y-3">
                 <button
                   onClick={() => this.handleManualRecovery('cleanup')}
-                  className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                   <span>Retry Connection</span>

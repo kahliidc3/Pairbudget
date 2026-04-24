@@ -37,7 +37,7 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
         </section>
 
         <div className="mt-8">
-          <Link href={`/${locale}`} className="text-sm font-medium text-blue-600 hover:text-blue-700">
+          <Link href={`/${locale}`} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
             {tCommon('back')}
           </Link>
         </div>

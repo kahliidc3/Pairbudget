@@ -74,11 +74,11 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         {currentPocket ? (
           <button
             onClick={onPocketSelect}
-            className="w-full bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-2xl p-4 hover:from-blue-100 hover:to-purple-100 transition-all duration-200"
+            className="w-full bg-gradient-to-r from-emerald-50 to-purple-50 border border-emerald-100 rounded-2xl p-4 hover:from-emerald-100 hover:to-purple-100 transition-all duration-200"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-emerald-600 to-purple-600 rounded-xl flex items-center justify-center">
                   <Wallet className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-left">
