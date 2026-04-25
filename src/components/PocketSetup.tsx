@@ -1,8 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import FocusLock from 'react-focus-lock';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
@@ -11,22 +9,13 @@ import { logger } from '@/lib/logger';
 import { createPocket, deletePocket, getPocket, joinPocket } from '@/services/pocketService';
 import { addPocketToUser, getUserProfile, removePocketFromUser, signOut } from '@/services/authService';
 import { Pocket, UserRole } from '@/types';
-import { formatCurrency, formatDate } from '@/lib/utils';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LanguageSelector from '@/components/LanguageSelector';
-import {
-  AlertCircle,
-  AlertTriangle,
-  Calendar,
-  CreditCard,
-  Home,
-  Plus,
-  Trash2,
-  UserPlus,
-  Users,
-  Wallet,
-  X
-} from 'lucide-react';
+import CreatePocketForm from '@/components/pocket-setup/CreatePocketForm';
+import JoinPocketForm from '@/components/pocket-setup/JoinPocketForm';
+import PocketList from '@/components/pocket-setup/PocketList';
+import DeletePocketModal from '@/components/pocket-setup/DeletePocketModal';
+import { AlertCircle, Home, Plus, UserPlus, Wallet } from 'lucide-react';
 
 interface PocketSetupProps {
   onSuccess?: () => void;
@@ -39,7 +28,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
   const t = useTranslations('pocketSetup');
   const tCommon = useTranslations('common');
   const tNav = useTranslations('navigation');
-  
+
   const [mode, setMode] = useState<'create' | 'join' | 'manage'>('create');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -47,39 +36,10 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
   const [loadingPockets, setLoadingPockets] = useState(true);
   const [deletingPocketId, setDeletingPocketId] = useState<string | null>(null);
   const [confirmDeletePocket, setConfirmDeletePocket] = useState<Pocket | null>(null);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    inviteCode: '',
-    role: 'provider' as UserRole
-  });
-  const [nameValidationError, setNameValidationError] = useState('');
-  const [inviteValidationError, setInviteValidationError] = useState('');
-  
+
   const { user, userProfile, setUserProfile } = useAuthStore();
   const { setCurrentPocket } = usePocketStore();
-  const pocketNameMinLength = 3;
-  const pocketNameMaxLength = 50;
 
-  const normalizeInviteCodeInput = (value: string) => {
-    const compact = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-    return compact.length > 3 ? `${compact.slice(0, 3)}-${compact.slice(3)}` : compact;
-  };
-
-  const getInviteCodeRaw = (value: string) => value.replace(/-/g, '');
-
-  const validatePocketName = (name: string) => {
-    const trimmed = name.trim();
-    if (trimmed.length < pocketNameMinLength) {
-      return `Pocket name must be at least ${pocketNameMinLength} characters.`;
-    }
-    if (trimmed.length > pocketNameMaxLength) {
-      return `Pocket name must be ${pocketNameMaxLength} characters or fewer.`;
-    }
-    return '';
-  };
-
-  // Load user's existing pockets
   useEffect(() => {
     const loadUserPockets = async () => {
       if (!userProfile?.pocketIds || userProfile.pocketIds.length === 0) {
@@ -87,140 +47,21 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
         setLoadingPockets(false);
         return;
       }
-
       setLoadingPockets(true);
       try {
-        const pockets = await Promise.all(
-          userProfile.pocketIds.map(async (pocketId) => {
-            const pocket = await getPocket(pocketId);
-            return pocket;
-          })
-        );
-        
-        // Filter out null values and deleted pockets
-        const validPockets = pockets.filter((pocket): pocket is Pocket => 
-          pocket !== null && !pocket.deleted
-        );
+        const pockets = await Promise.all(userProfile.pocketIds.map(id => getPocket(id)));
+        const validPockets = pockets.filter((p): p is Pocket => p !== null && !p.deleted);
         setUserPockets(validPockets);
-        
-        // If user has pockets but no current pocket is set, show management view
-        if (validPockets.length > 0 && !isModal) {
-          setMode('manage');
-        }
-      } catch (error) {
-        logger.error('Error loading user pockets', { error });
+        if (validPockets.length > 0 && !isModal) setMode('manage');
+      } catch (err) {
+        logger.error('Error loading user pockets', { error: err });
         setUserPockets([]);
       } finally {
         setLoadingPockets(false);
       }
     };
-
     loadUserPockets();
   }, [userProfile?.pocketIds, userProfile?.currentPocketId, isModal]);
-
-  const handleCreatePocket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !userProfile) return;
-    const trimmedName = formData.name.trim();
-    const validationMessage = validatePocketName(trimmedName);
-    if (validationMessage) {
-      setNameValidationError(validationMessage);
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setNameValidationError('');
-
-    try {
-      const pocket = await createPocket(trimmedName, user.uid, formData.role);
-      
-      // Add pocket to user's pocket list and set as current
-      await addPocketToUser(user.uid, pocket.id);
-      const updatedPocketIds = [...(userProfile.pocketIds || []), pocket.id];
-      setUserProfile({ 
-        ...userProfile, 
-        currentPocketId: pocket.id,
-        pocketIds: updatedPocketIds
-      });
-      setCurrentPocket(pocket);
-      
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.push(`/${locale}/dashboard`);
-      }
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to create pocket');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleJoinPocket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !userProfile) return;
-    const inviteCodeRaw = getInviteCodeRaw(formData.inviteCode);
-    if (!/^[A-Z0-9]{6}$/.test(inviteCodeRaw)) {
-      setInviteValidationError('Invite code must be 6 letters or numbers.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setInviteValidationError('');
-
-    try {
-      const pocket = await joinPocket(inviteCodeRaw, user.uid, formData.role);
-      if (!pocket) {
-        throw new Error('Unable to join pocket right now.');
-      }
-      
-      // Add pocket to user's pocket list and set as current
-      await addPocketToUser(user.uid, pocket.id);
-      const updatedPocketIds = [...(userProfile.pocketIds || []), pocket.id];
-      setUserProfile({ 
-        ...userProfile, 
-        currentPocketId: pocket.id,
-        pocketIds: updatedPocketIds
-      });
-      setCurrentPocket(pocket);
-      
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.push(`/${locale}/dashboard`);
-      }
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to join pocket');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSelectPocket = async (pocket: Pocket) => {
-    if (!user || !userProfile) return;
-
-    setLoading(true);
-    try {
-      // Update user's current pocket
-      const updatedProfile = await getUserProfile(user.uid);
-      if (updatedProfile) {
-        setUserProfile({ ...updatedProfile, currentPocketId: pocket.id });
-        setCurrentPocket(pocket);
-        
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push(`/${locale}/dashboard`);
-        }
-      }
-    } catch (error) {
-      logger.error('Error selecting pocket', { error });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
@@ -229,88 +70,122 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
         router.push(`/${locale}/dashboard`);
       }
     };
-
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [locale, router]);
 
-  const handleDeletePocket = async () => {
-    if (!confirmDeletePocket || !user || deleteConfirmText !== 'DELETE') return;
+  const handleCreatePocket = useCallback(async (name: string, role: UserRole) => {
+    if (!user || !userProfile) return;
+    setLoading(true);
+    setError('');
+    try {
+      const pocket = await createPocket(name.trim(), user.uid, role);
+      await addPocketToUser(user.uid, pocket.id);
+      const updatedPocketIds = [...(userProfile.pocketIds || []), pocket.id];
+      setUserProfile({ ...userProfile, currentPocketId: pocket.id, pocketIds: updatedPocketIds });
+      setCurrentPocket(pocket);
+      if (onSuccess) onSuccess();
+      else router.push(`/${locale}/dashboard`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create pocket');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, userProfile, setUserProfile, setCurrentPocket, locale, router, onSuccess]);
 
+  const handleJoinPocket = useCallback(async (code: string, role: UserRole) => {
+    if (!user || !userProfile) return;
+    setLoading(true);
+    setError('');
+    try {
+      const pocket = await joinPocket(code, user.uid, role);
+      if (!pocket) throw new Error('Unable to join pocket right now.');
+      await addPocketToUser(user.uid, pocket.id);
+      const updatedPocketIds = [...(userProfile.pocketIds || []), pocket.id];
+      setUserProfile({ ...userProfile, currentPocketId: pocket.id, pocketIds: updatedPocketIds });
+      setCurrentPocket(pocket);
+      if (onSuccess) onSuccess();
+      else router.push(`/${locale}/dashboard`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to join pocket');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, userProfile, setUserProfile, setCurrentPocket, locale, router, onSuccess]);
+
+  const handleSelectPocket = useCallback(async (pocket: Pocket) => {
+    if (!user || !userProfile) return;
+    setLoading(true);
+    try {
+      const updatedProfile = await getUserProfile(user.uid);
+      if (updatedProfile) {
+        setUserProfile({ ...updatedProfile, currentPocketId: pocket.id });
+        setCurrentPocket(pocket);
+        if (onSuccess) onSuccess();
+        else router.push(`/${locale}/dashboard`);
+      }
+    } catch (err) {
+      logger.error('Error selecting pocket', { error: err });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, userProfile, setUserProfile, setCurrentPocket, locale, router, onSuccess]);
+
+  const handleDeletePocket = useCallback(async () => {
+    if (!confirmDeletePocket || !user) return;
     setDeletingPocketId(confirmDeletePocket.id);
     try {
       await deletePocket(confirmDeletePocket.id, user.uid);
-      
-      // Remove from user's pocket list
       await removePocketFromUser(user.uid, confirmDeletePocket.id);
-      
-      // Update local state
       const updatedPockets = userPockets.filter(p => p.id !== confirmDeletePocket.id);
       setUserPockets(updatedPockets);
-      
-      // Update user profile
       if (userProfile) {
         const updatedPocketIds = userProfile.pocketIds?.filter(id => id !== confirmDeletePocket.id) || [];
         const newCurrentPocketId = updatedPocketIds.length > 0 ? updatedPocketIds[0] : undefined;
-        
-        setUserProfile({
-          ...userProfile,
-          pocketIds: updatedPocketIds,
-          currentPocketId: newCurrentPocketId
-        });
+        setUserProfile({ ...userProfile, pocketIds: updatedPocketIds, currentPocketId: newCurrentPocketId });
       }
-      
       setConfirmDeletePocket(null);
-      setDeleteConfirmText('');
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : t('deleteError'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('deleteError'));
     } finally {
       setDeletingPocketId(null);
     }
-  };
+  }, [confirmDeletePocket, user, userPockets, userProfile, setUserProfile, t]);
 
-  const handleBackToDashboard = () => {
-    if (userPockets.length > 0) {
-      router.push(`/${locale}/dashboard`);
-    }
-  };
+  const handleBackToDashboard = useCallback(() => {
+    if (userPockets.length > 0) router.push(`/${locale}/dashboard`);
+  }, [userPockets.length, locale, router]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       await signOut();
       router.push(`/${locale}`);
-    } catch (error) {
-      logger.error('Error signing out', { error });
+    } catch (err) {
+      logger.error('Error signing out', { error: err });
     }
-  };
+  }, [locale, router]);
 
   if (isModal) {
-    // Keep the existing modal version for backwards compatibility
     return (
       <div className="p-6">
         <div className="max-w-md mx-auto">
-          {/* Mode Toggle */}
           <div className="bg-slate-100 rounded-lg p-1 mb-6">
             <div className="grid grid-cols-2 gap-1">
-                <button
-                  onClick={() => setMode('create')}
-                  disabled={loading}
-                  className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
-                  mode === 'create'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+              <button
+                onClick={() => setMode('create')}
+                disabled={loading}
+                className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
+                  mode === 'create' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Plus className="w-4 h-4" />
                 <span>Create New</span>
               </button>
-                <button
-                  onClick={() => setMode('join')}
-                  disabled={loading}
-                  className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
-                  mode === 'join'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+              <button
+                onClick={() => setMode('join')}
+                disabled={loading}
+                className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
+                  mode === 'join' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <UserPlus className="w-4 h-4" />
@@ -318,34 +193,16 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
               </button>
             </div>
           </div>
-
-          {/* Form Content */}
-          <AnimatePresence mode="wait">
-            {mode === 'create' && (
-              <motion.div
-                key="create"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Plus className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-1">Create Your Pocket</h3>
-                  <p className="text-sm text-slate-600">Set up a new shared expense pocket</p>
-                </div>
-                {/* Rest of the form */}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {mode === 'create' ? (
+            <CreatePocketForm onSubmit={handleCreatePocket} isSubmitting={loading} error={error} />
+          ) : (
+            <JoinPocketForm onSubmit={handleJoinPocket} isSubmitting={loading} error={error} />
+          )}
         </div>
       </div>
     );
   }
 
-  // Full page version with all the new features
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
       {/* Background Shapes */}
@@ -365,7 +222,6 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
               </div>
               <span className="font-bold text-white text-sm sm:text-lg nav-logo truncate">{tNav('pairbudget')}</span>
             </div>
-            
             <div className="flex items-center space-x-1 sm:space-x-4 nav-actions">
               <div className="hidden lg:flex items-center text-sm text-white/80 font-medium mr-2">
                 Welcome, {userProfile?.name || user?.displayName || user?.email?.split('@')[0]}
@@ -396,7 +252,6 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
       {/* Main Content */}
       <div className="min-h-screen flex items-center justify-center px-3 sm:px-4 py-16 sm:py-24 relative z-10 mobile-content">
         <div className="max-w-4xl mx-auto w-full">
-          {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4 mobile-title">
               {userPockets.length === 0 ? t('title') : t('managePockets')}
@@ -406,7 +261,6 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
             </p>
           </div>
 
-          {/* Manage Pockets Button - Always visible */}
           <div className="text-center mb-8 sm:mb-12">
             <button
               onClick={() => setMode('manage')}
@@ -430,18 +284,15 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
               <p className="text-white/90">{tCommon('loading')}</p>
             </div>
           ) : userPockets.length === 0 ? (
-            /* No Pockets - Show Create/Join Form */
+            /* No pockets — create or join */
             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-xl max-w-2xl mx-auto">
-              {/* Mode Toggle */}
               <div className="bg-white/10 rounded-lg p-1 mb-8">
                 <div className="grid grid-cols-2 gap-1">
                   <button
                     onClick={() => setMode('create')}
                     disabled={loading}
                     className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
-                      mode === 'create'
-                        ? 'bg-white/20 text-white shadow-sm'
-                        : 'text-white/90 hover:text-white'
+                      mode === 'create' ? 'bg-white/20 text-white shadow-sm' : 'text-white/90 hover:text-white'
                     }`}
                   >
                     <Plus className="w-4 h-4" />
@@ -451,9 +302,7 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                     onClick={() => setMode('join')}
                     disabled={loading}
                     className={`py-3 px-4 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center space-x-2 ${
-                      mode === 'join'
-                        ? 'bg-white/20 text-white shadow-sm'
-                        : 'text-white/90 hover:text-white'
+                      mode === 'join' ? 'bg-white/20 text-white shadow-sm' : 'text-white/90 hover:text-white'
                     }`}
                   >
                     <UserPlus className="w-4 h-4" />
@@ -469,245 +318,15 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 </div>
               )}
 
-              <AnimatePresence mode="wait">
-                {mode === 'create' ? (
-                  <motion.div
-                    key="create"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <div className="text-center mb-8">
-                      <div className="w-16 h-16 bg-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <Plus className="w-8 h-8 text-white" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Create Your Pocket</h3>
-                      <p className="text-white/90">Set up a new shared expense pocket</p>
-                    </div>
-
-                    <form onSubmit={handleCreatePocket} className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-white/90 mb-3">
-                          Pocket Name
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.name}
-                          onChange={(e) => {
-                            const nextValue = e.target.value;
-                            setFormData({ ...formData, name: nextValue });
-                            setNameValidationError(validatePocketName(nextValue));
-                          }}
-                          placeholder="e.g., Family Budget, Trip Fund"
-                          maxLength={pocketNameMaxLength}
-                          required
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors backdrop-blur-sm"
-                        />
-                        {nameValidationError && (
-                          <p className="mt-2 text-sm text-red-300">{nameValidationError}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-white/90 mb-4">
-                          Your Role
-                        </label>
-                        <div className="space-y-3">
-                          <label className="cursor-pointer">
-                            <input
-                              type="radio"
-                              value="provider"
-                              checked={formData.role === 'provider'}
-                              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                              className="sr-only"
-                            />
-                            <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                              formData.role === 'provider'
-                                ? 'border-emerald-500 bg-emerald-500/20'
-                                : 'border-white/20 hover:border-white/30 bg-white/5'
-                            }`}>
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  formData.role === 'provider' ? 'bg-emerald-600' : 'bg-white/20'
-                                }`}>
-                                  <CreditCard className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-white">Provider</div>
-                                  <div className="text-sm text-white/90">Fund the pocket and manage budget</div>
-                                </div>
-                              </div>
-                            </div>
-                          </label>
-
-                          <label className="cursor-pointer">
-                            <input
-                              type="radio"
-                              value="spender"
-                              checked={formData.role === 'spender'}
-                              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                              className="sr-only"
-                            />
-                            <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                              formData.role === 'spender'
-                                ? 'border-emerald-500 bg-emerald-500/20'
-                                : 'border-white/20 hover:border-white/30 bg-white/5'
-                            }`}>
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  formData.role === 'spender' ? 'bg-emerald-600' : 'bg-white/20'
-                                }`}>
-                                  <Wallet className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-white">Spender</div>
-                                  <div className="text-sm text-white/90">Make purchases and log expenses</div>
-                                </div>
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                      >
-                        {loading ? (
-                          <LoadingSpinner size="sm" />
-                        ) : (
-                          <>
-                            <Plus className="w-5 h-5" />
-                            <span>Create Pocket</span>
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="join"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <div className="text-center mb-8">
-                      <div className="w-16 h-16 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <UserPlus className="w-8 h-8 text-white" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-white mb-2">{t('joinExisting')}</h3>
-                      <p className="text-white/90">{t('enterInviteCode')}</p>
-                    </div>
-
-                    <form onSubmit={handleJoinPocket} className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-white/90 mb-3">
-                          {t('inviteCode')}
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.inviteCode}
-                          onChange={(e) => {
-                            const normalized = normalizeInviteCodeInput(e.target.value);
-                            setFormData({ ...formData, inviteCode: normalized });
-                            setInviteValidationError('');
-                          }}
-                          placeholder="ABC-123"
-                          required
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors backdrop-blur-sm text-center text-lg font-mono tracking-wider"
-                        />
-                        {inviteValidationError && (
-                          <p className="mt-2 text-sm text-red-300">{inviteValidationError}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-white/90 mb-4">
-                          Your Role
-                        </label>
-                        <div className="space-y-3">
-                          <label className="cursor-pointer">
-                            <input
-                              type="radio"
-                              value="provider"
-                              checked={formData.role === 'provider'}
-                              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                              className="sr-only"
-                            />
-                            <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                              formData.role === 'provider'
-                                ? 'border-purple-500 bg-purple-500/20'
-                                : 'border-white/20 hover:border-white/30 bg-white/5'
-                            }`}>
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  formData.role === 'provider' ? 'bg-purple-600' : 'bg-white/20'
-                                }`}>
-                                  <CreditCard className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-white">Provider</div>
-                                  <div className="text-sm text-white/90">Fund the pocket and manage budget</div>
-                                </div>
-                              </div>
-                            </div>
-                          </label>
-
-                          <label className="cursor-pointer">
-                            <input
-                              type="radio"
-                              value="spender"
-                              checked={formData.role === 'spender'}
-                              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                              className="sr-only"
-                            />
-                            <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                              formData.role === 'spender'
-                                ? 'border-purple-500 bg-purple-500/20'
-                                : 'border-white/20 hover:border-white/30 bg-white/5'
-                            }`}>
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  formData.role === 'spender' ? 'bg-purple-600' : 'bg-white/20'
-                                }`}>
-                                  <Wallet className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-white">Spender</div>
-                                  <div className="text-sm text-white/90">Make purchases and log expenses</div>
-                                </div>
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                      >
-                        {loading ? (
-                          <LoadingSpinner size="sm" />
-                        ) : (
-                          <>
-                            <UserPlus className="w-5 h-5" />
-                            <span>Join Pocket</span>
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {mode === 'create' ? (
+                <CreatePocketForm onSubmit={handleCreatePocket} isSubmitting={loading} />
+              ) : (
+                <JoinPocketForm onSubmit={handleJoinPocket} isSubmitting={loading} />
+              )}
             </div>
           ) : (
-            /* Existing Pockets - Show Management View */
+            /* Has pockets — management view */
             <div className="space-y-6">
-              {/* Create New Pocket Button */}
               <div className="text-center">
                 <button
                   onClick={() => setMode('create')}
@@ -718,167 +337,28 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
                 </button>
               </div>
 
-              {/* Existing Pockets Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userPockets.map((pocket) => (
-                  <div
-                    key={pocket.id}
-                    className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
-                        <Wallet className="w-6 h-6 text-white" />
-                      </div>
-                      <button
-                        onClick={() => setConfirmDeletePocket(pocket)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-all"
-                        aria-label={`Delete ${pocket.name}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-white mb-2 truncate">{pocket.name}</h3>
-                    
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center justify-between">
-                        <span className="text-white/90 text-sm">Balance</span>
-                        <span className={`font-medium ${pocket.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {formatCurrency(pocket.balance, { locale, currency: userProfile?.preferredCurrency })}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-white/90 text-sm flex items-center space-x-1">
-                          <Users className="w-3 h-3" />
-                          <span>Members</span>
-                        </span>
-                        <span className="text-white font-medium">{pocket.participants.length}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-white/90 text-sm flex items-center space-x-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>Created</span>
-                        </span>
-                        <span className="text-white/90 text-sm">{formatDate(pocket.createdAt, locale)}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleSelectPocket(pocket)}
-                      disabled={loading}
-                      className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all border border-white/20 hover:border-white/30 font-medium"
-                    >
-                      Select Pocket
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <PocketList
+                pockets={userPockets}
+                onSelect={handleSelectPocket}
+                onDelete={setConfirmDeletePocket}
+                locale={locale}
+                preferredCurrency={userProfile?.preferredCurrency}
+                isLoading={loading}
+              />
 
               {mode === 'create' && (
                 <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-xl max-w-2xl mx-auto">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-white">Create New Pocket</h3>
-                    <button
-                      onClick={() => setMode('manage')}
-                      className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                      aria-label="Close create pocket form"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-
                   {error && (
                     <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-center space-x-3">
                       <AlertCircle className="w-5 h-5 text-red-400" />
                       <span className="text-red-200">{error}</span>
                     </div>
                   )}
-
-                  <form onSubmit={handleCreatePocket} className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-white/90 mb-3">
-                        Pocket Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => {
-                          const nextValue = e.target.value;
-                          setFormData({ ...formData, name: nextValue });
-                          setNameValidationError(validatePocketName(nextValue));
-                        }}
-                        placeholder="e.g., Family Budget, Trip Fund"
-                        maxLength={pocketNameMaxLength}
-                        required
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors backdrop-blur-sm"
-                      />
-                      {nameValidationError && (
-                        <p className="mt-2 text-sm text-red-300">{nameValidationError}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-white/90 mb-4">
-                        Your Role
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <label className="cursor-pointer">
-                          <input
-                            type="radio"
-                            value="provider"
-                            checked={formData.role === 'provider'}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                            className="sr-only"
-                          />
-                          <div className={`p-4 rounded-lg border-2 transition-all duration-200 text-center ${
-                            formData.role === 'provider'
-                              ? 'border-emerald-500 bg-emerald-500/20'
-                              : 'border-white/20 hover:border-white/30 bg-white/5'
-                          }`}>
-                            <CreditCard className="w-8 h-8 text-white mx-auto mb-2" />
-                            <div className="font-medium text-white">Provider</div>
-                            <div className="text-xs text-white/90 mt-1">Fund & manage budget</div>
-                          </div>
-                        </label>
-
-                        <label className="cursor-pointer">
-                          <input
-                            type="radio"
-                            value="spender"
-                            checked={formData.role === 'spender'}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                            className="sr-only"
-                          />
-                          <div className={`p-4 rounded-lg border-2 transition-all duration-200 text-center ${
-                            formData.role === 'spender'
-                              ? 'border-emerald-500 bg-emerald-500/20'
-                              : 'border-white/20 hover:border-white/30 bg-white/5'
-                          }`}>
-                            <Wallet className="w-8 h-8 text-white mx-auto mb-2" />
-                            <div className="font-medium text-white">Spender</div>
-                            <div className="text-xs text-white/90 mt-1">Make purchases & log expenses</div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                    >
-                      {loading ? (
-                        <LoadingSpinner size="sm" />
-                      ) : (
-                        <>
-                          <Plus className="w-5 h-5" />
-                          <span>Create Pocket</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
+                  <CreatePocketForm
+                    onSubmit={handleCreatePocket}
+                    isSubmitting={loading}
+                    onCancel={() => setMode('manage')}
+                  />
                 </div>
               )}
             </div>
@@ -886,77 +366,14 @@ const PocketSetup: React.FC<PocketSetupProps> = ({ onSuccess, isModal = false })
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {confirmDeletePocket && (
-          <FocusLock returnFocus autoFocus>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t('deletePocketConfirm')}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-md w-full shadow-2xl"
-              >
-              <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertTriangle className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{t('deletePocketConfirm')}</h3>
-                <p className="text-white/90 mb-4">{t('deletePocketWarning')}</p>
-                <p className="text-sm text-white/70">{t('deleteConfirmText')}</p>
-              </div>
-
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="DELETE"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors backdrop-blur-sm text-center font-mono"
-                />
-
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => {
-                      setConfirmDeletePocket(null);
-                      setDeleteConfirmText('');
-                    }}
-                    className="flex-1 py-3 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all border border-white/20 hover:border-white/30 font-medium"
-                  >
-                    {tCommon('cancel')}
-                  </button>
-                  <button
-                    onClick={handleDeletePocket}
-                    disabled={deleteConfirmText !== 'DELETE' || deletingPocketId === confirmDeletePocket.id}
-                    className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                  >
-                    {deletingPocketId === confirmDeletePocket.id ? (
-                      <LoadingSpinner size="sm" />
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4" />
-                        <span>{t('deletePocket')}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-              </motion.div>
-            </motion.div>
-          </FocusLock>
-        )}
-      </AnimatePresence>
+      <DeletePocketModal
+        pocket={confirmDeletePocket}
+        onConfirm={handleDeletePocket}
+        onClose={() => setConfirmDeletePocket(null)}
+        isDeleting={deletingPocketId !== null}
+      />
     </div>
   );
 };
 
-export default PocketSetup; 
-
+export default PocketSetup;

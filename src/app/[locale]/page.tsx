@@ -101,7 +101,7 @@ export default function HomePage() {
 
   // Check if Firebase is configured first
   if (!isFirebaseConfigured()) {
-    return <FirebaseStatus />;
+    return process.env.NODE_ENV === 'development' ? <FirebaseStatus /> : null;
   }
 
   if (loading) {
@@ -137,7 +137,7 @@ export default function HomePage() {
   if (!user) {
     return (
       <>
-        <DebugAuthFix />
+        {process.env.NODE_ENV === 'development' && <DebugAuthFix />}
         <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-800">
         {/* Modern Grid Pattern Background */}
         <div className="absolute inset-0 opacity-10">

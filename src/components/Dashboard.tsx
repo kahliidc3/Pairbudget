@@ -6,43 +6,38 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
 import { addTransaction, deleteTransaction, getPocket, leavePocket, updateTransaction } from '@/services/pocketService';
-import { deleteUserAccountAndData, removePocketFromUser, signOut, updateUserProfile } from '@/services/authService';
+import { removePocketFromUser, signOut, updateUserProfile } from '@/services/authService';
 import { exportUserData } from '@/services/exportService';
 import { formatCurrency, generateInviteLink } from '@/lib/utils';
-import { EXPENSE_CATEGORIES, Pocket, Transaction } from '@/types';
+import { Pocket, Transaction } from '@/types';
 import MobileHeader from '@/components/ui/MobileHeader';
 import BottomNavigation from '@/components/ui/BottomNavigation';
 import StatCard from '@/components/ui/StatCard';
 import TransactionCard from '@/components/ui/TransactionCard';
 import QuickActionCard from '@/components/ui/QuickActionCard';
-import MobileModal from '@/components/ui/MobileModal';
 import WaitingOverlay from '@/components/ui/WaitingOverlay';
+import DesktopSidebar from '@/components/dashboard/DesktopSidebar';
+import DesktopHeader from '@/components/dashboard/DesktopHeader';
+import AddTransactionModal from '@/components/dashboard/AddTransactionModal';
+import EditTransactionModal from '@/components/dashboard/EditTransactionModal';
+import DeleteTransactionModal from '@/components/dashboard/DeleteTransactionModal';
+import LeaveModal from '@/components/dashboard/LeaveModal';
+import InviteModal from '@/components/dashboard/InviteModal';
 import { logger } from '@/lib/logger';
 import { useLoadUserNames } from '@/hooks/useLoadUserNames';
 import { toast } from 'sonner';
-import PocketSwitcher from '@/components/PocketSwitcher';
 import MobilePocketSheet from '@/components/ui/MobilePocketSheet';
-
-import { 
-  Activity, 
-  AlertTriangle, 
-  ArrowDownRight, 
+import {
+  Activity,
   ArrowRight,
-  ArrowUpRight,
   BarChart3,
-  Check,
-  Copy,
   DollarSign,
   Download,
-  FileText,
   LogOut,
   Receipt,
-  RefreshCw,
   Settings,
   Share2,
   TrendingUp,
-  UserMinus,
-  Wallet
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -51,19 +46,19 @@ const Dashboard: React.FC = () => {
   const tDashboard = useTranslations('dashboard');
   const tTransactions = useTranslations('transactions');
   const tCommon = useTranslations('common');
-  const { user, userProfile, setUserProfile, reset } = useAuthStore();
+  const { user, userProfile, setUserProfile } = useAuthStore();
   const { currentPocket, transactions, clearPocketData, setCurrentPocket } = usePocketStore();
-  
-  // Modal states
+
+  // Modal visibility
   const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const [transactionInitialType, setTransactionInitialType] = useState<'fund' | 'expense'>('fund');
   const [showInviteCode, setShowInviteCode] = useState(false);
   const [showLeavePocketModal, setShowLeavePocketModal] = useState(false);
-  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false);
   const [showDeleteTransactionModal, setShowDeleteTransactionModal] = useState(false);
   const [showMobilePocketSheet, setShowMobilePocketSheet] = useState(false);
 
-  // Mobile pocket switcher — load all user pockets
+  // Mobile pocket switcher
   const [userPockets, setUserPockets] = useState<Pocket[]>([]);
   const pocketIds = useMemo(() => userProfile?.pocketIds || [], [userProfile?.pocketIds]);
 
@@ -87,227 +82,71 @@ const Dashboard: React.FC = () => {
     setCurrentPocket(pocket);
   }, [user, userProfile, setUserProfile, setCurrentPocket]);
 
-  // UI states
+  // Loading states
   const [activeTab, setActiveTab] = useState('home');
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [leavePocketLoading, setLeavePocketLoading] = useState(false);
-  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
   const [editTransactionLoading, setEditTransactionLoading] = useState(false);
   const [deleteTransactionLoading, setDeleteTransactionLoading] = useState(false);
   const [exportDataLoading, setExportDataLoading] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
-  const [deleteAccountConfirm, setDeleteAccountConfirm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    type: 'fund' as 'fund' | 'expense',
-    category: '',
-    description: '',
-    amount: ''
-  });
-  const [editFormData, setEditFormData] = useState({
-    type: 'expense' as 'fund' | 'expense',
-    category: '',
-    description: '',
-    amount: ''
-  });
-  const descriptionMaxLength = 500;
 
-  // Calculate statistics
-  const totalFunds = transactions
-    .filter(t => t.type === 'fund')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const totalExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-
+  // Statistics
+  const totalFunds = transactions.filter(t => t.type === 'fund').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const currentBalance = totalFunds - totalExpenses;
   const recentTransactions = transactions.slice(0, 3);
   const { userNames } = useLoadUserNames(recentTransactions.map(t => t.userId));
 
-
-
   const userRole = currentPocket?.roles[user?.uid || ''];
   const preferredCurrency = userProfile?.preferredCurrency;
-  const canAddFunds = userRole === 'provider' || userRole === 'spender'; // Both roles can add funds
+  const canAddFunds = userRole === 'provider' || userRole === 'spender';
   const canAddExpenses = userRole === 'spender';
-  const isWaiting =
-    transactionLoading ||
-    leavePocketLoading ||
-    deleteAccountLoading ||
-    exportDataLoading ||
-    editTransactionLoading ||
-    deleteTransactionLoading;
+  const isWaiting = transactionLoading || leavePocketLoading || exportDataLoading || editTransactionLoading || deleteTransactionLoading;
+
   const canManageTransaction = useCallback((transaction: Transaction) => {
     if (!user || !currentPocket) return false;
     const role = currentPocket.roles[user.uid];
     return transaction.userId === user.uid || role === 'provider';
   }, [currentPocket, user]);
 
-  const handleTransactionSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleTransactionSubmit = useCallback(async (data: { type: 'fund' | 'expense'; category: string; description: string; amount: string }) => {
     if (!user || !currentPocket) return;
-
-    const amount = parseFloat(formData.amount);
+    const amount = parseFloat(data.amount);
     if (!amount || amount <= 0) return;
-    if (formData.description.trim().length > descriptionMaxLength) {
+    if (data.description.trim().length > 500) {
       toast.error('Description must be 500 characters or less.');
       return;
     }
-
     setTransactionLoading(true);
     try {
-      await addTransaction(
-        currentPocket.id,
-        user.uid,
-        formData.type,
-        formData.category,
-        formData.description,
-        amount
-      );
-      // Don't manually add to store - let the real-time subscription handle it
+      await addTransaction(currentPocket.id, user.uid, data.type, data.category, data.description, amount);
       setShowTransactionForm(false);
-      setFormData({ type: 'fund', category: '', description: '', amount: '' });
     } catch (error) {
       logger.error('Error adding transaction', { error, context: { pocketId: currentPocket?.id } });
       toast.error('Failed to add transaction. Please try again.');
     } finally {
       setTransactionLoading(false);
     }
-  }, [currentPocket, descriptionMaxLength, formData, user]);
+  }, [currentPocket, user]);
 
-  const copyInviteLink = useCallback(async () => {
-    if (!currentPocket?.inviteCode) return;
-    
-    const link = generateInviteLink(currentPocket.inviteCode, locale);
-    await navigator.clipboard.writeText(link);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
-  }, [currentPocket?.inviteCode, locale]);
-
-  const handleLeavePocket = useCallback(async () => {
-    if (!user || !userProfile || !currentPocket) return;
-
-    setLeavePocketLoading(true);
-    try {
-      logger.debug('Initiating pocket leave for current user.', { context: { pocketId: currentPocket.id } });
-      
-      // Try to leave the pocket
-      await leavePocket(currentPocket.id, user.uid);
-      
-      // Remove pocket from user's pocket list
-      await removePocketFromUser(user.uid, currentPocket.id);
-      
-      // Update local state
-      const updatedPocketIds = (userProfile.pocketIds || []).filter(id => id !== currentPocket.id);
-      const newCurrentPocketId = updatedPocketIds.length > 0 ? updatedPocketIds[0] : undefined;
-      
-      setUserProfile({ 
-        ...userProfile, 
-        pocketIds: updatedPocketIds,
-        currentPocketId: newCurrentPocketId
-      });
-      
-      // Clear local state
-      clearPocketData();
-      
-      logger.info('Successfully left pocket and updated profile.', { context: { pocketId: currentPocket.id } });
-      setShowLeavePocketModal(false);
-      
-    } catch (error) {
-      logger.error('Error leaving pocket', { error, context: { pocketId: currentPocket?.id } });
-      toast.error('Failed to leave pocket. Please try again.');
-    } finally {
-      setLeavePocketLoading(false);
-    }
-  }, [clearPocketData, currentPocket, setUserProfile, user, userProfile]);
-
-  const handleDeleteAccount = useCallback(async () => {
-    if (!user) return;
-
-    setDeleteAccountLoading(true);
-    setDeleteAccountError(null);
-
-    try {
-      await deleteUserAccountAndData();
-      clearPocketData();
-      reset();
-      setDeleteAccountConfirm('');
-      setShowDeleteAccountModal(false);
-      router.replace(`/${locale}`);
-    } catch (error) {
-      logger.error('Error deleting account', { error });
-      setDeleteAccountError(error instanceof Error ? error.message : 'Failed to delete account. Please try again later.');
-      setDeleteAccountLoading(false);
-      return;
-    }
-
-    setDeleteAccountLoading(false);
-  }, [clearPocketData, locale, reset, router, user]);
-
-  const handleSignOut = useCallback(async () => {
-    try {
-      await signOut();
-      router.push(`/${locale}`);
-    } catch (error) {
-      logger.error('Error signing out', { error });
-      toast.error('Failed to sign out. Please try again.');
-    }
-  }, [locale, router]);
-
-  const handleExportData = useCallback(async () => {
-    if (!user) return;
-
-    setExportDataLoading(true);
-    try {
-      await exportUserData(user.uid);
-      toast.success(tDashboard('quickActions.exportDataSuccess'));
-    } catch (error) {
-      logger.error('Error exporting user data', { error, context: { userUid: user.uid } });
-      toast.error(tDashboard('quickActions.exportDataError'));
-    } finally {
-      setExportDataLoading(false);
-    }
-  }, [tDashboard, user]);
-
-  const openEditTransactionModal = useCallback((transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setEditFormData({
-      type: transaction.type,
-      category: transaction.category || '',
-      description: transaction.description,
-      amount: String(transaction.amount),
-    });
-    setShowEditTransactionModal(true);
-  }, []);
-
-  const openDeleteTransactionModal = useCallback((transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setShowDeleteTransactionModal(true);
-  }, []);
-
-  const handleEditTransactionSubmit = useCallback(async () => {
+  const handleEditTransactionSubmit = useCallback(async (data: { type: 'fund' | 'expense'; category: string; description: string; amount: string }) => {
     if (!user || !selectedTransaction) return;
-
-    const amount = Number(editFormData.amount);
-    const description = editFormData.description.trim();
+    const amount = Number(data.amount);
+    const description = data.description.trim();
     if (!Number.isFinite(amount) || amount <= 0 || description.length === 0) {
       toast.error(tTransactions('updateError'));
       return;
     }
-    if (description.length > descriptionMaxLength) {
+    if (description.length > 500) {
       toast.error('Description must be 500 characters or less.');
       return;
     }
-
     setEditTransactionLoading(true);
     try {
       await updateTransaction(selectedTransaction.id, user.uid, {
-        type: editFormData.type,
-        category: editFormData.type === 'fund' ? '' : editFormData.category,
+        type: data.type,
+        category: data.type === 'fund' ? '' : data.category,
         description,
         amount,
       });
@@ -320,11 +159,10 @@ const Dashboard: React.FC = () => {
     } finally {
       setEditTransactionLoading(false);
     }
-  }, [descriptionMaxLength, editFormData, selectedTransaction, tTransactions, user]);
+  }, [selectedTransaction, tTransactions, user]);
 
   const handleDeleteTransaction = useCallback(async () => {
     if (!user || !selectedTransaction) return;
-
     setDeleteTransactionLoading(true);
     try {
       await deleteTransaction(selectedTransaction.id, user.uid);
@@ -339,6 +177,73 @@ const Dashboard: React.FC = () => {
     }
   }, [selectedTransaction, tTransactions, user]);
 
+  const handleLeavePocket = useCallback(async () => {
+    if (!user || !userProfile || !currentPocket) return;
+    setLeavePocketLoading(true);
+    try {
+      logger.debug('Initiating pocket leave for current user.', { context: { pocketId: currentPocket.id } });
+      await leavePocket(currentPocket.id, user.uid);
+      await removePocketFromUser(user.uid, currentPocket.id);
+      const updatedPocketIds = (userProfile.pocketIds || []).filter(id => id !== currentPocket.id);
+      const newCurrentPocketId = updatedPocketIds.length > 0 ? updatedPocketIds[0] : undefined;
+      setUserProfile({ ...userProfile, pocketIds: updatedPocketIds, currentPocketId: newCurrentPocketId });
+      clearPocketData();
+      logger.info('Successfully left pocket and updated profile.', { context: { pocketId: currentPocket.id } });
+      setShowLeavePocketModal(false);
+    } catch (error) {
+      logger.error('Error leaving pocket', { error, context: { pocketId: currentPocket?.id } });
+      toast.error('Failed to leave pocket. Please try again.');
+    } finally {
+      setLeavePocketLoading(false);
+    }
+  }, [clearPocketData, currentPocket, setUserProfile, user, userProfile]);
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOut();
+      router.push(`/${locale}`);
+    } catch (error) {
+      logger.error('Error signing out', { error });
+      toast.error('Failed to sign out. Please try again.');
+    }
+  }, [locale, router]);
+
+  const handleExportData = useCallback(async () => {
+    if (!user) return;
+    setExportDataLoading(true);
+    try {
+      await exportUserData(user.uid);
+      toast.success(tDashboard('quickActions.exportDataSuccess'));
+    } catch (error) {
+      logger.error('Error exporting user data', { error, context: { userUid: user.uid } });
+      toast.error(tDashboard('quickActions.exportDataError'));
+    } finally {
+      setExportDataLoading(false);
+    }
+  }, [tDashboard, user]);
+
+  const openEditTransactionModal = useCallback((transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowEditTransactionModal(true);
+  }, []);
+
+  const openDeleteTransactionModal = useCallback((transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowDeleteTransactionModal(true);
+  }, []);
+
+  const handleAddTransaction = useCallback((type: 'fund' | 'expense') => {
+    setTransactionInitialType(type);
+    setShowTransactionForm(true);
+  }, []);
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'history') router.push(`/${locale}/all-transactions`);
+    else if (tab === 'settings') router.push(`/${locale}/profile`);
+    else if (tab === 'pockets') setShowMobilePocketSheet(true);
+  }, [locale, router]);
+
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
       if (event.altKey && (event.key === 'h' || event.key === 'H')) {
@@ -346,38 +251,15 @@ const Dashboard: React.FC = () => {
         router.push(`/${locale}/dashboard`);
       }
     };
-
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [locale, router]);
 
-
-  // Handle tab changes
-  const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab);
-    if (tab === 'history') {
-      router.push(`/${locale}/all-transactions`);
-    } else if (tab === 'settings') {
-      setShowLeavePocketModal(true);
-    } else if (tab === 'pockets') {
-      setShowMobilePocketSheet(true);
-    }
-  }, [locale, router]);
-
-  // Handle transaction modal
-  const handleAddTransaction = useCallback((type: 'fund' | 'expense') => {
-    setFormData(prev => ({ ...prev, type }));
-    setShowTransactionForm(true);
-  }, []);
-
-  if (!user || !userProfile || !currentPocket) {
-    return null;
-  }
-
+  if (!user || !userProfile || !currentPocket) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header - only show on mobile */}
+      {/* Mobile Header */}
       <div className="lg:hidden">
         <MobileHeader
           currentPocket={currentPocket}
@@ -386,48 +268,17 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Desktop Header - only show on desktop */}
+      {/* Desktop Header */}
       <div className="hidden lg:block">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-          <div className="w-full px-4 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">{currentPocket.name}</h1>
-                  <p className="text-sm text-gray-600">
-                    {userRole === 'provider' ? tDashboard('role.provider') : tDashboard('role.spender')} • {Object.keys(currentPocket.roles).length} {tDashboard('members')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <div className="text-sm text-gray-600 font-medium">
-                  {tDashboard('welcome')}, {userProfile?.name || user?.displayName || user?.email?.split('@')[0]}
-                </div>
-                <PocketSwitcher />
-                <button
-                  onClick={() => setShowInviteCode(true)}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                  title={tDashboard('quickActions.invitePartner')}
-                  aria-label={tDashboard('quickActions.invitePartner')}
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                  title={tCommon('signOut')}
-                  aria-label={tCommon('signOut')}
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+        <DesktopHeader
+          currentPocket={currentPocket}
+          userRole={userRole}
+          userProfile={userProfile}
+          userName={user?.displayName || user?.email?.split('@')[0] || ''}
+          onInvite={() => setShowInviteCode(true)}
+          onProfile={() => router.push(`/${locale}/profile`)}
+          onSignOut={handleSignOut}
+        />
       </div>
 
       {/* Main Content */}
@@ -436,133 +287,24 @@ const Dashboard: React.FC = () => {
           {/* Desktop Sidebar */}
           <div className="hidden lg:block lg:col-span-3">
             <div className="space-y-6">
-              {/* Quick Actions for Desktop */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">{tDashboard('quickActions.title')}</h3>
-                <div className="space-y-3">
-                  {canAddFunds && (
-                    <button
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, type: 'fund' }));
-                        setShowTransactionForm(true);
-                      }}
-                      className="w-full flex items-center space-x-3 p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all duration-200 group"
-                    >
-                      <div className="w-10 h-10 bg-green-100 group-hover:bg-green-200 rounded-xl flex items-center justify-center">
-                        <ArrowUpRight className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-900">{tDashboard('quickActions.addFunds')}</p>
-                        <p className="text-sm text-gray-600">{tDashboard('quickActions.addFundsDesc')}</p>
-                      </div>
-                    </button>
-                  )}
-                  
-                  {canAddExpenses && (
-                    <button
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, type: 'expense' }));
-                        setShowTransactionForm(true);
-                      }}
-                      className="w-full flex items-center space-x-3 p-3 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all duration-200 group"
-                    >
-                      <div className="w-10 h-10 bg-orange-100 group-hover:bg-orange-200 rounded-xl flex items-center justify-center">
-                        <ArrowDownRight className="w-5 h-5 text-orange-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-900">{tDashboard('quickActions.addExpense')}</p>
-                        <p className="text-sm text-gray-600">{tDashboard('quickActions.addExpenseDesc')}</p>
-                      </div>
-                    </button>
-                  )}
-                  
-                  <button
-                    onClick={() => setShowInviteCode(true)}
-                    className="w-full flex items-center space-x-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-xl flex items-center justify-center">
-                      <Share2 className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-900">{tDashboard('quickActions.invitePartner')}</p>
-                      <p className="text-sm text-gray-600">{tDashboard('quickActions.invitePartnerDesc')}</p>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => router.push(`/${locale}/all-transactions`)}
-                    className="w-full flex items-center space-x-3 p-3 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 bg-emerald-100 group-hover:bg-emerald-200 rounded-xl flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-900">{tDashboard('quickActions.viewReports')}</p>
-                      <p className="text-sm text-gray-600">{tDashboard('quickActions.viewReportsDesc')}</p>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => router.push(`/${locale}/pocket-setup`)}
-                    className="w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 bg-gray-100 group-hover:bg-gray-200 rounded-xl flex items-center justify-center">
-                      <Settings className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-900">{tDashboard('quickActions.managePockets')}</p>
-                      <p className="text-sm text-gray-600">{tDashboard('quickActions.managePocketsDesc')}</p>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => setShowLeavePocketModal(true)}
-                    className="w-full flex items-center space-x-3 p-3 bg-red-50 hover:bg-red-100 rounded-xl transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 bg-red-100 group-hover:bg-red-200 rounded-xl flex items-center justify-center">
-                      <LogOut className="w-5 h-5 text-red-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-900">{tDashboard('quickActions.leavePocket')}</p>
-                      <p className="text-sm text-gray-600">{tDashboard('quickActions.leavePocketDesc')}</p>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => setShowDeleteAccountModal(true)}
-                    className="w-full flex items-center space-x-3 p-3 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 bg-orange-100 group-hover:bg-orange-200 rounded-xl flex items-center justify-center">
-                      <AlertTriangle className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-900">{tDashboard('quickActions.deleteAccount')}</p>
-                      <p className="text-sm text-gray-600">{tDashboard('quickActions.deleteAccountDesc')}</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={handleExportData}
-                    disabled={exportDataLoading}
-                    className="w-full flex items-center space-x-3 p-3 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all duration-200 group disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    <div className="w-10 h-10 bg-indigo-100 group-hover:bg-indigo-200 rounded-xl flex items-center justify-center">
-                      <Download className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-900">{tDashboard('quickActions.exportData')}</p>
-                      <p className="text-sm text-gray-600">{tDashboard('quickActions.exportDataDesc')}</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
+              <DesktopSidebar
+                canAddFunds={canAddFunds}
+                canAddExpenses={canAddExpenses}
+                exportDataLoading={exportDataLoading}
+                onAddFunds={() => { setTransactionInitialType('fund'); setShowTransactionForm(true); }}
+                onAddExpense={() => { setTransactionInitialType('expense'); setShowTransactionForm(true); }}
+                onInvite={() => setShowInviteCode(true)}
+                onViewReports={() => router.push(`/${locale}/all-transactions`)}
+                onManagePockets={() => router.push(`/${locale}/pocket-setup`)}
+                onLeavePocket={() => setShowLeavePocketModal(true)}
+                onExportData={handleExportData}
+              />
             </div>
           </div>
 
           {/* Main Content Area */}
           <div className="lg:col-span-9">
-            {/* Desktop KPI Cards - only show on desktop */}
+            {/* Desktop KPI Cards */}
             <div className="hidden lg:block mb-6">
               <div className="grid grid-cols-3 gap-6">
                 <StatCard
@@ -592,7 +334,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Statistics - only show on mobile */}
+            {/* Mobile Statistics */}
             <div className="lg:hidden mb-6">
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
@@ -670,7 +412,7 @@ const Dashboard: React.FC = () => {
               )}
             </div>
 
-            {/* Mobile Quick Actions - only show on mobile */}
+            {/* Mobile Quick Actions */}
             <div className="lg:hidden mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">{tDashboard('quickActions.title')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -714,21 +456,13 @@ const Dashboard: React.FC = () => {
                   onClick={handleExportData}
                   delay={0.5}
                 />
-                <QuickActionCard
-                  title={tDashboard('quickActions.deleteAccount')}
-                  subtitle={tDashboard('quickActions.deleteAccountDesc')}
-                  icon={AlertTriangle}
-                  color="orange"
-                  onClick={() => setShowDeleteAccountModal(true)}
-                  delay={0.6}
-                />
               </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation - only show on mobile */}
+      {/* Mobile Bottom Navigation */}
       <div className="lg:hidden">
         <BottomNavigation
           activeTab={activeTab}
@@ -739,7 +473,6 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Mobile Pocket Sheet */}
       <MobilePocketSheet
         isOpen={showMobilePocketSheet}
         onClose={() => setShowMobilePocketSheet(false)}
@@ -748,428 +481,49 @@ const Dashboard: React.FC = () => {
         onSelect={handlePocketSwitch}
       />
 
-      {/* Transaction Form Modal */}
-      <MobileModal
+      <AddTransactionModal
         isOpen={showTransactionForm}
         onClose={() => setShowTransactionForm(false)}
-        title={formData.type === 'fund' ? 'Add Funds' : 'Record Expense'}
-      >
-        <form onSubmit={handleTransactionSubmit} className="p-4 space-y-4">
-          {/* Transaction Type Toggle */}
-          <div className="bg-gray-100 rounded-xl p-1">
-            <div className="grid grid-cols-2 gap-1">
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: 'fund' }))}
-                className={`py-3 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  formData.type === 'fund'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Add Funds
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: 'expense' }))}
-                className={`py-3 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  formData.type === 'expense'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Record Expense
-              </button>
-            </div>
-          </div>
+        initialType={transactionInitialType}
+        onSubmit={handleTransactionSubmit}
+        isSubmitting={transactionLoading}
+        canAddFunds={canAddFunds}
+        canAddExpenses={canAddExpenses}
+      />
 
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Amount
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              placeholder="0.00"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <input
-              type="text"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder={formData.type === 'fund' ? 'Monthly allowance' : 'Grocery shopping'}
-              maxLength={descriptionMaxLength}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
-            />
-            <p className="mt-2 text-xs text-gray-500 text-right">
-              {formData.description.length}/{descriptionMaxLength}
-            </p>
-          </div>
-
-          {/* Category (for expenses) */}
-          {formData.type === 'expense' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
-              >
-                <option value="">Select a category</option>
-                {EXPENSE_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowTransactionForm(false)}
-              disabled={transactionLoading}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium text-base"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={transactionLoading}
-              className="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center space-x-2 text-base"
-            >
-              {transactionLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Adding...</span>
-                </>
-              ) : (
-                <span>{formData.type === 'fund' ? 'Add Funds' : 'Record Expense'}</span>
-              )}
-            </button>
-          </div>
-        </form>
-      </MobileModal>
-
-      {/* Invite Code Modal */}
-      <MobileModal
+      <InviteModal
         isOpen={showInviteCode}
         onClose={() => setShowInviteCode(false)}
-        title="Invite Partner"
-      >
-        <div className="p-4">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Share2 className="w-8 h-8 text-purple-600" />
-            </div>
-            <p className="text-gray-600">
-              Share this link with your partner to give them access to this pocket
-            </p>
-          </div>
+        inviteCode={currentPocket.inviteCode || ''}
+        inviteLink={generateInviteLink(currentPocket.inviteCode || '', locale)}
+      />
 
-          <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1 mr-3">
-                <p className="text-sm font-medium text-gray-700 mb-1">Invite Link</p>
-                <p className="text-xs text-gray-500 break-all">
-                  {generateInviteLink(currentPocket.inviteCode || '', locale)}
-                </p>
-              </div>
-              <button
-                onClick={copyInviteLink}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-xl transition-all duration-200"
-                aria-label="Copy invite link"
-              >
-                {copySuccess ? (
-                  <Check className="w-5 h-5 text-green-600" />
-                ) : (
-                  <Copy className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-500 mb-4">
-              Invite Code: <span className="font-mono font-bold">{currentPocket.inviteCode}</span>
-            </p>
-            <button
-              onClick={() => setShowInviteCode(false)}
-              className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </MobileModal>
-
-      <MobileModal
+      <EditTransactionModal
         isOpen={showEditTransactionModal}
-        onClose={() => {
-          if (editTransactionLoading) return;
-          setShowEditTransactionModal(false);
-          setSelectedTransaction(null);
-        }}
-        title={tTransactions('editTitle')}
-      >
-        <div className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{tTransactions('filterType')}</label>
-            <select
-              value={editFormData.type}
-              onChange={(event) =>
-                setEditFormData((prev) => ({
-                  ...prev,
-                  type: event.target.value as 'fund' | 'expense',
-                  category: event.target.value === 'fund' ? '' : prev.category,
-                }))
-              }
-              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-            >
-              <option value="fund">{tTransactions('fund')}</option>
-              <option value="expense">{tTransactions('expense')}</option>
-            </select>
-          </div>
+        onClose={() => { setShowEditTransactionModal(false); setSelectedTransaction(null); }}
+        transaction={selectedTransaction}
+        onSubmit={handleEditTransactionSubmit}
+        isSubmitting={editTransactionLoading}
+      />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <input
-              type="text"
-              value={editFormData.description}
-              onChange={(event) => setEditFormData((prev) => ({ ...prev, description: event.target.value }))}
-              maxLength={descriptionMaxLength}
-              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-            />
-            <p className="mt-2 text-xs text-gray-500 text-right">
-              {editFormData.description.length}/{descriptionMaxLength}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={editFormData.amount}
-              onChange={(event) => setEditFormData((prev) => ({ ...prev, amount: event.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-            />
-          </div>
-
-          {editFormData.type === 'expense' ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-              <select
-                value={editFormData.category}
-                onChange={(event) => setEditFormData((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-              >
-                <option value="">{tTransactions('allCategories')}</option>
-                {EXPENSE_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-
-          <div className="flex space-x-3 pt-2">
-            <button
-              onClick={() => setShowEditTransactionModal(false)}
-              disabled={editTransactionLoading}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
-            >
-              {tCommon('cancel')}
-            </button>
-            <button
-              onClick={handleEditTransactionSubmit}
-              disabled={editTransactionLoading}
-              className="flex-1 py-3 px-4 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition-all duration-200 font-medium"
-            >
-              {editTransactionLoading ? tTransactions('updating') : tTransactions('saveChanges')}
-            </button>
-          </div>
-        </div>
-      </MobileModal>
-
-      <MobileModal
+      <DeleteTransactionModal
         isOpen={showDeleteTransactionModal}
-        onClose={() => {
-          if (deleteTransactionLoading) return;
-          setShowDeleteTransactionModal(false);
-          setSelectedTransaction(null);
-        }}
-        title={tTransactions('deleteTitle')}
-      >
-        <div className="p-4 space-y-4">
-          <p className="text-gray-700">{tTransactions('deleteConfirm')}</p>
-          {selectedTransaction ? (
-            <div className="bg-gray-50 border border-gray-200 p-3 text-sm text-gray-700">
-              {selectedTransaction.description}
-            </div>
-          ) : null}
-          <div className="flex space-x-3 pt-2">
-            <button
-              onClick={() => setShowDeleteTransactionModal(false)}
-              disabled={deleteTransactionLoading}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
-            >
-              {tCommon('cancel')}
-            </button>
-            <button
-              onClick={handleDeleteTransaction}
-              disabled={deleteTransactionLoading}
-              className="flex-1 py-3 px-4 bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 transition-all duration-200 font-medium"
-            >
-              {deleteTransactionLoading ? tTransactions('deleting') : tCommon('delete')}
-            </button>
-          </div>
-        </div>
-      </MobileModal>
+        onClose={() => { setShowDeleteTransactionModal(false); setSelectedTransaction(null); }}
+        transaction={selectedTransaction}
+        onConfirm={handleDeleteTransaction}
+        isDeleting={deleteTransactionLoading}
+      />
 
-      {/* Leave Pocket Modal */}
-      <MobileModal
+      <LeaveModal
         isOpen={showLeavePocketModal}
         onClose={() => setShowLeavePocketModal(false)}
-        title="Leave Pocket"
-      >
-        <div className="p-4">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <UserMinus className="w-8 h-8 text-red-600" />
-            </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">
-              Are you sure you want to leave?
-            </h4>
-            <p className="text-gray-600">
-              You will lose access to this pocket and all its transactions. You can rejoin later with an invite link.
-            </p>
-          </div>
-
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setShowLeavePocketModal(false)}
-              disabled={leavePocketLoading}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleLeavePocket}
-              disabled={leavePocketLoading}
-              className="flex-1 py-3 px-4 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center space-x-2"
-            >
-              {leavePocketLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Leaving...</span>
-                </>
-              ) : (
-                <span>Leave Pocket</span>
-              )}
-            </button>
-          </div>
-        </div>
-      </MobileModal>
-
-      {/* Delete Account Modal */}
-      <MobileModal
-        isOpen={showDeleteAccountModal}
-        onClose={() => {
-          if (deleteAccountLoading) return;
-          setShowDeleteAccountModal(false);
-          setDeleteAccountConfirm('');
-          setDeleteAccountError(null);
-        }}
-        title="Delete Account"
-      >
-        <div className="p-4 space-y-5">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-orange-600" />
-            </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">
-              Permanently delete your account?
-            </h4>
-            <p className="text-gray-600 text-sm">
-              This will remove your profile, transactions, and pocket memberships. The action cannot be undone.
-            </p>
-          </div>
-
-          {deleteAccountError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
-              {deleteAccountError}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Type <span className="font-semibold">DELETE</span> to confirm
-            </label>
-            <input
-              type="text"
-              value={deleteAccountConfirm}
-              onChange={(event) => setDeleteAccountConfirm(event.target.value.toUpperCase())}
-              disabled={deleteAccountLoading}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
-              placeholder="DELETE"
-            />
-          </div>
-
-          <div className="flex space-x-3 pt-2">
-            <button
-              onClick={() => {
-                if (deleteAccountLoading) return;
-                setShowDeleteAccountModal(false);
-                setDeleteAccountConfirm('');
-                setDeleteAccountError(null);
-              }}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
-              disabled={deleteAccountLoading}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDeleteAccount}
-              disabled={deleteAccountLoading || deleteAccountConfirm !== 'DELETE'}
-              className="flex-1 py-3 px-4 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center space-x-2"
-            >
-              {deleteAccountLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Deleting...</span>
-                </>
-              ) : (
-                <span>Delete Account</span>
-              )}
-            </button>
-          </div>
-        </div>
-      </MobileModal>
-
-      <WaitingOverlay
-        isVisible={isWaiting}
-        label={tCommon('loading')}
+        onConfirm={handleLeavePocket}
+        isLeaving={leavePocketLoading}
       />
+
+      <WaitingOverlay isVisible={isWaiting} label={tCommon('loading')} />
     </div>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

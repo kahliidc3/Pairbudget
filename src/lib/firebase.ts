@@ -44,7 +44,12 @@ export const performance =
   typeof window !== 'undefined'
     ? (() => {
         try {
-          return getPerformance(app);
+          const perf = getPerformance(app);
+          // Disable automatic instrumentation — Firebase tries to record LCP element
+          // selectors as trace attributes, but Tailwind's colon-prefixed classes
+          // (hover:, lg:, etc.) are invalid Firebase attribute values.
+          perf.instrumentationEnabled = false;
+          return perf;
         } catch (error) {
           logger.warn('Firebase Performance could not be initialized', { error });
           return null;

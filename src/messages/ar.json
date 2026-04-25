@@ -153,6 +153,8 @@
       "viewReportsDesc": "عرض كل المعاملات",
       "managePockets": "إدارة الجيوب",
       "managePocketsDesc": "إنشاء أو إدارة الجيوب",
+      "profile": "الملف الشخصي",
+      "profileDesc": "تعديل الاسم واللغة",
       "leavePocket": "مغادرة الجيب",
       "leavePocketDesc": "الخروج من هذا الجيب",
       "exportData": "تصدير بياناتي",
@@ -312,6 +314,21 @@
       "rightsTitle": "حقوقك",
       "rightsBody": "يمكنك تصدير بياناتك وحذف بيانات الحساب من إعدادات التطبيق."
     }
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "displayName": "الاسم المعروض",
+    "namePlaceholder": "اسمك الكامل",
+    "saveNameBtn": "حفظ الاسم",
+    "language": "اللغة",
+    "saveLanguageBtn": "حفظ اللغة",
+    "successName": "تم تحديث الاسم",
+    "successLanguage": "تم تحديث اللغة",
+    "errorName": "فشل تحديث الاسم",
+    "errorLanguage": "فشل تحديث اللغة",
+    "back": "العودة إلى لوحة التحكم",
+    "nameMinLength": "يجب أن يتكون الاسم من حرفين على الأقل",
+    "nameMaxLength": "يجب ألا يتجاوز الاسم 40 حرفاً"
   },
   "errors": {
     "unexpected": "حدث خطأ غير متوقع.",

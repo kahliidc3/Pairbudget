@@ -153,6 +153,8 @@
       "viewReportsDesc": "See all transactions",
       "managePockets": "Manage Pockets",
       "managePocketsDesc": "Create or manage pockets",
+      "profile": "Profile",
+      "profileDesc": "Edit your name and language",
       "leavePocket": "Leave Pocket",
       "leavePocketDesc": "Exit this pocket",
       "exportData": "Export My Data",
@@ -312,6 +314,21 @@
       "rightsTitle": "Your Rights",
       "rightsBody": "You can request export of your data and delete your account data from within the app settings."
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "displayName": "Display Name",
+    "namePlaceholder": "Your full name",
+    "saveNameBtn": "Save Name",
+    "language": "Language",
+    "saveLanguageBtn": "Save Language",
+    "successName": "Name updated successfully",
+    "successLanguage": "Language updated",
+    "errorName": "Failed to update name",
+    "errorLanguage": "Failed to update language",
+    "back": "Back to Dashboard",
+    "nameMinLength": "Name must be at least 2 characters",
+    "nameMaxLength": "Name must be 40 characters or fewer"
   },
   "errors": {
     "unexpected": "An unexpected error occurred.",

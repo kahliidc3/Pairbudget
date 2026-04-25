@@ -153,6 +153,8 @@
       "viewReportsDesc": "Voir toutes les transactions",
       "managePockets": "Gérer les poches",
       "managePocketsDesc": "Créer ou gérer des poches",
+      "profile": "Profil",
+      "profileDesc": "Modifier votre nom et la langue",
       "leavePocket": "Quitter la poche",
       "leavePocketDesc": "Quitter cette poche",
       "exportData": "Exporter mes données",
@@ -312,6 +314,21 @@
       "rightsTitle": "Vos droits",
       "rightsBody": "Vous pouvez exporter vos données et supprimer votre compte depuis les paramètres de l'application."
     }
+  },
+  "profile": {
+    "title": "Profil",
+    "displayName": "Nom affiché",
+    "namePlaceholder": "Votre nom complet",
+    "saveNameBtn": "Enregistrer le nom",
+    "language": "Langue",
+    "saveLanguageBtn": "Enregistrer la langue",
+    "successName": "Nom mis à jour",
+    "successLanguage": "Langue mise à jour",
+    "errorName": "Échec de la mise à jour du nom",
+    "errorLanguage": "Échec de la mise à jour de la langue",
+    "back": "Retour au tableau de bord",
+    "nameMinLength": "Le nom doit comporter au moins 2 caractères",
+    "nameMaxLength": "Le nom ne doit pas dépasser 40 caractères"
   },
   "errors": {
     "unexpected": "Une erreur inattendue s'est produite.",
