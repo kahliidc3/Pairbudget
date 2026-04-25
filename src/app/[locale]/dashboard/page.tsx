@@ -171,33 +171,25 @@ export default function DashboardPage() {
   const shouldShowLoading = authLoading || 
                            (!initialLoadComplete && userStatus.hasProfile && userStatus.currentPocketId);
 
-  // Show loading only for authenticated users with valid profiles
   if (shouldShowLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center max-w-md w-full mx-4 shadow-sm">
-          <LoadingSpinner 
-            size="lg" 
-            className="mb-6" 
-            showProgress={true}
-            text={authLoading ? 'Authenticating...' : 'Loading your budget...'}
-          />
-          <div className="mt-4 text-sm text-slate-600 font-medium">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <div className="card card-padded" style={{ maxWidth: 420, width: '100%', margin: '0 1rem', textAlign: 'center' }}>
+          <LoadingSpinner size="lg" text={authLoading ? 'Authenticating...' : 'Loading your budget...'} />
+          <p style={{ marginTop: '1rem', fontSize: '.85rem', color: 'var(--text-muted)' }}>
             {authLoading ? 'Verifying your credentials...' : 'Setting up your financial dashboard...'}
-          </div>
+          </p>
         </div>
       </div>
     );
   }
 
-  // Handle unauthenticated users - this should be very brief due to the redirect
   if (!userStatus.isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center max-w-md w-full mx-4 shadow-sm">
-          <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-slate-600 font-medium mb-2">Redirecting...</p>
-          <p className="text-slate-500 text-sm">Taking you back to the login page</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <div className="card card-padded" style={{ maxWidth: 420, width: '100%', margin: '0 1rem', textAlign: 'center' }}>
+          <LoadingSpinner size="lg" text="Redirecting..." />
+          <p style={{ marginTop: '.6rem', fontSize: '.85rem', color: 'var(--text-muted)' }}>Taking you back to the login page</p>
         </div>
       </div>
     );

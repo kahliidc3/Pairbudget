@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Trash2, Users, Wallet } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Pocket } from '@/types';
 
@@ -9,70 +9,69 @@ interface PocketListProps {
   pockets: Pocket[];
   onSelect: (pocket: Pocket) => void;
   onDelete: (pocket: Pocket) => void;
+  onCreate?: () => void;
   locale: string;
   preferredCurrency?: string;
   isLoading: boolean;
 }
 
+const WalletIcon = () => (
+  <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>
+);
+
 const PocketList: React.FC<PocketListProps> = ({
-  pockets,
-  onSelect,
-  onDelete,
-  locale,
-  preferredCurrency,
-  isLoading,
+  pockets, onSelect, onDelete, onCreate, locale, preferredCurrency, isLoading,
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {pockets.map((pocket) => (
-      <div
-        key={pocket.id}
-        className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group"
-      >
-        <div className="flex items-start justify-between mb-4">
-          <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
-            <Wallet className="w-6 h-6 text-white" />
+  <div className="pockets-grid">
+    {pockets.map((pocket) => {
+      const negative = pocket.balance < 0;
+      return (
+        <div key={pocket.id} className="pc">
+          <div className="pc-top">
+            <div className={`pc-ico ${negative ? 'red' : 'green'}`}><WalletIcon /></div>
+            <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
+              <span className={`tag ${negative ? 'tag-red' : 'tag-green'}`}>{negative ? 'Overdrawn' : 'Active'}</span>
+              <button
+                type="button"
+                onClick={() => onDelete(pocket)}
+                className="btn btn-icon btn-ghost"
+                aria-label={`Delete ${pocket.name}`}
+                style={{ border: 'none', background: 'transparent' }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
+          <div className="pc-name">{pocket.name}</div>
+          <div className="pc-bal-l">Balance</div>
+          <div className={`pc-bal ${negative ? 'red' : 'green'}`}>
+            {formatCurrency(pocket.balance, { locale, currency: preferredCurrency })}
+          </div>
+          <div className="pc-meta">
+            <div className="pc-meta-item"><strong>{pocket.participants.length}</strong> members</div>
+            <div className="pc-meta-item">{formatDate(pocket.createdAt, locale)}</div>
+          </div>
+          <hr className="pc-divider" />
           <button
-            onClick={() => onDelete(pocket)}
-            className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-all"
-            aria-label={`Delete ${pocket.name}`}
+            type="button"
+            onClick={() => onSelect(pocket)}
+            disabled={isLoading}
+            className="btn btn-primary"
+            style={{ width: '100%' }}
           >
-            <Trash2 className="w-4 h-4" />
+            Open Dashboard →
           </button>
         </div>
-
-        <h3 className="text-lg font-semibold text-white mb-2 truncate">{pocket.name}</h3>
-
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center justify-between">
-            <span className="text-white/90 text-sm">Balance</span>
-            <span className={`font-medium ${pocket.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {formatCurrency(pocket.balance, { locale, currency: preferredCurrency })}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-white/90 text-sm flex items-center space-x-1">
-              <Users className="w-3 h-3" /><span>Members</span>
-            </span>
-            <span className="text-white font-medium">{pocket.participants.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-white/90 text-sm flex items-center space-x-1">
-              <Calendar className="w-3 h-3" /><span>Created</span>
-            </span>
-            <span className="text-white/90 text-sm">{formatDate(pocket.createdAt, locale)}</span>
-          </div>
+      );
+    })}
+    {onCreate && (
+      <button type="button" className="pc-add" onClick={onCreate}>
+        <div className="pc-add-ico">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
         </div>
-
-        <button
-          onClick={() => onSelect(pocket)}
-          disabled={isLoading}
-          className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all border border-white/20 hover:border-white/30 font-medium disabled:opacity-50"
-        >
-          Select Pocket
-        </button>
-      </div>
-    ))}
+        <span className="pc-add-lbl">New Pocket</span>
+      </button>
+    )}
   </div>
 );
 

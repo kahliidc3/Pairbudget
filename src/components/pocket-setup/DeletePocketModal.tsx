@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import FocusLock from 'react-focus-lock';
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2, X } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useTranslations } from 'next-intl';
 import { Pocket } from '@/types';
@@ -20,69 +19,58 @@ const DeletePocketModal: React.FC<DeletePocketModalProps> = ({ pocket, onConfirm
   const tC = useTranslations('common');
   const [confirmText, setConfirmText] = useState('');
 
-  useEffect(() => {
-    if (!pocket) setConfirmText('');
-  }, [pocket]);
+  useEffect(() => { if (!pocket) setConfirmText(''); }, [pocket]);
+
+  if (!pocket) return null;
 
   const handleClose = () => { setConfirmText(''); onClose(); };
 
   return (
-    <AnimatePresence>
-      {pocket && (
-        <FocusLock returnFocus autoFocus>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            role="dialog"
-            aria-modal="true"
-            aria-label={t('deletePocketConfirm')}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+    <div className="modal-overlay">
+      <FocusLock returnFocus autoFocus>
+        <dialog open className="modal-dialog" aria-modal="true" aria-label={t('deletePocketConfirm')}>
+          <div className="modal-head">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.65rem' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--red-soft)', border: '1px solid var(--red-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={16} style={{ color: 'var(--red)' }} />
+              </div>
+              <span className="modal-title">{t('deletePocketConfirm')}</span>
+            </div>
+            <button type="button" onClick={handleClose} className="modal-close" aria-label={tC('cancel')}>
+              <X size={16} />
+            </button>
+          </div>
+          <div className="modal-body">
+            <p style={{ fontSize: '.875rem', color: 'var(--text-mid)', marginBottom: '.5rem' }}>{t('deletePocketWarning')}</p>
+            <p style={{ fontSize: '.78rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{t('deleteConfirmText')}</p>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="input-base"
+              style={{ textAlign: 'center', fontFamily: 'var(--f-head)', letterSpacing: '.1em' }}
+            />
+          </div>
+          <div className="modal-footer">
+            <button type="button" onClick={handleClose} className="btn btn-ghost">{tC('cancel')}</button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={confirmText !== 'DELETE' || isDeleting}
+              className="btn btn-red-solid"
             >
-              <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertTriangle className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{t('deletePocketConfirm')}</h3>
-                <p className="text-white/90 mb-4">{t('deletePocketWarning')}</p>
-                <p className="text-sm text-white/70">{t('deleteConfirmText')}</p>
-              </div>
-
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={confirmText}
-                  onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder="DELETE"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors backdrop-blur-sm text-center font-mono"
-                />
-                <div className="flex space-x-3">
-                  <button
-                    onClick={handleClose}
-                    className="flex-1 py-3 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all border border-white/20 hover:border-white/30 font-medium"
-                  >
-                    {tC('cancel')}
-                  </button>
-                  <button
-                    onClick={onConfirm}
-                    disabled={confirmText !== 'DELETE' || isDeleting}
-                    className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                  >
-                    {isDeleting ? <LoadingSpinner size="sm" /> : <><Trash2 className="w-4 h-4" /><span>{t('deletePocket')}</span></>}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </FocusLock>
-      )}
-    </AnimatePresence>
+              {isDeleting ? <LoadingSpinner size="sm" /> : (
+                <>
+                  <Trash2 size={14} />
+                  <span>{t('deletePocket')}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </dialog>
+      </FocusLock>
+    </div>
   );
 };
 

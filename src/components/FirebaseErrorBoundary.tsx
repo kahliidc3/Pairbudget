@@ -239,146 +239,104 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       const errorId = error.message?.match(/ID: (ca9|b815)/)?.[1];
       
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-lg w-full">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-6 bg-red-50 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)', padding: '1rem' }}>
+          <div className="card card-padded" style={{ maxWidth: 520, width: '100%', padding: '2.25rem 2rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--red-soft)', border: '1px solid var(--red-border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                <AlertTriangle size={28} style={{ color: 'var(--red)' }} />
               </div>
-              
-              <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                Database Connection Issue
-              </h2>
-              
+              <h2 className="t-head" style={{ fontSize: '1.4rem', marginBottom: '.5rem' }}>Database Connection Issue</h2>
+
               {isInternalAssertion && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-red-800 font-semibold">
-                    Internal Assertion Failure {errorId && `(ID: ${errorId})`}
-                  </p>
-                  <p className="text-xs text-red-600 mt-1">
-                    Subscription state corrupted - automatic recovery in progress
-                  </p>
+                <div className="alert alert-error" style={{ marginBottom: '1rem', textAlign: 'left' }}>
+                  <div>
+                    <p style={{ fontWeight: 700 }}>Internal Assertion Failure {errorId && `(ID: ${errorId})`}</p>
+                    <p style={{ fontSize: '.75rem', marginTop: '.2rem' }}>Subscription state corrupted — automatic recovery in progress</p>
+                  </div>
                 </div>
               )}
-              
-              <p className="text-slate-600 mb-6 leading-relaxed">
-                {isRecovering 
+
+              <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1rem' }}>
+                {isRecovering
                   ? 'Attempting to recover connection...'
-                  : 'We\'re experiencing connectivity issues with the database. Please try one of the recovery options below.'
-                }
+                  : "We're experiencing connectivity issues with the database. Please try one of the recovery options below."}
               </p>
-              
-              {/* Status Indicators */}
-              <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Health Status</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${this.getHealthStateColor(healthState)}`}>
-                      {healthState}
-                    </span>
-                  </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem', fontSize: '.8rem', marginBottom: '.5rem' }}>
+                <div className="card" style={{ padding: '.6rem .75rem', boxShadow: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Health</span>
+                  <span className="tag tag-amber">{healthState}</span>
                 </div>
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Attempts</span>
-                    <span className="text-slate-900 font-semibold">{recoveryAttempts}</span>
-                  </div>
+                <div className="card" style={{ padding: '.6rem .75rem', boxShadow: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Attempts</span>
+                  <strong>{recoveryAttempts}</strong>
                 </div>
               </div>
             </div>
 
             {isRecovering ? (
-              <div className="text-center">
-                <div className="inline-flex items-center px-6 py-3 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200">
-                  <RefreshCw className="animate-spin w-4 h-4 mr-3" />
-                  <span className="font-medium">Recovering...</span>
+              <div style={{ textAlign: 'center' }}>
+                <div className="alert alert-success" style={{ display: 'inline-flex' }}>
+                  <RefreshCw size={14} className="spin" />
+                  <span style={{ fontWeight: 600 }}>Recovering...</span>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                <button
-                  onClick={() => this.handleManualRecovery('cleanup')}
-                  className="w-full flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Retry Connection</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+                <button onClick={() => this.handleManualRecovery('cleanup')} className="btn btn-primary" style={{ width: '100%' }}>
+                  <RefreshCw size={14} /> <span>Retry Connection</span>
                 </button>
-                
-                <button
-                  onClick={() => this.handleManualRecovery('reset')}
-                  className="w-full flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Reset Subscriptions</span>
+                <button onClick={() => this.handleManualRecovery('reset')} className="btn btn-secondary" style={{ width: '100%' }}>
+                  <RotateCcw size={14} /> <span>Reset Subscriptions</span>
                 </button>
-                
-                <button
-                  onClick={() => this.handleManualRecovery('emergency')}
-                  className="w-full flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-                >
-                  <Zap className="w-4 h-4" />
-                  <span>Emergency Reset</span>
+                <button onClick={() => this.handleManualRecovery('emergency')} className="btn btn-red-solid" style={{ width: '100%' }}>
+                  <Zap size={14} /> <span>Emergency Reset</span>
                 </button>
-                
-                <button
-                  onClick={() => this.handleManualRecovery('reload')}
-                  className="w-full flex items-center justify-center space-x-2 bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-                >
-                  <Monitor className="w-4 h-4" />
-                  <span>Reload Page</span>
+                <button onClick={() => this.handleManualRecovery('reload')} className="btn btn-ghost" style={{ width: '100%' }}>
+                  <Monitor size={14} /> <span>Reload Page</span>
                 </button>
-                
-                <button
-                  onClick={this.toggleDiagnostics}
-                  className="w-full flex items-center justify-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-lg transition-colors text-sm border border-slate-200"
-                >
-                  <Activity className="w-4 h-4" />
-                  <span>{showDiagnostics ? 'Hide' : 'Show'} Diagnostics</span>
+                <button onClick={this.toggleDiagnostics} className="btn btn-ghost btn-sm" style={{ width: '100%' }}>
+                  <Activity size={13} /> <span>{showDiagnostics ? 'Hide' : 'Show'} Diagnostics</span>
                 </button>
               </div>
             )}
 
             {showDiagnostics && (
-              <div className="mt-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
-                <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
-                  <Activity className="w-4 h-4 mr-2" />
-                  System Diagnostics
+              <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--r)' }}>
+                <h3 className="t-head" style={{ fontSize: '.95rem', marginBottom: '.85rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                  <Activity size={14} /> System Diagnostics
                 </h3>
-                <div className="space-y-4 text-sm">
-                  <div className="grid grid-cols-2 gap-4">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '.85rem', fontSize: '.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.85rem' }}>
                     <div>
-                      <span className="text-slate-600">Active Subscriptions:</span>
-                      <div className="font-semibold text-slate-900">{subscriptionStats.activeSubscriptions}</div>
+                      <span style={{ color: 'var(--text-muted)' }}>Active Subscriptions:</span>
+                      <div style={{ fontWeight: 700, color: 'var(--text)' }}>{subscriptionStats.activeSubscriptions}</div>
                     </div>
                     <div>
-                      <span className="text-slate-600">Error Count:</span>
-                      <div className="font-semibold text-slate-900">{subscriptionStats.errorCount}</div>
+                      <span style={{ color: 'var(--text-muted)' }}>Error Count:</span>
+                      <div style={{ fontWeight: 700, color: 'var(--text)' }}>{subscriptionStats.errorCount}</div>
                     </div>
                   </div>
-                  
                   <div>
-                    <span className="text-slate-600">Last Success:</span>
-                    <div className="font-semibold text-slate-900">
+                    <span style={{ color: 'var(--text-muted)' }}>Last Success:</span>
+                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>
                       {new Date(subscriptionStats.lastSuccessfulOperation).toLocaleTimeString()}
                     </div>
                   </div>
-                  
                   <div>
-                    <span className="text-slate-600">Time Since Success:</span>
-                    <div className="font-semibold text-slate-900">
+                    <span style={{ color: 'var(--text-muted)' }}>Time Since Success:</span>
+                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>
                       {Math.round(subscriptionStats.timeSinceLastSuccess / 1000)}s
                     </div>
                   </div>
-                  
-                  <div className="pt-4 border-t border-slate-200">
-                    <span className="text-slate-600">Error Details:</span>
-                    <pre className="text-xs bg-white p-3 rounded mt-2 overflow-x-auto border border-slate-200 text-red-600">
+                  <div style={{ paddingTop: '.85rem', borderTop: '1px solid var(--border)' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Error Details:</span>
+                    <pre style={{ fontSize: '.7rem', background: '#fff', padding: '.6rem', borderRadius: 'var(--r-sm)', marginTop: '.4rem', overflowX: 'auto', border: '1px solid var(--border)', color: 'var(--red)' }}>
                       {error.message}
                     </pre>
                   </div>
-                  
-                  <div className="pt-2 text-xs text-slate-500">
-                    Press <kbd className="px-1.5 py-0.5 bg-slate-200 rounded text-xs font-mono">Ctrl+Shift+R</kbd> for emergency reset
+                  <div style={{ fontSize: '.7rem', color: 'var(--text-muted)' }}>
+                    Press <kbd style={{ padding: '.1rem .4rem', background: 'var(--c-100)', borderRadius: 'var(--r-sm)', fontFamily: 'var(--f-head)', fontSize: '.7rem' }}>Ctrl+Shift+R</kbd> for emergency reset
                   </div>
                 </div>
               </div>

@@ -2,15 +2,7 @@
 
 import React from 'react';
 import { useLocale } from 'next-intl';
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Calendar,
-  Pencil,
-  Tag,
-  Trash2,
-  User,
-} from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Transaction } from '@/types';
 
@@ -18,157 +10,70 @@ interface TransactionCardProps {
   transaction: Transaction;
   userName?: string;
   currency?: string;
+  /** @deprecated kept for backwards compat — no longer used */
   delay?: number;
+  /** @deprecated kept for backwards compat — no longer used */
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   showActions?: boolean;
 }
 
-const BASE_CARD = 'relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200';
+const ArrowUp = () => (
+  <svg viewBox="0 0 24 24"><line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" /></svg>
+);
+const ArrowDn = () => (
+  <svg viewBox="0 0 24 24"><line x1="7" y1="7" x2="17" y2="17" /><polyline points="17 7 17 17 7 17" /></svg>
+);
 
-function TransactionIcon({ isFund }: Readonly<{ isFund: boolean }>) {
-  return (
-    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-      isFund ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
-    }`}>
-      {isFund ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
-    </div>
-  );
-}
-
-function ActionButtons({ onEdit }: Readonly<{ onEdit?: () => void }>) {
-  if (!onEdit) return null;
-  return (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onEdit(); }}
-      className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-      aria-label="Edit transaction"
-    >
-      <Pencil className="w-4 h-4" />
-    </button>
-  );
-}
-
-function CardContent({
-  transaction,
-  userName,
-  currency,
-  isFund,
-  showActions,
-  onEdit,
-  onDelete,
-  locale,
-}: Readonly<{
-  transaction: Transaction;
-  userName?: string;
-  currency?: string;
-  isFund: boolean;
-  showActions: boolean;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  locale: string;
-}>) {
-  return (
-    <>
-      {onDelete && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors z-10"
-          aria-label="Delete transaction"
-        >
-          <Trash2 size={15} />
-        </button>
-      )}
-      <div className="flex items-start space-x-3 pr-8">
-        <TransactionIcon isFund={isFund} />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-2">
-            <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-gray-900 text-base truncate">
-                {transaction.description}
-              </h3>
-              {transaction.category && (
-                <div className="flex items-center mt-1">
-                  <Tag className="w-3 h-3 text-gray-400 mr-1" />
-                  <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                    {transaction.category}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="ml-3 flex flex-col items-end gap-2">
-              <div className={`text-lg font-bold ${isFund ? 'text-green-600' : 'text-orange-600'}`}>
-                {isFund ? '+' : '-'}{formatCurrency(transaction.amount, { locale, currency })}
-              </div>
-              {showActions && <ActionButtons onEdit={onEdit} />}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
-            {userName && (
-              <div className="flex items-center space-x-1">
-                <User className="w-3 h-3" />
-                <span className="truncate max-w-[100px]">{userName}</span>
-              </div>
-            )}
-            <div className="flex items-center space-x-1">
-              <Calendar className="w-3 h-3" />
-              <span>{formatDate(transaction.date, locale)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
+const categoryTagClass = (cat?: string): string => {
+  if (!cat) return 'tag-green';
+  const lower = cat.toLowerCase();
+  if (lower.includes('grocer') || lower.includes('food')) return 'tag-green';
+  if (lower.includes('bill') || lower.includes('utility') || lower.includes('rent')) return 'tag-amber';
+  return 'tag-green';
+};
 
 const TransactionCardComponent: React.FC<TransactionCardProps> = ({
-  transaction,
-  userName,
-  currency,
-  delay = 0,
-  onClick,
-  onEdit,
-  onDelete,
-  showActions = false,
+  transaction, userName, currency, onEdit, onDelete, showActions = false,
 }) => {
   const locale = useLocale();
   const isFund = transaction.type === 'fund';
 
-  const content = (
-    <CardContent
-      transaction={transaction}
-      userName={userName}
-      currency={currency}
-      isFund={isFund}
-      showActions={showActions}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      locale={locale}
-    />
-  );
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        data-delay={delay}
-        onClick={onClick}
-        className={`${BASE_CARD} w-full text-left cursor-pointer`}
-      >
-        {content}
-      </button>
-    );
-  }
-
   return (
-    <div data-delay={delay} className={BASE_CARD}>
-      {content}
+    <div className="tx-row">
+      <div className={`tx-dir ${isFund ? 'up' : 'dn'}`}>
+        {isFund ? <ArrowUp /> : <ArrowDn />}
+      </div>
+      <div className="tx-info">
+        <div className="tx-name">{transaction.description}</div>
+        <div className="tx-meta">
+          {transaction.category && (
+            <span className={`tag ${categoryTagClass(transaction.category)}`} style={{ fontSize: '.65rem', padding: '.1rem .4rem' }}>
+              {transaction.category}
+            </span>
+          )}
+          {userName && <span>👤 {userName}</span>}
+          <span>{formatDate(transaction.date, locale)}</span>
+        </div>
+      </div>
+      <div className={`tx-amt ${isFund ? 'up' : 'dn'}`}>
+        {isFund ? '+' : '−'}{formatCurrency(transaction.amount, { locale, currency })}
+      </div>
+      {showActions && (
+        <div className="tx-acts">
+          {onEdit && (
+            <button type="button" onClick={onEdit} className="btn btn-icon btn-ghost btn-sm" aria-label="Edit transaction">
+              <Pencil size={12} />
+            </button>
+          )}
+          {onDelete && (
+            <button type="button" onClick={onDelete} className="btn btn-icon btn-red btn-sm" aria-label="Delete transaction">
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -182,8 +87,6 @@ const propsAreEqual = (prev: TransactionCardProps, next: TransactionCardProps) =
   prev.transaction.date?.getTime?.() === next.transaction.date?.getTime?.() &&
   prev.userName === next.userName &&
   prev.currency === next.currency &&
-  prev.delay === next.delay &&
-  prev.onClick === next.onClick &&
   prev.onEdit === next.onEdit &&
   prev.onDelete === next.onDelete &&
   prev.showActions === next.showActions;

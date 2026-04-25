@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
+import { Trash2 } from 'lucide-react';
 import MobileModal from '@/components/ui/MobileModal';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { Transaction } from '@/types';
 
 interface DeleteTransactionModalProps {
@@ -14,42 +16,31 @@ interface DeleteTransactionModalProps {
 }
 
 const DeleteTransactionModal: React.FC<DeleteTransactionModalProps> = ({
-  isOpen,
-  onClose,
-  transaction,
-  onConfirm,
-  isDeleting,
+  isOpen, onClose, transaction, onConfirm, isDeleting,
 }) => {
   const tT = useTranslations('transactions');
   const tC = useTranslations('common');
 
   return (
-    <MobileModal
-      isOpen={isOpen}
-      onClose={() => { if (!isDeleting) onClose(); }}
-      title={tT('deleteTitle')}
-    >
-      <div className="p-4 space-y-4">
-        <p className="text-gray-700">{tT('deleteConfirm')}</p>
+    <MobileModal isOpen={isOpen} onClose={onClose} title={tT('deleteTitle')}>
+      <div className="modal-body">
+        <p style={{ color: 'var(--text-mid)', marginBottom: '.85rem' }}>{tT('deleteConfirm')}</p>
         {transaction && (
-          <div className="bg-gray-50 border border-gray-200 p-3 text-sm text-gray-700">
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', padding: '.75rem .9rem', borderRadius: 'var(--r)', fontSize: '.875rem', color: 'var(--text-mid)' }}>
             {transaction.description}
           </div>
         )}
-        <div className="flex space-x-3 pt-2">
-          <button
-            onClick={onClose}
-            disabled={isDeleting}
-            className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
-          >
+        <div style={{ display: 'flex', gap: '.6rem', marginTop: '1.25rem' }}>
+          <button type="button" onClick={onClose} disabled={isDeleting} className="btn btn-ghost" style={{ flex: 1 }}>
             {tC('cancel')}
           </button>
-          <button
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="flex-1 py-3 px-4 bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 transition-all duration-200 font-medium"
-          >
-            {isDeleting ? tT('deleting') : tC('delete')}
+          <button type="button" onClick={onConfirm} disabled={isDeleting} className="btn btn-red-solid" style={{ flex: 1 }}>
+            {isDeleting ? <LoadingSpinner size="sm" /> : (
+              <>
+                <Trash2 size={14} />
+                <span>{tC('delete')}</span>
+              </>
+            )}
           </button>
         </div>
       </div>

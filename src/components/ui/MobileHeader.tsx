@@ -1,13 +1,9 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { 
-  Bell, 
-  ChevronDown,
-  Search,
-  Wallet
-} from 'lucide-react';
+import { ChevronDown, User as UserIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Pocket, User } from '@/types';
 
@@ -15,110 +11,51 @@ interface MobileHeaderProps {
   currentPocket: Pocket | null;
   userProfile: User | null;
   onPocketSelect: () => void;
-  onNotifications?: () => void;
-  onSearch?: () => void;
 }
 
-const MobileHeader: React.FC<MobileHeaderProps> = ({
-  currentPocket,
-  userProfile,
-  onPocketSelect,
-  onNotifications,
-  onSearch
-}) => {
+const WalletIcon = () => (
+  <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>
+);
+
+const MobileHeader: React.FC<MobileHeaderProps> = ({ currentPocket, userProfile, onPocketSelect }) => {
   const tDashboard = useTranslations('dashboard');
-  const tCommon = useTranslations('common');
+  const router = useRouter();
   const locale = useLocale();
-  const balance = currentPocket?.balance || 0;
   const userRole = currentPocket?.roles[userProfile?.uid || ''] || '';
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? tCommon('morning') : hour < 18 ? tCommon('afternoon') : tCommon('evening');
-  const userLabel = userProfile?.name || tCommon('user');
 
   return (
-    <div className="bg-white border-b border-gray-100">
-      <div className="px-4 py-4">
-        {/* Top Row: Greeting and Actions */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-sm text-gray-600">{greeting}</p>
-            <p className="font-semibold text-gray-900 truncate max-w-[200px]">
-              {userLabel}
-            </p>
+    <div className="mhead">
+      {currentPocket ? (
+        <button type="button" className="pocket-sel" onClick={onPocketSelect} style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            {onSearch && (
-              <button
-                onClick={onSearch}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            )}
-            {onNotifications && (
-              <button
-                onClick={onNotifications}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200 relative"
-                aria-label="Notifications"
-              >
-                <Bell className="w-5 h-5" />
-                <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></div>
-              </button>
-            )}
+          <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+            <div style={{ fontFamily: 'var(--f-body)', fontSize: '.875rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {currentPocket.name}
+            </div>
+            <div style={{ fontSize: '.68rem', color: 'var(--text-muted)' }}>
+              {tDashboard(`role.${userRole || 'spender'}`)} · {formatCurrency(currentPocket.balance, { locale, currency: userProfile?.preferredCurrency })}
+            </div>
           </div>
-        </div>
-
-        {/* Pocket Selection */}
-        {currentPocket ? (
-          <button
-            onClick={onPocketSelect}
-            className="w-full bg-gradient-to-r from-emerald-50 to-purple-50 border border-emerald-100 rounded-2xl p-4 hover:from-emerald-100 hover:to-purple-100 transition-all duration-200"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-emerald-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-900 text-base truncate max-w-[180px]">
-                    {currentPocket.name}
-                  </p>
-                  <p className="text-sm text-gray-600 capitalize">
-                    {tDashboard(`role.${userRole || 'spender'}`)} • {Object.keys(currentPocket.roles).length} {tDashboard('members')}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="text-right">
-                <p className="text-xs text-gray-500 mb-1">{tDashboard('stats.currentBalance')}</p>
-                <p className={`text-lg font-bold ${
-                  balance >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(Math.abs(balance), { locale, currency: userProfile?.preferredCurrency })}
-                </p>
-              </div>
-            </div>
-          </button>
-        ) : (
-          <button
-            onClick={onPocketSelect}
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 hover:bg-gray-100 transition-all duration-200"
-          >
-            <div className="flex items-center justify-center space-x-3">
-              <div className="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-gray-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">{tDashboard('pocket.noPocketSelected')}</p>
-                <p className="text-sm text-gray-500">{tDashboard('pocket.tapToSelect')}</p>
-              </div>
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            </div>
-          </button>
-        )}
-      </div>
+          <ChevronDown size={14} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+        </button>
+      ) : (
+        <button type="button" className="pocket-sel" onClick={onPocketSelect} style={{ flex: 1 }}>
+          <WalletIcon />
+          <div style={{ flex: 1, textAlign: 'left' }}>
+            <div style={{ fontWeight: 600, color: 'var(--text)' }}>{tDashboard('pocket.noPocketSelected')}</div>
+          </div>
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => router.push(`/${locale}/profile`)}
+        className="btn btn-icon btn-ghost"
+        aria-label="Profile"
+      >
+        <UserIcon size={15} />
+      </button>
     </div>
   );
 };

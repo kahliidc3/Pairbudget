@@ -40,35 +40,30 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm text-center max-w-md w-full mx-auto p-8">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)', padding: '1rem' }}>
+          <div className="card card-padded" style={{ maxWidth: 460, width: '100%', textAlign: 'center', padding: '2.5rem 2rem' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--red-soft)', border: '1px solid var(--red-border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <AlertTriangle size={28} style={{ color: 'var(--red)' }} />
             </div>
-            
-            <h2 className="text-xl font-semibold text-slate-900 mb-3">
-              Something went wrong
-            </h2>
-            
-            <p className="text-slate-600 mb-8 leading-relaxed">
+
+            <h2 className="t-head" style={{ fontSize: '1.25rem', marginBottom: '.6rem' }}>Something went wrong</h2>
+
+            <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.75rem' }}>
               We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
             </p>
-            
-            <button
-              onClick={this.resetError}
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-            >
-              <RefreshCw className="w-4 h-4" />
+
+            <button onClick={this.resetError} className="btn btn-primary">
+              <RefreshCw size={14} />
               <span>Try Again</span>
             </button>
-            
+
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-8 text-left">
-                <summary className="cursor-pointer text-sm text-slate-500 hover:text-slate-700 font-medium mb-3">
+              <details style={{ marginTop: '1.75rem', textAlign: 'left' }}>
+                <summary style={{ cursor: 'pointer', fontSize: '.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                   Error Details (Development)
                 </summary>
-                <div className="mt-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <pre className="text-xs text-red-600 overflow-auto max-h-40 whitespace-pre-wrap">
+                <div style={{ marginTop: '.6rem', padding: '.85rem', background: 'var(--bg2)', borderRadius: 'var(--r)', border: '1px solid var(--border)' }}>
+                  <pre style={{ fontSize: '.7rem', color: 'var(--red)', overflow: 'auto', maxHeight: '160px', whiteSpace: 'pre-wrap' }}>
                     {this.state.error.stack}
                   </pre>
                 </div>

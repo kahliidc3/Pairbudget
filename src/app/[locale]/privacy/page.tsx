@@ -11,34 +11,34 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
   const tCommon = await getTranslations('common');
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-        <p className="mt-2 text-sm text-gray-500">{t('lastUpdated')}</p>
-        <p className="mt-4 text-gray-700">{t('intro')}</p>
+    <main className="min-h-screen" style={{ background: 'var(--bg)', padding: '2.5rem 1.5rem' }}>
+      <div className="card card-padded" style={{ maxWidth: 760, margin: '0 auto' }}>
+        <h1 className="t-display" style={{ fontSize: '1.85rem' }}>{t('title')}</h1>
+        <p style={{ marginTop: '.5rem', fontSize: '.875rem', color: 'var(--text-muted)' }}>{t('lastUpdated')}</p>
+        <p style={{ marginTop: '1rem', color: 'var(--text-mid)', lineHeight: 1.65 }}>{t('intro')}</p>
 
-        <section className="mt-6 space-y-5 text-gray-700">
+        <section style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', color: 'var(--text-mid)' }}>
           <article>
-            <h2 className="font-semibold text-gray-900">{t('dataCollectedTitle')}</h2>
-            <p className="mt-1">{t('dataCollectedBody')}</p>
+            <h2 className="t-head" style={{ fontSize: '1rem', color: 'var(--text)' }}>{t('dataCollectedTitle')}</h2>
+            <p style={{ marginTop: '.4rem', lineHeight: 1.65 }}>{t('dataCollectedBody')}</p>
           </article>
           <article>
-            <h2 className="font-semibold text-gray-900">{t('firebaseTitle')}</h2>
-            <p className="mt-1">{t('firebaseBody')}</p>
+            <h2 className="t-head" style={{ fontSize: '1rem', color: 'var(--text)' }}>{t('firebaseTitle')}</h2>
+            <p style={{ marginTop: '.4rem', lineHeight: 1.65 }}>{t('firebaseBody')}</p>
           </article>
           <article>
-            <h2 className="font-semibold text-gray-900">{t('cookiesTitle')}</h2>
-            <p className="mt-1">{t('cookiesBody')}</p>
+            <h2 className="t-head" style={{ fontSize: '1rem', color: 'var(--text)' }}>{t('cookiesTitle')}</h2>
+            <p style={{ marginTop: '.4rem', lineHeight: 1.65 }}>{t('cookiesBody')}</p>
           </article>
           <article>
-            <h2 className="font-semibold text-gray-900">{t('rightsTitle')}</h2>
-            <p className="mt-1">{t('rightsBody')}</p>
+            <h2 className="t-head" style={{ fontSize: '1rem', color: 'var(--text)' }}>{t('rightsTitle')}</h2>
+            <p style={{ marginTop: '.4rem', lineHeight: 1.65 }}>{t('rightsBody')}</p>
           </article>
         </section>
 
-        <div className="mt-8">
-          <Link href={`/${locale}`} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
-            {tCommon('back')}
+        <div style={{ marginTop: '2rem' }}>
+          <Link href={`/${locale}`} className="btn btn-ghost btn-sm">
+            ← {tCommon('back')}
           </Link>
         </div>
       </div>

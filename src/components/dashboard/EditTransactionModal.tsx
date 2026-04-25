@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import MobileModal from '@/components/ui/MobileModal';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { EXPENSE_CATEGORIES, Transaction } from '@/types';
 
 interface EditFormData {
@@ -23,20 +24,13 @@ interface EditTransactionModalProps {
 const DESCRIPTION_MAX = 500;
 
 const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
-  isOpen,
-  onClose,
-  transaction,
-  onSubmit,
-  isSubmitting,
+  isOpen, onClose, transaction, onSubmit, isSubmitting,
 }) => {
   const tT = useTranslations('transactions');
   const tC = useTranslations('common');
 
   const [formData, setFormData] = useState<EditFormData>({
-    type: 'expense',
-    category: '',
-    description: '',
-    amount: '',
+    type: 'expense', category: '', description: '', amount: '',
   });
 
   useEffect(() => {
@@ -50,87 +44,72 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
     }
   }, [transaction]);
 
-  const handleSave = async () => {
-    await onSubmit(formData);
-  };
+  const handleSave = async () => { await onSubmit(formData); };
 
   return (
-    <MobileModal
-      isOpen={isOpen}
-      onClose={() => { if (!isSubmitting) onClose(); }}
-      title={tT('editTitle')}
-    >
-      <div className="p-4 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">{tT('filterType')}</label>
+    <MobileModal isOpen={isOpen} onClose={onClose} title={tT('editTitle')}>
+      <div className="modal-body">
+        <div className="field">
+          <label htmlFor="edit-type" className="field-label">{tT('filterType')}</label>
           <select
+            id="edit-type"
             value={formData.type}
-            onChange={(e) =>
-              setFormData(prev => ({
-                ...prev,
-                type: e.target.value as 'fund' | 'expense',
-                category: e.target.value === 'fund' ? '' : prev.category,
-              }))
-            }
-            className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              type: e.target.value as 'fund' | 'expense',
+              category: e.target.value === 'fund' ? '' : prev.category,
+            }))}
+            className="input-base"
           >
             <option value="fund">{tT('fund')}</option>
             <option value="expense">{tT('expense')}</option>
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <div className="field">
+          <label htmlFor="edit-desc" className="field-label">Description</label>
           <input
-            type="text"
+            id="edit-desc" type="text" maxLength={DESCRIPTION_MAX}
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            maxLength={DESCRIPTION_MAX}
-            className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+            className="input-base"
           />
-          <p className="mt-2 text-xs text-gray-500 text-right">{formData.description.length}/{DESCRIPTION_MAX}</p>
+          <p style={{ marginTop: '.4rem', fontSize: '.7rem', color: 'var(--text-faint)', textAlign: 'right' }}>
+            {formData.description.length}/{DESCRIPTION_MAX}
+          </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+        <div className="field">
+          <label htmlFor="edit-amount" className="field-label">Amount</label>
           <input
-            type="number"
-            min="0"
-            step="0.01"
+            id="edit-amount" type="number" min="0" step="0.01"
             value={formData.amount}
             onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-            className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+            className="input-base"
           />
         </div>
 
         {formData.type === 'expense' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <div className="field">
+            <label htmlFor="edit-cat" className="field-label">Category</label>
             <select
+              id="edit-cat"
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+              className="input-base"
             >
               <option value="">{tT('allCategories')}</option>
-              {EXPENSE_CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+              {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         )}
 
-        <div className="flex space-x-3 pt-2">
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
-          >
+        <div style={{ display: 'flex', gap: '.6rem', marginTop: '.5rem' }}>
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="btn btn-ghost" style={{ flex: 1 }}>
             {tC('cancel')}
           </button>
-          <button
-            onClick={handleSave}
-            disabled={isSubmitting}
-            className="flex-1 py-3 px-4 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition-all duration-200 font-medium"
-          >
-            {isSubmitting ? tT('updating') : tT('saveChanges')}
+          <button type="button" onClick={handleSave} disabled={isSubmitting} className="btn btn-primary" style={{ flex: 1 }}>
+            {isSubmitting ? <LoadingSpinner size="sm" /> : tT('saveChanges')}
           </button>
         </div>
       </div>

@@ -22,43 +22,33 @@ const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, inviteCode, 
 
   return (
     <MobileModal isOpen={isOpen} onClose={onClose} title="Invite Partner">
-      <div className="p-4">
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Share2 className="w-8 h-8 text-purple-600" />
+      <div className="modal-body">
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--primary-soft)', border: '1px solid var(--v-200)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '.85rem' }}>
+            <Share2 size={26} style={{ color: 'var(--primary)' }} />
           </div>
-          <p className="text-gray-600">
-            Share this link with your partner to give them access to this pocket
+          <p style={{ color: 'var(--text-muted)', fontSize: '.9rem', lineHeight: 1.5 }}>
+            Share this link with your partner so they can join the pocket.
           </p>
         </div>
 
-        <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1 mr-3">
-              <p className="text-sm font-medium text-gray-700 mb-1">Invite Link</p>
-              <p className="text-xs text-gray-500 break-all">{inviteLink}</p>
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--r)', padding: '.85rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '.6rem' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="field-label" style={{ marginBottom: '.2rem' }}>Invite Link</div>
+              <div style={{ fontSize: '.72rem', color: 'var(--text-mid)', wordBreak: 'break-all' }}>{inviteLink}</div>
             </div>
-            <button
-              onClick={handleCopy}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-xl transition-all duration-200"
-              aria-label="Copy invite link"
-            >
-              {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+            <button type="button" onClick={handleCopy} className="btn btn-icon btn-ghost" aria-label="Copy invite link">
+              {copied ? <Check size={15} style={{ color: 'var(--primary)' }} /> : <Copy size={15} />}
             </button>
           </div>
         </div>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-500 mb-4">
-            Invite Code: <span className="font-mono font-bold">{inviteCode}</span>
-          </p>
-          <button
-            onClick={onClose}
-            className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
-          >
-            Close
-          </button>
+        <div style={{ textAlign: 'center', fontSize: '.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          Invite Code: <span style={{ fontFamily: 'var(--f-head)', fontWeight: 700, color: 'var(--text)', letterSpacing: '.05em' }}>{inviteCode}</span>
         </div>
+
+        <button type="button" onClick={onClose} className="btn btn-ghost" style={{ width: '100%' }}>Close</button>
       </div>
     </MobileModal>
   );

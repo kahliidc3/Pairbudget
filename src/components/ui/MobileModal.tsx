@@ -9,58 +9,44 @@ interface MobileModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  /** @deprecated kept for backwards compat — modal is responsive by default */
   fullScreen?: boolean;
   showCloseButton?: boolean;
 }
 
 const MobileModal: React.FC<MobileModalProps> = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-  fullScreen = false,
-  showCloseButton = true
+  isOpen, onClose, title, children, showCloseButton = true,
 }) => {
   if (!isOpen) return null;
 
   return (
-    <FocusLock returnFocus autoFocus>
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
-        onClick={onClose}
-      >
-        <div
-          className={`bg-white shadow-xl max-w-md w-full mx-4 overflow-hidden ${
-            fullScreen
-              ? 'fixed inset-0 sm:relative sm:inset-auto sm:rounded-2xl sm:max-h-[90vh]'
-              : 'rounded-t-2xl sm:rounded-2xl max-h-[90vh]'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+    >
+      <FocusLock returnFocus autoFocus>
+        <dialog
+          open
+          className="modal-dialog"
           aria-modal="true"
           aria-label={title}
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <div className="modal-head">
+            <span className="modal-title">{title}</span>
             {showCloseButton && (
-              <button
-                onClick={onClose}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                aria-label="Close dialog"
-              >
-                <X className="w-5 h-5" />
+              <button type="button" onClick={onClose} className="modal-close" aria-label="Close dialog">
+                <X size={16} />
               </button>
             )}
           </div>
-
-          {/* Content */}
-          <div className="overflow-y-auto flex-1">
+          <div style={{ overflowY: 'auto', maxHeight: 'calc(80vh - 60px)' }}>
             {children}
           </div>
-        </div>
-      </div>
-    </FocusLock>
+        </dialog>
+      </FocusLock>
+    </div>
   );
 };
 

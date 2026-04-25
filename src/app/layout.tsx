@@ -1,21 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import AppToaster from '@/components/AppToaster';
 import FirebaseErrorBoundary from '@/components/FirebaseErrorBoundary';
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  weight: ['300', '400', '500', '600', '700'],
-  display: 'swap',
-  variable: '--font-inter',
-});
-
 export const metadata: Metadata = {
-  title: "PairBudget - Expense Tracking for Two",
-  description: "Simple expense tracking and budget management for couples and partners.",
+  title: "PairBudget — Shared Expense Tracking for Two",
+  description: "Real-time, role-based budget tracking for couples and partners.",
   keywords: "expense tracking, budget management, shared expenses, family budget, couples finance",
-  authors: [{ name: "PairBudget Team" }],
+  authors: [{ name: "PairBudget" }],
 };
 
 export const viewport: Viewport = {
@@ -25,7 +17,7 @@ export const viewport: Viewport = {
   minimumScale: 1,
   userScalable: true,
   viewportFit: "cover",
-  themeColor: "#0f172a",
+  themeColor: "#2d6a4f",
 };
 
 export default function RootLayout({
@@ -34,12 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className={`scroll-smooth ${inter.variable}`} lang="en">
-      <body className={`${inter.className} font-sans antialiased bg-slate-50 text-slate-900`}>
+    <html className="scroll-smooth" lang="en">
+      <body>
         <FirebaseErrorBoundary>
-          <main className="min-h-screen">
-            {children}
-          </main>
+          <main>{children}</main>
           <AppToaster />
         </FirebaseErrorBoundary>
       </body>

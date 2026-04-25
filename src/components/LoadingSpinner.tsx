@@ -6,60 +6,29 @@ interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   text?: string;
+  /** @deprecated kept for backwards compat */
   showProgress?: boolean;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  size = 'md', 
-  className = '',
-  text,
-  showProgress = false
-}) => {
-  const getSizeClasses = () => {
-    switch (size) {
-      case 'sm':
-        return 'h-4 w-4';
-      case 'lg':
-        return 'h-12 w-12';
-      default:
-        return 'h-8 w-8';
-    }
-  };
+const SIZE_PX: Record<string, number> = { sm: 16, md: 28, lg: 44 };
+const BORDER_WIDTH: Record<string, number> = { sm: 2, md: 2.5, lg: 3.5 };
 
-  const getBorderWidth = () => {
-    switch (size) {
-      case 'sm':
-        return 'border-2';
-      case 'lg':
-        return 'border-4';
-      default:
-        return 'border-2';
-    }
-  };
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', className = '', text }) => {
+  const px = SIZE_PX[size];
+  const bw = BORDER_WIDTH[size];
 
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
-      <div className="relative">
-        {/* Main spinner */}
-        <div 
-          className={`${getSizeClasses()} ${getBorderWidth()} border-slate-200 border-t-emerald-600 rounded-full animate-spin`}
-          style={{ animationDuration: '0.8s' }}
-        />
-        
-        {/* Optional progress ring */}
-        {showProgress && (
-          <div 
-            className={`${getSizeClasses()} ${getBorderWidth()} absolute inset-0 border-transparent border-t-slate-400 rounded-full animate-spin opacity-50`}
-            style={{ animationDuration: '1.2s', animationDirection: 'reverse' }}
-          />
-        )}
-      </div>
-      
+      <div
+        className="spinner-circle"
+        style={{
+          width: px,
+          height: px,
+          borderWidth: bw,
+        }}
+      />
       {text && (
-        <p className={`mt-3 text-slate-600 animate-pulse ${
-          size === 'sm' ? 'text-sm' : 
-          size === 'lg' ? 'text-lg' : 'text-base'
-        }`}>
+        <p style={{ marginTop: '.75rem', color: 'var(--text-muted)', fontSize: size === 'sm' ? '.8rem' : '.9rem' }}>
           {text}
         </p>
       )}
@@ -67,4 +36,4 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   );
 };
 
-export default LoadingSpinner; 
+export default LoadingSpinner;

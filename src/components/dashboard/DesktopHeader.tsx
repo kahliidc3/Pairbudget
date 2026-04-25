@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
-import { LogOut, Share2, User, Wallet } from 'lucide-react';
-import PocketSwitcher from '@/components/PocketSwitcher';
+import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { ChevronDown, LogOut, Share2, User as UserIcon } from 'lucide-react';
+import LanguageSelector from '@/components/LanguageSelector';
 import { Pocket, User as UserProfile } from '@/types';
 
 interface DesktopHeaderProps {
@@ -14,68 +15,65 @@ interface DesktopHeaderProps {
   onInvite: () => void;
   onProfile: () => void;
   onSignOut: () => void;
+  onPocketSwitcher?: () => void;
 }
 
+const LogoMark = () => (
+  <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+);
+
 const DesktopHeader: React.FC<DesktopHeaderProps> = ({
-  currentPocket,
-  userRole,
-  userProfile,
-  userName,
-  onInvite,
-  onProfile,
-  onSignOut,
+  currentPocket, userRole, userProfile, userName, onInvite, onProfile, onSignOut, onPocketSwitcher,
 }) => {
+  const router = useRouter();
+  const locale = useLocale();
   const tDashboard = useTranslations('dashboard');
   const tCommon = useTranslations('common');
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="w-full px-4 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{currentPocket.name}</h1>
-              <p className="text-sm text-gray-600">
-                {userRole === 'provider' ? tDashboard('role.provider') : tDashboard('role.spender')} • {Object.keys(currentPocket.roles).length} {tDashboard('members')}
-              </p>
-            </div>
+    <nav className="nav">
+      <button type="button" className="nav-logo" onClick={() => router.push(`/${locale}`)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+        <div className="nav-mark"><LogoMark /></div>
+        <span className="nav-name">PairBudget</span>
+      </button>
+
+      <button
+        type="button"
+        className="pocket-sel"
+        onClick={onPocketSwitcher ?? (() => router.push(`/${locale}/pocket-setup`))}
+        style={{ marginLeft: '.5rem' }}
+      >
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2">
+          <rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" />
+        </svg>
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ fontFamily: 'var(--f-body)', fontSize: '.875rem', fontWeight: 700, color: 'var(--text)' }}>
+            {currentPocket.name}
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600 font-medium">
-              {tDashboard('welcome')}, {userProfile.name || userName}
-            </div>
-            <PocketSwitcher />
-            <button
-              onClick={onInvite}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
-              title={tDashboard('quickActions.invitePartner')}
-              aria-label={tDashboard('quickActions.invitePartner')}
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
-            <button
-              onClick={onProfile}
-              className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200"
-              title={tDashboard('quickActions.profile')}
-              aria-label={tDashboard('quickActions.profile')}
-            >
-              <User className="w-5 h-5" />
-            </button>
-            <button
-              onClick={onSignOut}
-              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-              title={tCommon('signOut')}
-              aria-label={tCommon('signOut')}
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+          <div style={{ fontSize: '.68rem', color: 'var(--text-muted)' }}>
+            {userRole === 'provider' ? tDashboard('role.provider') : tDashboard('role.spender')} · {Object.keys(currentPocket.roles).length} {tDashboard('members')}
           </div>
         </div>
+        <ChevronDown size={13} style={{ color: 'var(--text-faint)' }} />
+      </button>
+
+      <div className="nav-spacer" />
+
+      <div className="nav-right">
+        <span className="nav-user"><strong>{userProfile.name || userName}</strong></span>
+        <LanguageSelector />
+        <button type="button" onClick={onInvite} className="btn btn-icon btn-ghost" title={tDashboard('quickActions.invitePartner')} aria-label={tDashboard('quickActions.invitePartner')}>
+          <Share2 size={15} />
+        </button>
+        <button type="button" onClick={onProfile} className="btn btn-icon btn-ghost" title={tDashboard('quickActions.profile')} aria-label={tDashboard('quickActions.profile')}>
+          <UserIcon size={15} />
+        </button>
+        <button type="button" onClick={onSignOut} className="btn btn-ghost btn-sm">
+          <LogOut size={14} />
+          {tCommon('signOut')}
+        </button>
       </div>
-    </header>
+    </nav>
   );
 };
 

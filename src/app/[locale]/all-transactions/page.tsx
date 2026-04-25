@@ -9,23 +9,16 @@ import { usePocketStore } from '@/store/pocketStore';
 import { deleteTransaction, fetchTransactionsPage, updateTransaction } from '@/services/pocketService';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { logger } from '@/lib/logger';
-import { EXPENSE_CATEGORIES } from '@/types';
+import { EXPENSE_CATEGORIES, Transaction } from '@/types';
 import StatCard from '@/components/ui/StatCard';
 import TransactionCard from '@/components/ui/TransactionCard';
-import MobileModal from '@/components/ui/MobileModal';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EditTransactionModal from '@/components/dashboard/EditTransactionModal';
+import DeleteTransactionModal from '@/components/dashboard/DeleteTransactionModal';
 import { toast } from 'sonner';
-import { 
-  Activity,
-  ArrowLeft,
-  DollarSign,
-  Download,
-  Filter,
-  Receipt,
-  Search,
-  TrendingUp,
-  X
+import {
+  Activity, ArrowLeft, DollarSign, Download, Filter, Receipt, Search, TrendingUp, X,
 } from 'lucide-react';
-import { Transaction } from '@/types';
 import { useLoadUserNames } from '@/hooks/useLoadUserNames';
 
 interface TransactionWithUser extends Transaction {
@@ -39,9 +32,8 @@ export default function AllTransactionsPage() {
   const tCommon = useTranslations('common');
   const { user, userProfile } = useAuthStore();
   const preferredCurrency = userProfile?.preferredCurrency;
-  const currentPocket = usePocketStore((state) => state.currentPocket);
+  const currentPocket = usePocketStore(state => state.currentPocket);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = useState<TransactionWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -50,69 +42,52 @@ export default function AllTransactionsPage() {
   const [filterType, setFilterType] = useState<'all' | 'fund' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<TransactionWithUser | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [editForm, setEditForm] = useState({
-    type: 'expense' as 'fund' | 'expense',
-    category: '',
-    description: '',
-    amount: '',
-  });
 
-  const { userNames } = useLoadUserNames(transactions.map((t) => t.userId));
+  const { userNames } = useLoadUserNames(transactions.map(t => t.userId));
 
   const transactionsWithUsers = useMemo(
-    () =>
-      transactions.map((transaction) => ({
-        ...transaction,
-        userName: userNames[transaction.userId] || t('unknownUser'),
-      })),
+    () => transactions.map(tx => ({ ...tx, userName: userNames[tx.userId] || t('unknownUser') })),
     [transactions, userNames, t]
   );
 
+  const filteredTransactions = useMemo(() => {
+    let f = [...transactionsWithUsers];
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      f = f.filter(tx =>
+        tx.description.toLowerCase().includes(term) ||
+        tx.category.toLowerCase().includes(term) ||
+        tx.userName?.toLowerCase().includes(term)
+      );
+    }
+    if (filterType !== 'all') f = f.filter(tx => tx.type === filterType);
+    if (filterCategory !== 'all') f = f.filter(tx => tx.category === filterCategory);
+    return f;
+  }, [transactionsWithUsers, searchTerm, filterType, filterCategory]);
+
   const loadTransactions = async (reset = false) => {
     if (!currentPocket) return;
-
-    if (reset) {
-      setLoading(true);
-    } else {
-      setIsLoadingMore(true);
-    }
-
+    if (reset) setLoading(true); else setIsLoadingMore(true);
     try {
-      const result = await fetchTransactionsPage(
-        currentPocket.id,
-        20,
-        reset ? undefined : pageCursor ?? undefined
-      );
-
-      setTransactions((prev) => {
+      const result = await fetchTransactionsPage(currentPocket.id, 20, reset ? undefined : pageCursor ?? undefined);
+      setTransactions(prev => {
         const base = reset ? [] : prev;
-        const existingIds = new Set(base.map((t) => t.id));
+        const ids = new Set(base.map(t => t.id));
         const merged = [...base];
-
-        result.transactions.forEach((tx) => {
-          if (!existingIds.has(tx.id)) {
-            merged.push(tx);
-          }
-        });
-
+        result.transactions.forEach(tx => { if (!ids.has(tx.id)) merged.push(tx); });
         return merged;
       });
-
       setPageCursor(result.cursor);
       setHasMore(result.hasMore);
     } catch (error) {
       logger.error('Error loading transactions', { error, context: { pocketId: currentPocket?.id } });
     } finally {
-      if (reset) {
-        setLoading(false);
-      } else {
-        setIsLoadingMore(false);
-      }
+      if (reset) setLoading(false); else setIsLoadingMore(false);
     }
   };
 
@@ -125,113 +100,46 @@ export default function AllTransactionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPocket?.id]);
 
-  // Filter transactions based on search and filters
-  useEffect(() => {
-    let filtered = [...transactionsWithUsers];
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(transaction =>
-        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.userName?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Type filter
-    if (filterType !== 'all') {
-      filtered = filtered.filter(transaction => transaction.type === filterType);
-    }
-
-    // Category filter
-    if (filterCategory !== 'all') {
-      filtered = filtered.filter(transaction => transaction.category === filterCategory);
-    }
-
-    setFilteredTransactions(filtered);
-  }, [transactionsWithUsers, searchTerm, filterType, filterCategory]);
-
-  // Calculate statistics
-  const totalFunds = transactionsWithUsers
-    .filter(t => t.type === 'fund')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const totalExpenses = transactionsWithUsers
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-
+  const totalFunds = transactionsWithUsers.filter(t => t.type === 'fund').reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = transactionsWithUsers.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const netBalance = totalFunds - totalExpenses;
 
   const handleExport = () => {
-    // Create CSV content
-    const csvContent = [
+    const csv = [
       [t('csv.date'), t('csv.type'), t('csv.category'), t('csv.description'), t('csv.amount'), t('csv.user')].join(','),
-      ...filteredTransactions.map(transaction => [
-        formatDate(transaction.date, locale),
-        transaction.type,
-        transaction.category,
-        `"${transaction.description}"`,
-        transaction.amount,
-        transaction.userName || t('unknown')
-      ].join(','))
+      ...filteredTransactions.map(tx => [
+        formatDate(tx.date, locale), tx.type, tx.category, `"${tx.description}"`, tx.amount, tx.userName || t('unknown'),
+      ].join(',')),
     ].join('\n');
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${currentPocket?.name || 'transactions'}-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setFilterType('all');
-    setFilterCategory('all');
-  };
+  const clearFilters = () => { setSearchTerm(''); setFilterType('all'); setFilterCategory('all'); };
 
-  const canManageTransaction = (transaction: Transaction) => {
+  const canManageTransaction = (tx: Transaction) => {
     if (!user || !currentPocket) return false;
     const role = currentPocket.roles[user.uid];
-    return transaction.userId === user.uid || role === 'provider';
+    return tx.userId === user.uid || role === 'provider';
   };
 
-  const openEditModal = (transaction: TransactionWithUser) => {
-    setSelectedTransaction(transaction);
-    setEditForm({
-      type: transaction.type,
-      category: transaction.category || '',
-      description: transaction.description,
-      amount: String(transaction.amount),
-    });
-    setShowEditModal(true);
-  };
-
-  const openDeleteModal = (transaction: TransactionWithUser) => {
-    setSelectedTransaction(transaction);
-    setShowDeleteModal(true);
-  };
-
-  const handleUpdateTransaction = async () => {
+  const handleUpdateTransaction = async (data: { type: 'fund' | 'expense'; category: string; description: string; amount: string }) => {
     if (!user || !selectedTransaction) return;
-
-    const amount = Number(editForm.amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
+    const amount = Number(data.amount);
+    const description = data.description.trim();
+    if (!Number.isFinite(amount) || amount <= 0 || description.length === 0) {
       toast.error(t('updateError'));
       return;
     }
-
     setEditLoading(true);
     try {
       await updateTransaction(selectedTransaction.id, user.uid, {
-        type: editForm.type,
-        category: editForm.type === 'fund' ? '' : editForm.category,
-        description: editForm.description.trim(),
-        amount,
+        type: data.type, category: data.type === 'fund' ? '' : data.category, description, amount,
       });
       toast.success(t('updateSuccess'));
       setShowEditModal(false);
@@ -247,7 +155,6 @@ export default function AllTransactionsPage() {
 
   const handleDeleteTransaction = async () => {
     if (!user || !selectedTransaction) return;
-
     setDeleteLoading(true);
     try {
       await deleteTransaction(selectedTransaction.id, user.uid);
@@ -270,81 +177,66 @@ export default function AllTransactionsPage() {
         router.push(`/${locale}/dashboard`);
       }
     };
-
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [locale, router]);
 
   if (!user || !currentPocket) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-200 max-w-md w-full mx-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-center font-medium">{tCommon('loading')}</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <LoadingSpinner size="lg" text={tCommon('loading')} />
       </div>
     );
   }
 
+  const hasFilters = searchTerm || filterType !== 'all' || filterCategory !== 'all';
+
   return (
-    <div className="min-h-screen bg-gray-50 mobile-content-with-nav">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-md lg:max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3 min-w-0 flex-1">
-              <button
-                onClick={() => router.push(`/${locale}/dashboard`)}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
-                aria-label={t('backToDashboard')}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-600 to-purple-600 flex items-center justify-center">
-                <Receipt className="w-5 h-5 text-white" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg font-semibold text-gray-900 truncate">{t('title')}</h1>
-                <p className="text-sm text-gray-500 truncate">{currentPocket.name}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  showFilters 
-                    ? 'bg-emerald-100 text-emerald-600' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                aria-label={t('toggleFilters')}
-              >
-                <Filter className="w-5 h-5" />
-              </button>
-              <button
-                onClick={handleExport}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
-                title={t('exportData')}
-                aria-label={t('exportData')}
-              >
-                <Download className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+      <nav className="nav">
+        <button
+          type="button"
+          onClick={() => router.push(`/${locale}/dashboard`)}
+          className="btn btn-icon btn-ghost"
+          aria-label={t('backToDashboard')}
+        >
+          <ArrowLeft size={15} />
+        </button>
+        <div>
+          <div className="nav-name">{t('title')}</div>
+          <div style={{ fontSize: '.7rem', color: 'var(--text-muted)' }}>{currentPocket.name}</div>
         </div>
-      </header>
+        <div className="nav-spacer" />
+        <div className="nav-right">
+          <button
+            type="button"
+            onClick={() => setShowFilters(v => !v)}
+            className={`btn btn-icon ${showFilters ? 'btn-secondary' : 'btn-ghost'}`}
+            aria-label={t('toggleFilters')}
+          >
+            <Filter size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="btn btn-icon btn-ghost"
+            title={t('exportData')}
+            aria-label={t('exportData')}
+          >
+            <Download size={15} />
+          </button>
+        </div>
+      </nav>
 
-      {/* Main Content */}
-      <main className="max-w-md lg:max-w-7xl mx-auto px-4 py-4 lg:px-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '1.75rem 2rem 5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* Stats */}
+        <div className="stats-row">
           <StatCard
             title={t('totalFunds')}
             value={formatCurrency(totalFunds, { locale, currency: preferredCurrency })}
             subtitle={t('addedThisMonth')}
             icon={TrendingUp}
             iconColor="green"
-            delay={0}
           />
           <StatCard
             title={t('totalExpenses')}
@@ -352,7 +244,6 @@ export default function AllTransactionsPage() {
             subtitle={t('spentThisMonth')}
             icon={Activity}
             iconColor="orange"
-            delay={0.1}
           />
           <StatCard
             title={t('netBalance')}
@@ -360,129 +251,101 @@ export default function AllTransactionsPage() {
             subtitle={netBalance >= 0 ? t('remainingFunds') : t('overspent')}
             icon={DollarSign}
             iconColor={netBalance >= 0 ? 'blue' : 'red'}
-            delay={0.2}
           />
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100 mb-6">
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <label htmlFor="transaction-search" className="sr-only">
-              {t('searchLabel')}
-            </label>
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              id="transaction-search"
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-describedby="transactions-result-count"
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
-            />
+        {/* Filters */}
+        <div className="card card-padded">
+          <div className="field" style={{ marginBottom: showFilters ? '1rem' : 0 }}>
+            <div className="input-wrap">
+              <Search />
+              <input
+                id="transaction-search"
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input-base with-icon"
+              />
+            </div>
           </div>
 
-          {/* Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterType')}</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '.85rem' }}>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label htmlFor="filter-type" className="field-label">{t('filterType')}</label>
                 <select
-                  value={filterType}
+                  id="filter-type" value={filterType}
                   onChange={(e) => setFilterType(e.target.value as 'all' | 'fund' | 'expense')}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
+                  className="input-base"
                 >
                   <option value="all">{t('allTypes')}</option>
                   <option value="fund">{t('fundsOnly')}</option>
                   <option value="expense">{t('expensesOnly')}</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterCategory')}</label>
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label htmlFor="filter-cat" className="field-label">{t('filterCategory')}</label>
                 <select
-                  value={filterCategory}
+                  id="filter-cat" value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-base"
+                  className="input-base"
                 >
                   <option value="all">{t('allCategories')}</option>
-                  {EXPENSE_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
+                  {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
           )}
 
-          {/* Filter Summary */}
-          {(searchTerm || filterType !== 'all' || filterCategory !== 'all') && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-              <div id="transactions-result-count" className="text-sm text-gray-600">
+          {hasFilters && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '.85rem', paddingTop: '.85rem', borderTop: '1px solid var(--border)' }}>
+              <span style={{ fontSize: '.8rem', color: 'var(--text-muted)' }}>
                 {filteredTransactions.length} {filteredTransactions.length === 1 ? t('transaction') : t('transactions')}
-              </div>
-              <button
-                onClick={clearFilters}
-                className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors flex items-center space-x-1"
-              >
-                <X className="w-4 h-4" />
-                <span>{t('clearFilters')}</span>
+              </span>
+              <button type="button" onClick={clearFilters} className="btn btn-ghost btn-sm">
+                <X size={13} /> {t('clearFilters')}
               </button>
             </div>
           )}
         </div>
 
-        {/* Transactions List */}
-        <div className="space-y-3 lg:space-y-4">
+        {/* Transactions list */}
+        <div className="tx-card">
           {loading ? (
-            <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 font-medium">{tCommon('loading')}</p>
+            <div style={{ padding: '3rem 1.5rem' }}>
+              <LoadingSpinner size="lg" text={tCommon('loading')} />
             </div>
           ) : filteredTransactions.length > 0 ? (
-            filteredTransactions.map((transaction, index) => (
+            filteredTransactions.map(tx => (
               <TransactionCard
-                key={transaction.id}
-                transaction={transaction}
-                userName={transaction.userName}
+                key={tx.id}
+                transaction={tx}
+                userName={tx.userName}
                 currency={preferredCurrency}
-                delay={index * 0.05}
-                showActions={canManageTransaction(transaction)}
-                onEdit={canManageTransaction(transaction) ? () => openEditModal(transaction) : undefined}
-                onDelete={canManageTransaction(transaction) ? () => openDeleteModal(transaction) : undefined}
+                showActions={canManageTransaction(tx)}
+                onEdit={canManageTransaction(tx) ? () => { setSelectedTransaction(tx); setShowEditModal(true); } : undefined}
+                onDelete={canManageTransaction(tx) ? () => { setSelectedTransaction(tx); setShowDeleteModal(true); } : undefined}
               />
             ))
           ) : (
-            <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
-              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Receipt className="w-8 h-8 text-gray-400" />
+            <div style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                <Receipt size={26} style={{ color: 'var(--text-faint)' }} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {searchTerm || filterType !== 'all' || filterCategory !== 'all' 
-                  ? t('noTransactionsFound')
-                  : t('noTransactionsRecorded')
-                }
+              <h3 className="t-head" style={{ fontSize: '1rem', marginBottom: '.4rem' }}>
+                {hasFilters ? t('noTransactionsFound') : t('noTransactionsRecorded')}
               </h3>
-              <p className="text-gray-600 mb-6">
-                {searchTerm || filterType !== 'all' || filterCategory !== 'all' 
-                  ? t('adjustFilters')
-                  : t('noTransactionsHelp')
-                }
+              <p style={{ fontSize: '.875rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                {hasFilters ? t('adjustFilters') : t('noTransactionsHelp')}
               </p>
-              <div className="flex flex-col space-y-3">
-                {(searchTerm || filterType !== 'all' || filterCategory !== 'all') && (
-                  <button
-                    onClick={clearFilters}
-                    className="bg-emerald-600 text-white rounded-xl px-6 py-3 hover:bg-emerald-700 transition-all duration-200 shadow-sm font-medium flex items-center justify-center space-x-2"
-                  >
-                    <X className="w-4 h-4" />
-                    <span>{t('clearFilters')}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.6rem' }}>
+                {hasFilters && (
+                  <button type="button" onClick={clearFilters} className="btn btn-primary">
+                    <X size={14} /> {t('clearFilters')}
                   </button>
                 )}
-                <button
-                  onClick={() => router.push(`/${locale}/dashboard`)}
-                  className="bg-gray-100 text-gray-700 rounded-xl px-6 py-3 hover:bg-gray-200 transition-all duration-200 border border-gray-200 font-medium"
-                >
+                <button type="button" onClick={() => router.push(`/${locale}/dashboard`)} className="btn btn-ghost">
                   {t('backToDashboard')}
                 </button>
               </div>
@@ -491,139 +354,29 @@ export default function AllTransactionsPage() {
         </div>
 
         {!loading && hasMore && (
-          <div className="flex justify-center mt-4">
-            <button
-              onClick={() => loadTransactions(false)}
-              disabled={isLoadingMore}
-              className="px-5 py-3 bg-white border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <button type="button" onClick={() => loadTransactions(false)} disabled={isLoadingMore} className="btn btn-ghost">
               {isLoadingMore ? t('loadingMore') : t('loadMore')}
             </button>
           </div>
         )}
       </main>
 
-      <MobileModal
+      <EditTransactionModal
         isOpen={showEditModal}
-        onClose={() => {
-          if (editLoading) return;
-          setShowEditModal(false);
-          setSelectedTransaction(null);
-        }}
-        title={t('editTitle')}
-      >
-        <div className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterType')}</label>
-            <select
-              value={editForm.type}
-              onChange={(event) =>
-                setEditForm((prev) => ({
-                  ...prev,
-                  type: event.target.value as 'fund' | 'expense',
-                  category: event.target.value === 'fund' ? '' : prev.category,
-                }))
-              }
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            >
-              <option value="fund">{t('fund')}</option>
-              <option value="expense">{t('expense')}</option>
-            </select>
-          </div>
+        onClose={() => { setShowEditModal(false); setSelectedTransaction(null); }}
+        transaction={selectedTransaction}
+        onSubmit={handleUpdateTransaction}
+        isSubmitting={editLoading}
+      />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('csv.description')}</label>
-            <input
-              type="text"
-              value={editForm.description}
-              onChange={(event) => setEditForm((prev) => ({ ...prev, description: event.target.value }))}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('csv.amount')}</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={editForm.amount}
-              onChange={(event) => setEditForm((prev) => ({ ...prev, amount: event.target.value }))}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-          </div>
-
-          {editForm.type === 'expense' ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('filterCategory')}</label>
-              <select
-                value={editForm.category}
-                onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="">{t('allCategories')}</option>
-                {EXPENSE_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setShowEditModal(false)}
-              disabled={editLoading}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
-            >
-              {tCommon('cancel')}
-            </button>
-            <button
-              onClick={handleUpdateTransaction}
-              disabled={editLoading}
-              className="flex-1 py-3 px-4 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition-all duration-200 font-medium"
-            >
-              {editLoading ? t('updating') : t('saveChanges')}
-            </button>
-          </div>
-        </div>
-      </MobileModal>
-
-      <MobileModal
+      <DeleteTransactionModal
         isOpen={showDeleteModal}
-        onClose={() => {
-          if (deleteLoading) return;
-          setShowDeleteModal(false);
-          setSelectedTransaction(null);
-        }}
-        title={t('deleteTitle')}
-      >
-        <div className="p-4 space-y-4">
-          <p className="text-gray-700">{t('deleteConfirm')}</p>
-          {selectedTransaction ? (
-            <div className="bg-gray-50 border border-gray-200 p-3 text-sm text-gray-700">
-              {selectedTransaction.description}
-            </div>
-          ) : null}
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              disabled={deleteLoading}
-              className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
-            >
-              {tCommon('cancel')}
-            </button>
-            <button
-              onClick={handleDeleteTransaction}
-              disabled={deleteLoading}
-              className="flex-1 py-3 px-4 bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 transition-all duration-200 font-medium"
-            >
-              {deleteLoading ? t('deleting') : tCommon('delete')}
-            </button>
-          </div>
-        </div>
-      </MobileModal>
+        onClose={() => { setShowDeleteModal(false); setSelectedTransaction(null); }}
+        transaction={selectedTransaction}
+        onConfirm={handleDeleteTransaction}
+        isDeleting={deleteLoading}
+      />
     </div>
   );
 }
