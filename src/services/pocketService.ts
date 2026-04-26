@@ -184,40 +184,45 @@ const createSubscription = <T>({
         },
         async (error: unknown) => {
           if (!isActive) return;
+          // Wrap entire body — Firebase does not .catch() async error callbacks,
+          // so any throw here becomes an unhandled rejection with undefined reason.
+          try {
+            logger.error(`${type} subscription error`, { error, context: { pocketId } });
+            consecutiveErrors++;
+            subscriptionErrorCount++;
 
-          logger.error(`${type} subscription error`, { error, context: { pocketId } });
-          consecutiveErrors++;
-          subscriptionErrorCount++;
+            const errorMessage = error instanceof Error ? error.message : String(error ?? '');
+            const isInternalAssertion = errorMessage.includes('INTERNAL ASSERTION FAILED');
+            const isSubscriptionCorruption = errorMessage.includes('ID: ca9') ||
+                                           errorMessage.includes('ID: b815') ||
+                                           errorMessage.includes('Fe:-1') ||
+                                           errorMessage.includes('Unexpected state');
 
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          const isInternalAssertion = errorMessage.includes('INTERNAL ASSERTION FAILED');
-          const isSubscriptionCorruption = errorMessage.includes('ID: ca9') ||
-                                         errorMessage.includes('ID: b815') ||
-                                         errorMessage.includes('Fe:-1') ||
-                                         errorMessage.includes('Unexpected state');
+            if (isInternalAssertion || isSubscriptionCorruption) {
+              logger.warn('Detected Firebase internal assertion failure in subscription', { context: { pocketId, type } });
 
-          if (isInternalAssertion || isSubscriptionCorruption) {
-            logger.warn('Detected Firebase internal assertion failure in subscription', { context: { pocketId, type } });
-
-            const recovered = await handleFirebaseInternalError(error);
-            if (recovered && isActive) {
-              logger.info('Firebase recovery successful, recreating subscription', { context: { pocketId, type } });
-              setTimeout(() => {
-                if (isActive) {
-                  retrySubscription();
-                }
-              }, SUBSCRIPTION_CONFIG.recoveryRetryDelayMs);
-            } else if (isActive) {
-              logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId, type } });
+              const recovered = await handleFirebaseInternalError(error);
+              if (recovered && isActive) {
+                logger.info('Firebase recovery successful, recreating subscription', { context: { pocketId, type } });
+                setTimeout(() => {
+                  if (isActive) {
+                    retrySubscription();
+                  }
+                }, SUBSCRIPTION_CONFIG.recoveryRetryDelayMs);
+              } else if (isActive) {
+                logger.warn('Firebase recovery failed, using exponential backoff', { context: { pocketId, type } });
+                retrySubscription();
+              }
+            } else if (onFatalError) {
+              const shouldRetry = await onFatalError(error);
+              if (shouldRetry && isActive) {
+                retrySubscription();
+              }
+            } else {
               retrySubscription();
             }
-          } else if (onFatalError) {
-            const shouldRetry = await onFatalError(error);
-            if (shouldRetry && isActive) {
-              retrySubscription();
-            }
-          } else {
-            retrySubscription();
+          } catch (callbackError) {
+            logger.error('Uncaught error in subscription error handler', { callbackError, context: { pocketId, type } });
           }
         }
       );
@@ -234,7 +239,7 @@ const createSubscription = <T>({
           if (recovered && isActive) {
             setTimeout(() => retrySubscription(), SUBSCRIPTION_CONFIG.internalAssertionRetryDelayMs);
           }
-        });
+        }).catch(() => {});
       } else {
         retrySubscription();
       }

@@ -26,8 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className="scroll-smooth" lang="en">
+    <html lang="en">
       <body>
+        {/* Suppress Firebase SDK's undefined promise rejections before any JS loads */}
+        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener('unhandledrejection',function(e){if(e.reason===undefined||e.reason===null){e.preventDefault();e.stopImmediatePropagation();}},true);` }} />
         <FirebaseErrorBoundary>
           <main>{children}</main>
           <AppToaster />

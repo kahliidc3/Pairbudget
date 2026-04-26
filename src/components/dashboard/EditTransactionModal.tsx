@@ -103,15 +103,15 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             </select>
           </div>
         )}
+      </div>
 
-        <div style={{ display: 'flex', gap: '.6rem', marginTop: '.5rem' }}>
-          <button type="button" onClick={onClose} disabled={isSubmitting} className="btn btn-ghost" style={{ flex: 1 }}>
-            {tC('cancel')}
-          </button>
-          <button type="button" onClick={handleSave} disabled={isSubmitting} className="btn btn-primary" style={{ flex: 1 }}>
-            {isSubmitting ? <LoadingSpinner size="sm" /> : tT('saveChanges')}
-          </button>
-        </div>
+      <div className="modal-footer">
+        <button type="button" onClick={onClose} disabled={isSubmitting} className="btn btn-ghost" style={{ flex: 1 }}>
+          {tC('cancel')}
+        </button>
+        <button type="button" onClick={handleSave} disabled={isSubmitting} className="btn btn-primary" style={{ flex: 1 }}>
+          {isSubmitting ? <LoadingSpinner size="sm" /> : tT('saveChanges')}
+        </button>
       </div>
     </MobileModal>
   );

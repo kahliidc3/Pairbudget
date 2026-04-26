@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowDownRight, ArrowUpRight, History, Home, Layers, Plus, Settings } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, History, Home, Layers, Plus, User } from 'lucide-react';
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -93,8 +93,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <span>{tNav('history')}</span>
         </button>
         <button type="button" className={`bnav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => onTabChange('settings')}>
-          <Settings size={18} />
-          <span>{tNav('settings')}</span>
+          <User size={18} />
+          <span>{tNav('profile')}</span>
         </button>
       </nav>
     </>

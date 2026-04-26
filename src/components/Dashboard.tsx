@@ -254,7 +254,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
       {/* Mobile header */}
       <div className="lg:hidden">
-        <MobileHeader currentPocket={currentPocket} userProfile={userProfile} onPocketSelect={() => setShowMobilePocketSheet(true)} />
+        <MobileHeader currentPocket={currentPocket} userProfile={userProfile} onPocketSelect={() => setShowMobilePocketSheet(true)} onInvite={() => setShowInviteCode(true)} />
       </div>
 
       {/* Desktop header */}

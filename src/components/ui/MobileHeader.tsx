@@ -3,21 +3,23 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { ChevronDown, User as UserIcon } from 'lucide-react';
+import { ChevronDown, LogOut, Share2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Pocket, User } from '@/types';
+import { signOut } from '@/services/authService';
 
 interface MobileHeaderProps {
   currentPocket: Pocket | null;
   userProfile: User | null;
   onPocketSelect: () => void;
+  onInvite?: () => void;
 }
 
 const WalletIcon = () => (
   <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>
 );
 
-const MobileHeader: React.FC<MobileHeaderProps> = ({ currentPocket, userProfile, onPocketSelect }) => {
+const MobileHeader: React.FC<MobileHeaderProps> = ({ currentPocket, userProfile, onPocketSelect, onInvite }) => {
   const tDashboard = useTranslations('dashboard');
   const router = useRouter();
   const locale = useLocale();
@@ -48,13 +50,23 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ currentPocket, userProfile,
           </div>
         </button>
       )}
+      {onInvite && currentPocket && (
+        <button
+          type="button"
+          onClick={onInvite}
+          className="btn btn-icon btn-ghost"
+          aria-label="Invite partner"
+        >
+          <Share2 size={15} />
+        </button>
+      )}
       <button
         type="button"
-        onClick={() => router.push(`/${locale}/profile`)}
+        onClick={async () => { try { await signOut(); router.push(`/${locale}`); } catch { /* ignore */ } }}
         className="btn btn-icon btn-ghost"
-        aria-label="Profile"
+        aria-label="Sign out"
       >
-        <UserIcon size={15} />
+        <LogOut size={15} />
       </button>
     </div>
   );

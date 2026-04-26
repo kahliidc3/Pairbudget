@@ -45,35 +45,41 @@ const TransactionCardComponent: React.FC<TransactionCardProps> = ({
       <div className={`tx-dir ${isFund ? 'up' : 'dn'}`}>
         {isFund ? <ArrowUp /> : <ArrowDn />}
       </div>
-      <div className="tx-info">
-        <div className="tx-name">{transaction.description}</div>
-        <div className="tx-meta">
-          {transaction.category && (
-            <span className={`tag ${categoryTagClass(transaction.category)}`} style={{ fontSize: '.65rem', padding: '.1rem .4rem' }}>
-              {transaction.category}
-            </span>
+      <div className="tx-body">
+        {/* Line 1: name + amount */}
+        <div className="tx-top">
+          <span className="tx-name">{transaction.description}</span>
+          <span className={`tx-amt ${isFund ? 'up' : 'dn'}`}>
+            {isFund ? '+' : '−'}{formatCurrency(transaction.amount, { locale, currency })}
+          </span>
+        </div>
+        {/* Line 2: meta + actions */}
+        <div className="tx-bottom">
+          <div className="tx-meta">
+            {transaction.category && (
+              <span className={`tag ${categoryTagClass(transaction.category)}`}>
+                {transaction.category}
+              </span>
+            )}
+            {userName && <span className="tx-user">{userName}</span>}
+            <span className="tx-date">{formatDate(transaction.date, locale)}</span>
+          </div>
+          {showActions && (
+            <div className="tx-acts">
+              {onEdit && (
+                <button type="button" onClick={onEdit} className="btn btn-icon btn-ghost btn-sm" aria-label="Edit transaction">
+                  <Pencil size={12} />
+                </button>
+              )}
+              {onDelete && (
+                <button type="button" onClick={onDelete} className="btn btn-icon btn-red btn-sm" aria-label="Delete transaction">
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
           )}
-          {userName && <span>👤 {userName}</span>}
-          <span>{formatDate(transaction.date, locale)}</span>
         </div>
       </div>
-      <div className={`tx-amt ${isFund ? 'up' : 'dn'}`}>
-        {isFund ? '+' : '−'}{formatCurrency(transaction.amount, { locale, currency })}
-      </div>
-      {showActions && (
-        <div className="tx-acts">
-          {onEdit && (
-            <button type="button" onClick={onEdit} className="btn btn-icon btn-ghost btn-sm" aria-label="Edit transaction">
-              <Pencil size={12} />
-            </button>
-          )}
-          {onDelete && (
-            <button type="button" onClick={onDelete} className="btn btn-icon btn-red btn-sm" aria-label="Delete transaction">
-              <Trash2 size={12} />
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 };

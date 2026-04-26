@@ -322,12 +322,18 @@ export const emergencyFirebaseReset = async () => {
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     const error = event.reason;
-    if (error && typeof error === 'object' && 'message' in error) {
-      const message = String(error.message);
+    // Suppress undefined/null rejections — these come from Firebase SDK internals.
+    // stopImmediatePropagation() prevents Next.js dev overlay from also showing it.
+    if (error === undefined || error === null) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    if (typeof error === 'object' && 'message' in error) {
+      const message = String((error as { message: unknown }).message);
       if (message.includes('FIRESTORE') && message.includes('INTERNAL ASSERTION FAILED')) {
         logger.warn('Caught unhandled Firebase error, attempting recovery', { error });
-        handleFirebaseInternalError(error);
-        // Prevent the error from being logged to console
+        handleFirebaseInternalError(error).catch(() => {});
         event.preventDefault();
       }
     }

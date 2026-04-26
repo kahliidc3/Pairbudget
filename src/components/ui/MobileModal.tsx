@@ -41,9 +41,7 @@ const MobileModal: React.FC<MobileModalProps> = ({
               </button>
             )}
           </div>
-          <div style={{ overflowY: 'auto', maxHeight: 'calc(80vh - 60px)' }}>
-            {children}
-          </div>
+          {children}
         </dialog>
       </FocusLock>
     </div>
