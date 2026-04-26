@@ -1,216 +1,146 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { usePocketStore } from '@/store/pocketStore';
+import { logger } from '@/lib/logger';
 import { getPocket } from '@/services/pocketService';
-import { updateUserProfile } from '@/services/authService';
-import { formatCurrency } from '@/lib/utils';
-import { 
-  Plus, 
-  Wallet,
-  Users,
-  TrendingUp,
-  LogOut,
-  ArrowRight
-} from 'lucide-react';
+import { signOut, updateUserProfile } from '@/services/authService';
+import LanguageSelector from '@/components/LanguageSelector';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import PocketList from '@/components/pocket-setup/PocketList';
+import { LogOut } from 'lucide-react';
 import { Pocket } from '@/types';
 import PocketSetup from '@/components/PocketSetup';
 
+const LogoMark = () => (
+  <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+);
+
 const PocketSelection: React.FC = () => {
-  const { user, userProfile, setUserProfile, signOut } = useAuthStore();
+  const { user, userProfile, setUserProfile } = useAuthStore();
   const { setCurrentPocket } = usePocketStore();
+  const router = useRouter();
+  const locale = useLocale();
   const [userPockets, setUserPockets] = useState<Pocket[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateNew, setShowCreateNew] = useState(false);
+  const [loadingPocketId, setLoadingPocketId] = useState<string | null>(null);
 
-  // Load all user's pockets
+  const pocketIds = useMemo(() => userProfile?.pocketIds || [], [userProfile?.pocketIds]);
+
   useEffect(() => {
+    let isMounted = true;
     const loadUserPockets = async () => {
-      if (!userProfile?.pocketIds || userProfile.pocketIds.length === 0) {
-        setUserPockets([]);
-        setLoading(false);
-        return;
-      }
-
+      if (pocketIds.length === 0) { setUserPockets([]); setLoading(false); return; }
       try {
         const pockets = await Promise.all(
-          userProfile.pocketIds.map(async (pocketId) => {
-            const pocket = await getPocket(pocketId);
-            return pocket;
+          pocketIds.map(async (pocketId) => {
+            try {
+              return (await Promise.race([
+                getPocket(pocketId),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000)),
+              ])) as Pocket | null;
+            } catch (err) {
+              logger.warn('Failed to load pocket', { error: err, context: { pocketId } });
+              return null;
+            }
           })
         );
-        
-        // Filter out null values (pockets that couldn't be loaded)
-        const validPockets = pockets.filter((pocket): pocket is Pocket => pocket !== null);
-        setUserPockets(validPockets);
-      } catch (error) {
-        console.error('Error loading user pockets:', error);
-        setUserPockets([]);
+        if (!isMounted) return;
+        setUserPockets(pockets.filter((p): p is Pocket => p !== null));
+      } catch (err) {
+        logger.error('Error loading user pockets', { error: err });
+        if (isMounted) setUserPockets([]);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-
     loadUserPockets();
-  }, [userProfile?.pocketIds]);
+    return () => { isMounted = false; };
+  }, [pocketIds]);
 
-  const handlePocketSelect = async (pocket: Pocket) => {
-    if (!user || !userProfile) return;
-
+  const handlePocketSelect = useCallback(async (pocket: Pocket) => {
+    if (!user || !userProfile || loadingPocketId) return;
+    setLoadingPocketId(pocket.id);
     try {
-      // Update user's current pocket
       await updateUserProfile(user.uid, { currentPocketId: pocket.id });
       setUserProfile({ ...userProfile, currentPocketId: pocket.id });
-      
-      // Update current pocket in store
       setCurrentPocket(pocket);
-    } catch (error) {
-      console.error('Error selecting pocket:', error);
+    } catch (err) {
+      logger.error('Error selecting pocket', { error: err });
+    } finally {
+      setLoadingPocketId(null);
     }
+  }, [user, userProfile, setUserProfile, setCurrentPocket, loadingPocketId]);
+
+  const handleSignOut = async () => {
+    try { await signOut(); router.push(`/${locale}`); }
+    catch (err) { logger.error('Error signing out', { error: err }); }
   };
 
-  if (showCreateNew) {
-    return <PocketSetup />;
-  }
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.altKey && (event.key === 'h' || event.key === 'H')) {
+        event.preventDefault();
+        router.push(`/${locale}/dashboard`);
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [locale, router]);
+
+  if (showCreateNew) return <PocketSetup isModal={false} />;
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      {/* Navigation Header */}
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-nav fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-between w-full max-w-4xl mx-auto px-4"
-      >
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-            <Wallet className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-semibold text-gray-800">PairBudget</span>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600 hidden md:block">
-            Welcome, {userProfile?.name || user?.email?.split('@')[0]}
-          </span>
-          <button
-            onClick={signOut}
-            className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
-            title="Sign Out"
-          >
-            <LogOut className="w-5 h-5" />
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
+      <nav className="nav">
+        <button type="button" className="nav-logo" onClick={() => router.push(`/${locale}`)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+          <div className="nav-mark"><LogoMark /></div>
+          <span className="nav-name">PairBudget</span>
+        </button>
+        <div className="nav-spacer" />
+        <div className="nav-right">
+          <span className="nav-user">Welcome, <strong>{userProfile?.name || user?.displayName || user?.email?.split('@')[0]}</strong></span>
+          <LanguageSelector />
+          <button type="button" onClick={handleSignOut} className="btn btn-ghost btn-sm" aria-label="Sign Out">
+            <LogOut size={14} />
+            <span>Sign Out</span>
           </button>
         </div>
-      </motion.header>
+      </nav>
 
-      <div className="w-full max-w-4xl mx-auto pt-24 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10"
-        >
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              Choose Your Pocket
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              You have {userPockets.length} pocket{userPockets.length !== 1 ? 's' : ''} available. 
-              Select one to continue managing your budget.
-            </p>
-          </motion.div>
-
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading your pockets...</p>
+      <div className="pockets-inner">
+        <div className="page-top-row">
+          <div>
+            <span className="pt-eye">My Pockets</span>
+            <div className="pt-title">Choose Your Pocket</div>
+            <div className="pt-sub">
+              You have {userPockets.length} pocket{userPockets.length !== 1 ? 's' : ''} available — select one to continue.
             </div>
-          ) : (
-            <>
-              {/* Pockets Grid */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
-              >
-                {userPockets.map((pocket, index) => (
-                  <motion.button
-                    key={pocket.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                    onClick={() => handlePocketSelect(pocket)}
-                    className="card-floating p-6 text-left hover:scale-105 transition-all duration-300 group"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                        <Wallet className="w-6 h-6 text-white" />
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                    </div>
-                    
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{pocket.name}</h3>
-                    
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Balance</span>
-                        <span className={`font-medium ${pocket.balance >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                          {formatCurrency(pocket.balance)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Members</span>
-                        <span className="flex items-center space-x-1">
-                          <Users className="w-3 h-3" />
-                          <span>{pocket.participants.length}</span>
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span className="flex items-center space-x-1">
-                        <TrendingUp className="w-3 h-3" />
-                        <span>Funded: {formatCurrency(pocket.totalFunded)}</span>
-                      </span>
-                      <span>Spent: {formatCurrency(pocket.totalSpent)}</span>
-                    </div>
-                  </motion.button>
-                ))}
-              </motion.div>
+          </div>
+        </div>
 
-              {/* Create New Pocket */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-center"
-              >
-                <button
-                  onClick={() => setShowCreateNew(true)}
-                  className="inline-flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span className="font-medium">Create New Pocket</span>
-                </button>
-                <p className="text-sm text-gray-500 mt-3">
-                  Want to start fresh? Create a new pocket for different budgets.
-                </p>
-              </motion.div>
-            </>
-          )}
-        </motion.div>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+            <LoadingSpinner size="lg" text="Loading your pockets..." />
+          </div>
+        ) : (
+          <PocketList
+            pockets={userPockets}
+            onSelect={handlePocketSelect}
+            onDelete={() => { /* Disabled in selection view */ }}
+            onCreate={() => setShowCreateNew(true)}
+            locale={locale}
+            preferredCurrency={userProfile?.preferredCurrency}
+            isLoading={!!loadingPocketId}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-export default PocketSelection; 
+export default PocketSelection;

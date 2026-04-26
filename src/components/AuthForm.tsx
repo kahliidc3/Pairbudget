@@ -1,11 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiHeart } from 'react-icons/fi';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { signIn, signUp } from '@/services/authService';
+import { clearAuthCache } from '@/lib/utils';
+import { ChevronLeft, Eye, EyeOff, Globe, Lock, Mail, User } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
+import WaitingOverlay from './ui/WaitingOverlay';
+import { logger } from '@/lib/logger';
+
+const PASSWORD_POLICY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/;
 
 interface AuthFormProps {
   mode: 'login' | 'signup';
@@ -13,299 +19,272 @@ interface AuthFormProps {
 }
 
 export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
+  const locale = useLocale();
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    name: ''
+    name: '',
+    preferredLanguage: locale,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
+  const [success, setSuccess] = useState('');
 
   const { setUser, setUserProfile } = useAuthStore();
+  const t = useTranslations('auth');
+
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, preferredLanguage: locale }));
+  }, [locale]);
+
+  useEffect(() => { setError(''); setSuccess(''); }, [mode]);
+
+  const getErrorMessage = (e: unknown): { code: string; message: string } => {
+    if (typeof e !== 'object' || e === null) return { code: 'unknown', message: t('errors.unexpected') };
+    const err = e as { code?: string; message?: string };
+    if (!err.code) return { code: 'unknown', message: t('errors.unexpected') };
+    switch (err.code) {
+      case 'auth/email-already-in-use': return { code: err.code, message: t('errors.emailInUse') };
+      case 'auth/weak-password': return { code: err.code, message: t('errors.weakPassword') };
+      case 'auth/invalid-email': return { code: err.code, message: t('errors.invalidEmail') };
+      case 'auth/user-not-found': return { code: err.code, message: t('errors.userNotFound') };
+      case 'auth/wrong-password': return { code: err.code, message: t('errors.wrongPassword') };
+      case 'auth/too-many-requests': return { code: err.code, message: t('errors.tooManyRequests') };
+      case 'auth/user-disabled': return { code: err.code, message: t('errors.userDisabled') };
+      case 'auth/operation-not-allowed': return { code: err.code, message: t('errors.operationNotAllowed') };
+      case 'auth/invalid-credential': return { code: err.code, message: t('errors.invalidCredential') };
+      default: return { code: err.code, message: err.message || t('errors.unexpected') };
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'signup' && !agreeToTerms) {
-      alert('Please agree to the terms and conditions');
-      return;
-    }
-    if (mode === 'signup' && formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
+    setError(''); setErrorCode('');
+
+    if (mode === 'signup' && !agreeToTerms) { setError(t('errors.acceptTerms')); return; }
+    if (mode === 'signup' && formData.password !== formData.confirmPassword) { setError(t('errors.passwordMismatch')); return; }
+    if (mode === 'signup' && !PASSWORD_POLICY_REGEX.test(formData.password)) { setError(t('errors.passwordPolicy')); return; }
+    if (!formData.email.trim()) { setError(t('errors.emailRequired')); return; }
+    if (!formData.password.trim()) { setError(t('errors.passwordRequired')); return; }
+    if (mode === 'signup' && !formData.name.trim()) { setError(t('errors.nameRequired')); return; }
 
     setIsLoading(true);
     try {
       if (mode === 'signup') {
-        const { user, userProfile } = await signUp(formData.email, formData.password, formData.name);
+        const { user, userProfile } = await signUp(formData.email, formData.password, formData.name, formData.preferredLanguage);
         setUser(user);
         setUserProfile(userProfile);
+        setSuccess(t('success.accountCreated'));
       } else {
         const user = await signIn(formData.email, formData.password);
         setUser(user);
+        setSuccess(t('success.welcomeBack'));
       }
-    } catch (error) {
-      console.error('Auth error:', error);
+    } catch (err: unknown) {
+      logger.error('Auth error', { error: err });
+      const parsed = getErrorMessage(err);
+      setErrorCode(parsed.code);
+      setError(parsed.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    if (error) setError('');
+    if (success) setSuccess('');
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleClearCacheAndRetry = () => {
+    clearAuthCache();
+    setError(''); setErrorCode('');
+    setSuccess(t('success.cacheCleared'));
+    setFormData({ email: '', password: '', confirmPassword: '', name: '', preferredLanguage: locale });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md relative">
-        {/* Hero Card - Background Layer */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="absolute inset-0 transform translate-x-4 translate-y-4 card-floating opacity-30"
-        />
-        
-        {/* Form Card - Foreground Layer */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-          className="relative card-floating"
-        >
-          {/* Header */}
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3, type: "spring", stiffness: 200 }}
-              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl mb-4"
-            >
-              <FiHeart className="w-8 h-8 text-white" />
-            </motion.div>
-            
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="text-hero mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
-            >
-              {mode === 'login' ? 'Welcome Back' : 'Create Account'}
-            </motion.h1>
-            
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="text-gray-600"
-            >
-              {mode === 'login' 
-                ? 'Sign in to manage your shared expenses' 
-                : 'Join PairBudget to track expenses together'
-              }
-            </motion.p>
+    <div className="signin-split">
+      {/* Left brand panel */}
+      <div className="signin-left">
+        <button className="sl-back" onClick={() => router.push(`/${locale}`)}>
+          <ChevronLeft />
+          Back to home
+        </button>
+        <div className="sl-content">
+          <div className="sl-logo">
+            <div className="sl-mark">
+              <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+            </div>
+            <span className="sl-brand">PairBudget</span>
           </div>
+          <h1 className="sl-headline">Your money.<br /><em>Together.</em></h1>
+          <p className="sl-tagline">Track shared expenses, manage budgets, and stay financially aligned — effortlessly.</p>
+          <div className="sl-metrics">
+            <div><div className="sm-v">2</div><div className="sm-l">Per pocket</div></div>
+            <div><div className="sm-v">∞</div><div className="sm-l">Transactions</div></div>
+            <div><div className="sm-v">Free</div><div className="sm-l">Forever</div></div>
+          </div>
+        </div>
+      </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <AnimatePresence>
-              {mode === 'signup' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="relative">
-                    <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+      {/* Right form panel */}
+      <div className="signin-right">
+        <div className="auth-box">
+          <h2 className="auth-title">
+            {mode === 'login' ? t('signIn') : t('signUp')}
+          </h2>
+          <p className="auth-sub">
+            {mode === 'login' ? t('description.login') : t('description.signup')}
+          </p>
+
+          {error && (
+            <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600 }}>{error}</p>
+                {errorCode === 'auth/email-already-in-use' && (
+                  <button type="button" onClick={onToggleMode} style={{ marginTop: '.4rem', background: 'none', border: 'none', color: 'var(--red)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: '.8rem' }}>
+                    {t('signInInstead')}
+                  </button>
+                )}
+                {['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password', 'auth/too-many-requests', 'unknown'].includes(errorCode) && (
+                  <button type="button" onClick={handleClearCacheAndRetry} style={{ marginTop: '.4rem', background: 'none', border: 'none', color: 'var(--red)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: '.8rem' }}>
+                    {t('clearCacheRetry')}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {success && (
+            <div className="alert alert-success" style={{ marginBottom: '1rem' }}>
+              <span>{success}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {mode === 'signup' && (
+              <>
+                <div className="field">
+                  <label className="field-label">{t('name')}</label>
+                  <div className="input-wrap">
+                    <User />
                     <input
-                      type="text"
-                      name="name"
-                      placeholder="Full Name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="input-glass w-full pl-12 pr-4"
+                      type="text" name="name" placeholder={t('name')} required
+                      value={formData.name} onChange={handleInputChange}
+                      className="input-base with-icon"
                     />
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+                <div className="field">
+                  <label className="field-label">{t('languages.en')} / {t('languages.fr')} / {t('languages.ar')}</label>
+                  <div className="input-wrap">
+                    <Globe />
+                    <select
+                      name="preferredLanguage" value={formData.preferredLanguage} onChange={handleInputChange}
+                      className="input-base with-icon"
+                    >
+                      <option value="en">{t('languages.en')}</option>
+                      <option value="fr">{t('languages.fr')}</option>
+                      <option value="ar">{t('languages.ar')}</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <div className="relative">
-                <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+            <div className="field">
+              <label className="field-label">{t('email')}</label>
+              <div className="input-wrap">
+                <Mail />
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Email Address"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="input-glass w-full pl-12 pr-4"
+                  type="email" name="email" placeholder="you@example.com" required
+                  value={formData.email} onChange={handleInputChange}
+                  className="input-base with-icon"
                 />
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-            >
-              <div className="relative">
-                <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+            <div className="field">
+              <label className="field-label">{t('password')}</label>
+              <div className="input-wrap">
+                <Lock />
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  className="input-glass w-full pl-12 pr-12"
+                  type={showPassword ? 'text' : 'password'} name="password" placeholder="••••••••" required
+                  value={formData.password} onChange={handleInputChange}
+                  className="input-base with-icon"
+                  style={{ paddingRight: '2.5rem' }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                >
-                  {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: 'absolute', right: '.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-faint)', cursor: 'pointer', display: 'flex' }}>
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-            </motion.div>
+            </div>
 
-            <AnimatePresence>
-              {mode === 'signup' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="relative">
-                    <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      placeholder="Confirm Password"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      required
-                      className="input-glass w-full pl-12 pr-12"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                    >
-                      {showConfirmPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {mode === 'signup' && (
+              <div className="field">
+                <label className="field-label">{t('confirmPassword')}</label>
+                <div className="input-wrap">
+                  <Lock />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" placeholder="••••••••" required
+                    value={formData.confirmPassword} onChange={handleInputChange}
+                    className="input-base with-icon"
+                    style={{ paddingRight: '2.5rem' }}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{ position: 'absolute', right: '.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-faint)', cursor: 'pointer', display: 'flex' }}>
+                    {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+            )}
 
-            <AnimatePresence>
-              {mode === 'signup' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  className="flex items-start space-x-3"
-                >
-                  <label className="flex items-start space-x-3 cursor-pointer min-h-[44px]">
-                    <motion.div
-                      whileTap={{ scale: 0.95 }}
-                      className="flex-shrink-0 mt-1"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={agreeToTerms}
-                        onChange={(e) => setAgreeToTerms(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-                        agreeToTerms ? 'bg-blue-500 border-blue-500' : 'border-gray-300 bg-white'
-                      }`}>
-                        {agreeToTerms && (
-                          <motion.svg
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="w-3 h-3 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </motion.svg>
-                        )}
-                      </div>
-                    </motion.div>
-                    <span className="text-gray-600 text-sm leading-relaxed">
-                      I agree to the{' '}
-                      <span className="text-blue-600 underline hover:text-blue-800 transition-colors">
-                        Terms of Service
-                      </span>{' '}
-                      and{' '}
-                      <span className="text-blue-600 underline hover:text-blue-800 transition-colors">
-                        Privacy Policy
-                      </span>
-                    </span>
-                  </label>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {mode === 'signup' && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '.6rem', marginBottom: '1.1rem', fontSize: '.8125rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                <input
+                  type="checkbox" id="terms" checked={agreeToTerms} onChange={(e) => setAgreeToTerms(e.target.checked)}
+                  style={{ marginTop: '.2rem', accentColor: 'var(--primary)' }}
+                />
+                <label htmlFor="terms">
+                  {t('agreeToTermsPrefix')}{' '}
+                  <a href={`/${locale}/terms`} style={{ color: 'var(--primary)', fontWeight: 700 }}>{t('termsOfService')}</a>{' '}
+                  {t('and')}{' '}
+                  <a href={`/${locale}/privacy`} style={{ color: 'var(--primary)', fontWeight: 700 }}>{t('privacyPolicy')}</a>
+                </label>
+              </div>
+            )}
 
-            <motion.button
-              type="submit"
-              disabled={isLoading || (mode === 'signup' && !agreeToTerms)}
-              whileTap={{ scale: 0.98 }}
-              whileHover={{ scale: 1.02 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-              className="btn-primary w-full flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            <button
+              type="submit" disabled={isLoading || (mode === 'signup' && !agreeToTerms)}
+              className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '.25rem' }}
             >
-              {isLoading ? (
-                <LoadingSpinner />
-              ) : (
-                <span className="text-lg font-semibold">
-                  {mode === 'login' ? 'Sign In' : 'Create Account'}
-                </span>
-              )}
-            </motion.button>
+              {isLoading ? <LoadingSpinner size="sm" /> : <>{mode === 'login' ? t('signIn') : t('signUp')} →</>}
+            </button>
           </form>
 
-          {/* Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.9 }}
-            className="mt-8 text-center"
-          >
-            <p className="text-gray-600 text-sm">
-              {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-              <button
-                type="button"
-                onClick={onToggleMode}
-                className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200 underline min-h-[44px] inline-flex items-center px-2"
-              >
-                {mode === 'login' ? 'Sign up' : 'Sign in'}
-              </button>
-            </p>
-          </motion.div>
-        </motion.div>
+          <div className="auth-footer">
+            {mode === 'login' ? t('dontHaveAccount') : t('alreadyHaveAccount')}{' '}
+            <button type="button" onClick={onToggleMode}>
+              {mode === 'login' ? t('signUp') : t('signIn')}
+            </button>
+          </div>
+        </div>
       </div>
+
+      <WaitingOverlay
+        isVisible={isLoading}
+        label={mode === 'login' ? t('loading.signingIn') : t('loading.creatingAccount')}
+      />
     </div>
   );
-} 
+}

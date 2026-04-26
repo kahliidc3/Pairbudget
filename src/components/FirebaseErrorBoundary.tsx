@@ -2,12 +2,14 @@
 
 import React, { Component, ReactNode } from 'react';
 import { 
-  handleFirebaseInternalError, 
+  emergencyFirebaseReset, 
   getSubscriptionHealthState, 
-  resetRecoveryTracking,
-  emergencyFirebaseReset
+  handleFirebaseInternalError,
+  resetRecoveryTracking
 } from '@/lib/firebase';
-import { getSubscriptionStats, cleanupAllSubscriptions } from '@/services/pocketService';
+import { logger } from '@/lib/logger';
+import { cleanupAllSubscriptions, getSubscriptionStats } from '@/services/pocketService';
+import { Activity, AlertTriangle, Monitor, RefreshCw, RotateCcw, Zap } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -20,16 +22,10 @@ interface State {
   isRecovering: boolean;
   showDiagnostics: boolean;
   recoveryAttempts: number;
-  subscriptionStats: {
-    activeSubscriptions: number;
-    errorCount: number;
-    lastSuccessfulOperation: number;
-    timeSinceLastSuccess: number;
-  };
 }
 
 class FirebaseErrorBoundary extends Component<Props, State> {
-  private diagnosticsInterval: NodeJS.Timeout | null = null;
+  private isRecoveringNow = false;
 
   constructor(props: Props) {
     super(props);
@@ -40,27 +36,17 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       isRecovering: false,
       showDiagnostics: false,
       recoveryAttempts: 0,
-      subscriptionStats: {
-        activeSubscriptions: 0,
-        errorCount: 0,
-        lastSuccessfulOperation: Date.now(),
-        timeSinceLastSuccess: 0
-      }
     };
   }
 
   componentDidMount() {
     // Set up global error listeners for Firebase errors
     this.setupGlobalErrorHandlers();
-    
-    // Start diagnostics monitoring
-    this.startDiagnosticsMonitoring();
   }
 
   componentWillUnmount() {
-    if (this.diagnosticsInterval) {
-      clearInterval(this.diagnosticsInterval);
-    }
+    window.removeEventListener('unhandledrejection', this.handleUnhandledRejection);
+    window.removeEventListener('error', this.handleGlobalError);
   }
 
   setupGlobalErrorHandlers = () => {
@@ -71,18 +57,10 @@ class FirebaseErrorBoundary extends Component<Props, State> {
     window.addEventListener('error', this.handleGlobalError);
   };
 
-  startDiagnosticsMonitoring = () => {
-    this.diagnosticsInterval = setInterval(() => {
-      this.setState({
-        subscriptionStats: getSubscriptionStats()
-      });
-    }, 5000); // Update every 5 seconds
-  };
-
   handleUnhandledRejection = (event: PromiseRejectionEvent) => {
     const error = event.reason;
     if (this.isFirebaseInternalError(error)) {
-      console.warn('FirebaseErrorBoundary caught unhandled Firebase error');
+      logger.warn('FirebaseErrorBoundary caught unhandled Firebase error');
       this.handleFirebaseError(error);
       event.preventDefault(); // Prevent the error from being logged
     }
@@ -90,7 +68,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
 
   handleGlobalError = (event: ErrorEvent) => {
     if (this.isFirebaseInternalError(event.error)) {
-      console.warn('FirebaseErrorBoundary caught global Firebase error');
+      logger.warn('FirebaseErrorBoundary caught global Firebase error');
       this.handleFirebaseError(event.error);
     }
   };
@@ -108,23 +86,24 @@ class FirebaseErrorBoundary extends Component<Props, State> {
   };
 
   handleFirebaseError = async (error: unknown) => {
-    if (this.state.isRecovering) {
-      console.log('Already recovering from Firebase error, skipping');
+    if (this.isRecoveringNow || this.state.isRecovering) {
+      logger.debug('Already recovering from Firebase error, skipping');
       return;
     }
 
-    console.error('FirebaseErrorBoundary handling error:', error);
+    logger.error('FirebaseErrorBoundary handling error', { error });
+    this.isRecoveringNow = true;
     
-    this.setState({ 
+    this.setState((prevState) => ({
       isRecovering: true,
-      recoveryAttempts: this.state.recoveryAttempts + 1
-    });
+      recoveryAttempts: prevState.recoveryAttempts + 1
+    }));
 
     try {
       const recovered = await handleFirebaseInternalError(error);
       
       if (recovered) {
-        console.log('Firebase error recovery successful');
+        logger.info('Firebase error recovery successful');
         // Reset error state after successful recovery
         setTimeout(() => {
           if (this.state.hasError) {
@@ -137,16 +116,17 @@ class FirebaseErrorBoundary extends Component<Props, State> {
           }
         }, 2000);
       } else {
-        console.warn('Firebase error recovery failed');
+        logger.warn('Firebase error recovery failed');
       }
     } catch (recoveryError) {
-      console.error('Error during Firebase recovery:', recoveryError);
+      logger.error('Error during Firebase recovery', { error: recoveryError });
     } finally {
+      this.isRecoveringNow = false;
       this.setState({ isRecovering: false });
     }
   };
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): Partial<State> | null {
     // Check if this is a Firebase internal error
     const message = error.message || '';
     const isFirebaseError = message.includes('FIRESTORE') && 
@@ -162,17 +142,20 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       };
     }
 
-    // For non-Firebase errors, let them bubble up
-    throw error;
+    // Ignore non-Firebase errors in this boundary to avoid re-entrant update loops.
+    return null;
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('FirebaseErrorBoundary caught error:', error, errorInfo);
+    logger.error('FirebaseErrorBoundary caught error', { error, context: { errorInfo } });
     
-    this.setState({
-      error,
-      errorInfo,
-    });
+    if (this.isFirebaseInternalError(error)) {
+      this.setState({
+        hasError: true,
+        error,
+        errorInfo,
+      });
+    }
 
     // Attempt recovery for Firebase errors
     if (this.isFirebaseInternalError(error)) {
@@ -186,24 +169,24 @@ class FirebaseErrorBoundary extends Component<Props, State> {
     try {
       switch (recoveryType) {
         case 'cleanup':
-          console.log('Manual cleanup triggered');
+          logger.info('Manual cleanup triggered');
           cleanupAllSubscriptions();
           break;
           
         case 'reset':
-          console.log('Manual reset triggered');
+          logger.info('Manual reset triggered');
           resetRecoveryTracking();
           cleanupAllSubscriptions();
           break;
           
         case 'emergency':
-          console.log('Emergency reset triggered');
+          logger.info('Emergency reset triggered');
           await emergencyFirebaseReset();
           cleanupAllSubscriptions();
           break;
           
         case 'reload':
-          console.log('Page reload triggered');
+          logger.info('Page reload triggered');
           window.location.reload();
           return;
       }
@@ -217,7 +200,7 @@ class FirebaseErrorBoundary extends Component<Props, State> {
       });
       
     } catch (error) {
-      console.error('Manual recovery failed:', error);
+      logger.error('Manual recovery failed', { error });
     } finally {
       this.setState({ isRecovering: false });
     }
@@ -227,140 +210,133 @@ class FirebaseErrorBoundary extends Component<Props, State> {
     this.setState({ showDiagnostics: !this.state.showDiagnostics });
   };
 
+  getHealthStateColor = (state: string) => {
+    switch (state) {
+      case 'healthy':
+        return 'text-green-600 bg-green-50';
+      case 'recovering':
+        return 'text-yellow-600 bg-yellow-50';
+      case 'corrupted':
+        return 'text-red-600 bg-red-50';
+      default:
+        return 'text-slate-600 bg-slate-50';
+    }
+  };
+
   render() {
     const { 
       hasError, 
       error, 
       isRecovering, 
       showDiagnostics, 
-      recoveryAttempts,
-      subscriptionStats 
+      recoveryAttempts
     } = this.state;
 
     if (hasError && error) {
+      const subscriptionStats = getSubscriptionStats();
       const healthState = getSubscriptionHealthState();
       const isInternalAssertion = error.message?.includes('INTERNAL ASSERTION FAILED');
       const errorId = error.message?.match(/ID: (ca9|b815)/)?.[1];
       
       return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full border border-red-200">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)', padding: '1rem' }}>
+          <div className="card card-padded" style={{ maxWidth: 520, width: '100%', padding: '2.25rem 2rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--red-soft)', border: '1px solid var(--red-border)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                <AlertTriangle size={28} style={{ color: 'var(--red)' }} />
               </div>
-              
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Firebase Connection Issue
-              </h2>
-              
+              <h2 className="t-head" style={{ fontSize: '1.4rem', marginBottom: '.5rem' }}>Database Connection Issue</h2>
+
               {isInternalAssertion && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-red-800 font-semibold">
-                    Internal Assertion Failure {errorId && `(ID: ${errorId})`}
-                  </p>
-                  <p className="text-xs text-red-600 mt-1">
-                    Subscription state corrupted - automatic recovery in progress
-                  </p>
+                <div className="alert alert-error" style={{ marginBottom: '1rem', textAlign: 'left' }}>
+                  <div>
+                    <p style={{ fontWeight: 700 }}>Internal Assertion Failure {errorId && `(ID: ${errorId})`}</p>
+                    <p style={{ fontSize: '.75rem', marginTop: '.2rem' }}>Subscription state corrupted — automatic recovery in progress</p>
+                  </div>
                 </div>
               )}
-              
-              <p className="text-gray-600 text-sm mb-4">
-                {isRecovering 
+
+              <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1rem' }}>
+                {isRecovering
                   ? 'Attempting to recover connection...'
-                  : 'We\'re experiencing connectivity issues with the database.'
-                }
+                  : "We're experiencing connectivity issues with the database. Please try one of the recovery options below."}
               </p>
-              
-              <div className="text-sm text-gray-500 space-y-1 mb-4">
-                <div>Health: <span className={`font-semibold ${
-                  healthState === 'healthy' ? 'text-green-600' :
-                  healthState === 'recovering' ? 'text-yellow-600' :
-                  healthState === 'corrupted' ? 'text-red-600' : 'text-gray-600'
-                }`}>{healthState}</span></div>
-                <div>Recovery attempts: <span className="font-semibold">{recoveryAttempts}</span></div>
-                <div>Active subscriptions: <span className="font-semibold">{subscriptionStats.activeSubscriptions}</span></div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem', fontSize: '.8rem', marginBottom: '.5rem' }}>
+                <div className="card" style={{ padding: '.6rem .75rem', boxShadow: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Health</span>
+                  <span className="tag tag-amber">{healthState}</span>
+                </div>
+                <div className="card" style={{ padding: '.6rem .75rem', boxShadow: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Attempts</span>
+                  <strong>{recoveryAttempts}</strong>
+                </div>
               </div>
             </div>
 
             {isRecovering ? (
-              <div className="text-center">
-                <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-                  <svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Recovering...
+              <div style={{ textAlign: 'center' }}>
+                <div className="alert alert-success" style={{ display: 'inline-flex' }}>
+                  <RefreshCw size={14} className="spin" />
+                  <span style={{ fontWeight: 600 }}>Recovering...</span>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                <button
-                  onClick={() => this.handleManualRecovery('cleanup')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
-                  Retry Connection
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+                <button onClick={() => this.handleManualRecovery('cleanup')} className="btn btn-primary" style={{ width: '100%' }}>
+                  <RefreshCw size={14} /> <span>Retry Connection</span>
                 </button>
-                
-                <button
-                  onClick={() => this.handleManualRecovery('reset')}
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
-                  Reset Subscriptions
+                <button onClick={() => this.handleManualRecovery('reset')} className="btn btn-secondary" style={{ width: '100%' }}>
+                  <RotateCcw size={14} /> <span>Reset Subscriptions</span>
                 </button>
-                
-                <button
-                  onClick={() => this.handleManualRecovery('emergency')}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
-                  Emergency Reset
+                <button onClick={() => this.handleManualRecovery('emergency')} className="btn btn-red-solid" style={{ width: '100%' }}>
+                  <Zap size={14} /> <span>Emergency Reset</span>
                 </button>
-                
-                <button
-                  onClick={() => this.handleManualRecovery('reload')}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
-                  Reload Page
+                <button onClick={() => this.handleManualRecovery('reload')} className="btn btn-ghost" style={{ width: '100%' }}>
+                  <Monitor size={14} /> <span>Reload Page</span>
                 </button>
-                
-                <button
-                  onClick={this.toggleDiagnostics}
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                >
-                  {showDiagnostics ? 'Hide' : 'Show'} Diagnostics
+                <button onClick={this.toggleDiagnostics} className="btn btn-ghost btn-sm" style={{ width: '100%' }}>
+                  <Activity size={13} /> <span>{showDiagnostics ? 'Hide' : 'Show'} Diagnostics</span>
                 </button>
               </div>
             )}
 
             {showDiagnostics && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-                <h3 className="font-semibold text-gray-900 mb-3">Diagnostics</h3>
-                <div className="space-y-2 text-sm">
+              <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--r)' }}>
+                <h3 className="t-head" style={{ fontSize: '.95rem', marginBottom: '.85rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                  <Activity size={14} /> System Diagnostics
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '.85rem', fontSize: '.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.85rem' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)' }}>Active Subscriptions:</span>
+                      <div style={{ fontWeight: 700, color: 'var(--text)' }}>{subscriptionStats.activeSubscriptions}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)' }}>Error Count:</span>
+                      <div style={{ fontWeight: 700, color: 'var(--text)' }}>{subscriptionStats.errorCount}</div>
+                    </div>
+                  </div>
                   <div>
-                    <span className="font-medium">Error:</span>
-                    <pre className="text-xs bg-white p-2 rounded mt-1 overflow-x-auto">
+                    <span style={{ color: 'var(--text-muted)' }}>Last Success:</span>
+                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>
+                      {new Date(subscriptionStats.lastSuccessfulOperation).toLocaleTimeString()}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Time Since Success:</span>
+                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>
+                      {Math.round(subscriptionStats.timeSinceLastSuccess / 1000)}s
+                    </div>
+                  </div>
+                  <div style={{ paddingTop: '.85rem', borderTop: '1px solid var(--border)' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Error Details:</span>
+                    <pre style={{ fontSize: '.7rem', background: '#fff', padding: '.6rem', borderRadius: 'var(--r-sm)', marginTop: '.4rem', overflowX: 'auto', border: '1px solid var(--border)', color: 'var(--red)' }}>
                       {error.message}
                     </pre>
                   </div>
-                  <div>
-                    <span className="font-medium">Error Count:</span> {subscriptionStats.errorCount}
-                  </div>
-                  <div>
-                    <span className="font-medium">Last Success:</span> {
-                      new Date(subscriptionStats.lastSuccessfulOperation).toLocaleTimeString()
-                    }
-                  </div>
-                  <div>
-                    <span className="font-medium">Time Since Success:</span> {
-                      Math.round(subscriptionStats.timeSinceLastSuccess / 1000)
-                    }s
-                  </div>
-                  <div className="pt-2 border-t border-gray-200">
-                    <p className="text-xs text-gray-600">
-                      Press <kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs">Ctrl+Shift+R</kbd> for emergency reset
-                    </p>
+                  <div style={{ fontSize: '.7rem', color: 'var(--text-muted)' }}>
+                    Press <kbd style={{ padding: '.1rem .4rem', background: 'var(--c-100)', borderRadius: 'var(--r-sm)', fontFamily: 'var(--f-head)', fontSize: '.7rem' }}>Ctrl+Shift+R</kbd> for emergency reset
                   </div>
                 </div>
               </div>

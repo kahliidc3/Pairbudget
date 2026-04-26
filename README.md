@@ -1,196 +1,175 @@
 # PairBudget
 
-**Simple expense tracking for two people.**
+**Shared expense tracking built for two.**
 
-PairBudget is a lightweight, mobile-friendly web application designed for two people to collaborate on managing shared expenses. Perfect for families, partners, caregivers, and any situation where financial transparency and shared responsibility matter.
+[![CI](https://github.com/kahliidc3/Pairbudget/actions/workflows/ci.yml/badge.svg)](https://github.com/kahliidc3/Pairbudget/actions/workflows/ci.yml)
 
-## 🌟 Features
-
-### Core Functionality
-- **Two-Person Collaboration**: Designed specifically for pairs - providers and spenders
-- **Real-time Synchronization**: Changes appear instantly across all devices
-- **Role-Based Access**: Provider funds and oversees, Spender purchases and logs
-- **Simple Interface**: Clean, intuitive design focused on ease of use
-
-### Key Capabilities
-- **Pocket Management**: Create private shared expense "pockets"
-- **Balance Tracking**: Live balance calculations (Total Given - Total Spent)
-- **Transaction Logging**: Record funds added and expenses made
-- **Category Organization**: Organize expenses by type (Groceries, Transport, etc.)
-- **Invite System**: Simple 6-character codes to invite your partner
-- **Real-time Updates**: See changes immediately across all devices
-
-## 🔧 Tech Stack
-
-- **Frontend**: Next.js 15.3.4 with TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand
-- **Backend**: Firebase (Firestore + Auth)
-- **Forms**: React Hook Form
-- **Icons**: Lucide React
-- **Deployment**: Vercel-ready
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+ 
-- Firebase account
-- npm or yarn
-
-### Installation
-
-1. **Clone and install dependencies**
-   ```bash
-   git clone <your-repo>
-   cd pairbudget
-   npm install
-   ```
-
-2. **Set up Firebase**
-   - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
-   - Enable Authentication (Email/Password)
-   - Create a Firestore database
-   - Get your Firebase configuration
-
-3. **Environment Setup**
-   ```bash
-   # Create environment file
-   cp .env.local.example .env.local
-   
-   # Add your Firebase config to .env.local
-   NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
-   NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
-   ```
-
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open [http://localhost:3000](http://localhost:3000)**
-
-## 📱 How It Works
-
-### Getting Started
-1. **Sign Up**: Create an account with email/password
-2. **Create or Join**: Either create a new pocket or join with an invite code
-3. **Choose Role**: Select Provider (funds & oversees) or Spender (purchases & logs)
-4. **Start Tracking**: Begin adding funds and recording expenses
-
-### User Roles
-
-**Provider**
-- Adds money to the pocket
-- Views all transactions and balance
-- Gets spending summaries and insights
-- Can see where money is being spent
-
-**Spender**
-- Records purchases and expenses
-- Categorizes transactions
-- Views current balance
-- Can upload receipts (optional)
-
-### Workflow Example
-1. **Provider** adds 2000 MAD to the family pocket
-2. **Spender** buys groceries for 320 MAD and logs it
-3. Both see updated balance: 1680 MAD remaining
-4. Real-time transparency and accountability
-
-## 🔒 Security & Privacy
-
-- **Firebase Authentication**: Secure user management
-- **Firestore Security Rules**: Data isolation between pockets
-- **Private Pockets**: Only invited members can access
-- **No Data Mining**: Your financial data stays private
-
-## 🌍 Deployment
-
-### Vercel (Recommended)
-1. Push code to GitHub
-2. Connect repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy automatically
-
-### Other Platforms
-The app works on any platform supporting Next.js:
-- Netlify
-- Railway
-- Your own server
-
-## 📂 Project Structure
-
-```
-pairbudget/
-├── src/
-│   ├── app/                 # Next.js App Router
-│   │   ├── dashboard/       # Main app interface
-│   │   ├── join/           # Invite link handling
-│   │   └── page.tsx        # Auth landing page
-│   ├── components/         # React components
-│   │   ├── ui/             # Reusable UI components
-│   │   ├── AuthForm.tsx    # Login/signup
-│   │   ├── Dashboard.tsx   # Main interface
-│   │   └── PocketSetup.tsx # Create/join pockets
-│   ├── lib/               # Utilities
-│   │   ├── firebase.ts    # Firebase config
-│   │   └── utils.ts       # Helper functions
-│   ├── services/          # API layer
-│   │   ├── authService.ts # Authentication
-│   │   └── pocketService.ts # Pocket/transaction operations
-│   ├── store/             # State management
-│   │   ├── authStore.ts   # User state
-│   │   └── pocketStore.ts # Pocket state
-│   └── types/             # TypeScript definitions
-└── public/               # Static assets
-```
-
-## 🛣️ Roadmap
-
-### Planned Features
-- **Receipt Upload**: Photo capture for transaction proof
-- **Spending Insights**: Charts and analytics
-- **Budget Limits**: Set category spending caps
-- **Export Data**: PDF reports and CSV export
-- **Multiple Pockets**: Handle different purposes/people
-- **Offline Support**: Work without internet connection
-
-### Future Enhancements
-- **Mobile App**: Native iOS/Android versions
-- **Recurring Transactions**: Automatic bills/transfers
-- **Smart Categories**: AI-powered expense categorization
-- **Team Plans**: Support for families with children
-
-## 🤝 Contributing
-
-We welcome contributions! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 🆘 Support
-
-- **Issues**: Report bugs via GitHub Issues
-- **Questions**: Start a GitHub Discussion
-- **Security**: Email security@yourapp.com for sensitive issues
-
-## 🙏 Acknowledgments
-
-- Built with [Next.js](https://nextjs.org)
-- UI components inspired by [shadcn/ui](https://ui.shadcn.com)
-- Icons by [Lucide](https://lucide.dev)
-- Hosted on [Vercel](https://vercel.com)
+PairBudget is a real-time, mobile-first web app that lets two people manage shared finances together — with distinct roles, live balance tracking, and a clean interface that works seamlessly on any device.
 
 ---
 
-**Made with ❤️ for transparent financial relationships**
+## Features
+
+- **Two roles** — Provider funds the pocket; Spender logs expenses. Both see the same live data.
+- **Real-time sync** — Firestore listeners push changes instantly to both users.
+- **Invite system** — Share a 6-character code or link to bring your partner in.
+- **Multi-pocket** — Create or join multiple pockets and switch between them.
+- **Full transaction history** — Filter by type, date, and category across all time.
+- **Data export** — Download your transaction history as a file.
+- **Three languages** — English, Français, العربية (RTL supported).
+- **Profile page** — Edit your display name and switch language at any time.
+- **Mobile-first** — Bottom navigation, pocket switcher sheet, always-visible actions.
+- **Responsive desktop** — Sidebar quick-actions, sticky header, full stat cards.
+
+---
+
+## Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router, TypeScript) |
+| Styling | Tailwind CSS v4 |
+| State | Zustand |
+| Backend | Firebase — Firestore + Auth |
+| i18n | next-intl (en / fr / ar) |
+| Forms | React Hook Form |
+| Animations | Framer Motion |
+| Notifications | Sonner |
+| Monitoring | Sentry |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- A [Firebase](https://console.firebase.google.com) project with **Authentication** (Email/Password) and **Firestore** enabled
+
+### 1 — Clone and install
+
+```bash
+git clone https://github.com/kahliidc3/Pairbudget.git
+cd pairbudget
+npm install
+```
+
+### 2 — Configure environment variables
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+```
+
+Fill in the values from your Firebase project settings.
+
+### 3 — Firestore index
+
+Create one composite index in Firestore:
+
+- **Collection:** `transactions`
+- **Fields:** `pocketId` (Ascending) → `date` (Descending)
+
+### 4 — Run
+
+```bash
+npm run dev       # development server at http://localhost:3000
+npm run build     # production build
+npm run lint      # ESLint
+npm test          # unit tests (Vitest)
+npm run test:e2e  # end-to-end tests (Playwright)
+```
+
+---
+
+## How It Works
+
+1. **Sign up** with email and password.
+2. **Create a pocket** (or join one with an invite code).
+3. **Choose your role** — Provider or Spender.
+4. **Share the invite link** with your partner so they can join.
+5. **Track together** — add funds, log expenses, view history in real time.
+
+### Roles
+
+| | Provider | Spender |
+|---|---|---|
+| Add funds | ✓ | ✓ |
+| Record expenses | — | ✓ |
+| Edit any transaction | ✓ | own only |
+| View full history | ✓ | ✓ |
+| Invite partners | ✓ | ✓ |
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/[locale]/             # App Router pages (i18n)
+│   ├── dashboard/            # Main app page
+│   ├── all-transactions/     # Full transaction history
+│   ├── pocket-setup/         # Create / join pockets
+│   ├── profile/              # User profile & settings
+│   └── join/                 # Invite link handler
+├── components/
+│   ├── dashboard/            # Dashboard sub-components
+│   │   ├── AddTransactionModal.tsx
+│   │   ├── EditTransactionModal.tsx
+│   │   ├── DeleteTransactionModal.tsx
+│   │   ├── InviteModal.tsx
+│   │   ├── LeaveModal.tsx
+│   │   ├── DesktopHeader.tsx
+│   │   └── DesktopSidebar.tsx
+│   ├── pocket-setup/         # Pocket-setup sub-components
+│   │   ├── CreatePocketForm.tsx
+│   │   ├── JoinPocketForm.tsx
+│   │   ├── PocketList.tsx
+│   │   ├── DeletePocketModal.tsx
+│   │   └── RoleSelector.tsx
+│   ├── ui/                   # Shared UI primitives
+│   ├── Dashboard.tsx
+│   ├── PocketSetup.tsx
+│   ├── Profile.tsx
+│   └── AuthForm.tsx
+├── services/                 # Firebase service layer
+├── store/                    # Zustand stores (auth, pocket)
+├── types/                    # TypeScript definitions
+├── hooks/                    # Custom React hooks
+├── lib/                      # Firebase init, utilities, logger
+└── messages/                 # i18n strings (en / fr / ar)
+```
+
+---
+
+## Deployment
+
+### Vercel (recommended)
+
+1. Push to GitHub.
+2. Import the repo in [Vercel](https://vercel.com).
+3. Add all `NEXT_PUBLIC_*` environment variables in the Vercel dashboard.
+4. Deploy — Vercel handles the rest automatically.
+
+Any other Next.js-compatible host (Netlify, Railway, AWS Amplify) works the same way.
+
+---
+
+## Security
+
+- Firestore security rules enforce per-pocket data isolation — users can only read and write data they belong to.
+- Firebase Authentication handles all credential management.
+- No financial data is exposed to third parties.
+
+---
+
+## License
+
+MIT

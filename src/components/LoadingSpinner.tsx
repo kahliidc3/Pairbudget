@@ -1,48 +1,39 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  text?: string;
+  /** @deprecated kept for backwards compat */
+  showProgress?: boolean;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  size = 'md', 
-  className = '' 
-}) => {
-  const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-8 h-8',
-    lg: 'w-12 h-12'
-  };
+const SIZE_PX: Record<string, number> = { sm: 16, md: 28, lg: 44 };
+const BORDER_WIDTH: Record<string, number> = { sm: 2, md: 2.5, lg: 3.5 };
+
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', className = '', text }) => {
+  const px = SIZE_PX[size];
+  const bw = BORDER_WIDTH[size];
 
   return (
-    <div className={`inline-flex items-center justify-center ${className}`}>
-      <motion.div
-        className={`${sizeClasses[size]} border-2 border-transparent rounded-full`}
+    <div className={`flex flex-col items-center justify-center ${className}`}>
+      <div
+        className="spinner-circle"
         style={{
-          background: 'linear-gradient(45deg, #8B5FBF, #4F7EF7)',
-          backgroundClip: 'padding-box',
+          width: px,
+          height: px,
+          borderWidth: bw,
         }}
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
-        <div 
-          className="w-full h-full rounded-full border-2 border-transparent"
-          style={{
-            background: 'linear-gradient(45deg, transparent, transparent, #FFFFFF)',
-            backgroundClip: 'padding-box',
-          }}
-        />
-      </motion.div>
+      />
+      {text && (
+        <p style={{ marginTop: '.75rem', color: 'var(--text-muted)', fontSize: size === 'sm' ? '.8rem' : '.9rem' }}>
+          {text}
+        </p>
+      )}
     </div>
   );
 };
 
-export default LoadingSpinner; 
+export default LoadingSpinner;

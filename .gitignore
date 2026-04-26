@@ -134,6 +134,8 @@ pids
 .cache
 .parcel-cache
 
+CLAUDE.md
+
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
@@ -143,6 +145,8 @@ pids
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+.claude
 
 # MacOS
 .DS_Store
