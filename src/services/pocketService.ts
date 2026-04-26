@@ -222,7 +222,7 @@ const createSubscription = <T>({
               retrySubscription();
             }
           } catch (callbackError) {
-            logger.error('Uncaught error in subscription error handler', { callbackError, context: { pocketId, type } });
+            logger.error('Uncaught error in subscription error handler', { error: callbackError, context: { pocketId, type } });
           }
         }
       );
